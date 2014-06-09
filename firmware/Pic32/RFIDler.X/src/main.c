@@ -715,17 +715,15 @@ void UserInit(void)
     // LCR
     LCR_CALIBRATE= LOW;
 
-    // RTC
-    // don't output to h/w pin
-    RtccOutputEnable(FALSE);
-
-    // enable
-    RtccInit();
-    while(RtccGetClkStat() != RTCC_CLK_ON)
-        ;               
-
-    // set default time/date - Wednesday Jan 1st 2014, 00:00:01
-    RtccSetTimeDate(0x00000100, 0x14010103);
+    //// RTC
+    //// only enable this code if you've installed the 32.768KHz crystal at X2
+    //// otherwise code will hang while waiting for clock to initialise
+    //RtccOutputEnable(FALSE);
+    //RtccInit();
+    //while(RtccGetClkStat() != RTCC_CLK_ON)
+    //    ;               
+    //// set default time/date - Wednesday Jan 1st 2014, 00:00:01
+    //RtccSetTimeDate(0x00000100, 0x14010103);
 
     mLED_All_Off();
 

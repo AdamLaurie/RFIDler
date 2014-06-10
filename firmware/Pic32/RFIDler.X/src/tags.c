@@ -751,7 +751,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
+            RFIDlerConfig.PotHigh= 160;
             RFIDlerConfig.DataRate= 32;
             RFIDlerConfig.DataBits= 37; // 5 bits leadin + 32 bits ID
             RFIDlerConfig.DataBlocks= HITAG2_DATABLOCKS;
@@ -761,7 +761,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
             RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10
             RFIDlerConfig.RWD_Sleep_Period= 2000;
-            RFIDlerConfig.RWD_Wake_Period= 500; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
+            RFIDlerConfig.RWD_Wake_Period= 525; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
             RFIDlerConfig.RWD_Zero_Period= 18; // 18 - 22
             RFIDlerConfig.RWD_One_Period= 26; // 26 - 32
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 199;
@@ -822,7 +822,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Modulation= MOD_MODE_PSK1;
             RFIDlerConfig.PotLow= POTLOW_DEFAULT;
-            RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
+            RFIDlerConfig.PotHigh= 170;
             RFIDlerConfig.DataRate= 32;
             RFIDlerConfig.DataRateSub0= 2;
             RFIDlerConfig.DataBits= 64;
@@ -842,7 +842,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Modulation= MOD_MODE_PSK1;
             RFIDlerConfig.PotLow= POTLOW_DEFAULT;
-            RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
+            RFIDlerConfig.PotHigh= 170;
             RFIDlerConfig.DataRate= 32;
             RFIDlerConfig.DataRateSub0= 2;
             RFIDlerConfig.DataBits= 224;

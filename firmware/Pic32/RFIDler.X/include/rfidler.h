@@ -634,7 +634,7 @@ extern rtccDate	RTC_date;			// date structure
 #define COMMS_USB                       1
 #define COMMS_UART                      2
 
-#define MAX_HISTORY                     10
+#define MAX_HISTORY                     8
 
 // modulation modes
 #define MOD_MODE_NONE                   0

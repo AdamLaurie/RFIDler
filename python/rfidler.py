@@ -488,6 +488,9 @@ while current < len(sys.argv):
 				result, reason= rfidler.connect(port)
 				if result:
 					break
+				if os.path.exists('/dev/hidraw1'):
+					print 'bootloader mode - flashing...'
+					os.system('mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
 
 			os.system('clear')
 			print 'Starting test', test
@@ -501,7 +504,10 @@ while current < len(sys.argv):
 				 'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
 				print '  Test %s - ' % x,
 				sys.stdout.flush()
-				result, data= rfidler.command(x)
+				for z in range(10):
+					result, data= rfidler.command(x)
+					if result:
+						break
 				print result, data
 				if not result:
 					test_result= 'Fail!'

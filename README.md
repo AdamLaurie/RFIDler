@@ -140,7 +140,7 @@ Connections
 ===========
 
 	The device can be powered via the USB port, and, if connected to a PC, will provide a
-	management CLI/API via USB-Serial CDC at 115200 baud.
+	management CLI/API via USB-Serial CDC at 115200 baud (8 bit, No Parity, 1 Stop Bit, No Handshaking/Flow Control).
 
         The CLI/API is also accessible via 3.3v or 5v UART on pins RF4 (UART2 RX) and RF5 (UART2 TX)
 

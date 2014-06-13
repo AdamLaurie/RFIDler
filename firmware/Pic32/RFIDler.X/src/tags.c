@@ -705,7 +705,7 @@ BOOL tag_set(BYTE tag)
         case TAG_TYPE_HID_26:
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Modulation= MOD_MODE_FSK;
-            RFIDlerConfig.PotHigh=  100;
+            RFIDlerConfig.PotHigh=  120;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 10;

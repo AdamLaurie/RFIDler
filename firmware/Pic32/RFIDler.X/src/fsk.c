@@ -559,7 +559,9 @@ BOOL fsk_raw_get_uid(BYTE *response)
     BOOL blank= TRUE;
     BYTE tmp[MAXUID + 1];
 
-    memset(tmp, '\0', sizeof(tmp));
+    memset(tmp, '0', MAXUID);
+    tmp[MAXUID]= '\0';
+    
     if (read_fsk_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.DataRateSub0, RFIDlerConfig.DataRateSub1, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Invert, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, FALSE, HEX) != RFIDlerConfig.DataBits)
         return FALSE;
     

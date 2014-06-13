@@ -515,7 +515,9 @@ BOOL ask_raw_get_uid(BYTE *response)
     BOOL blank= TRUE;
     BYTE tmp[MAXUID + 1];
 
-    memset(tmp, '\0', sizeof(tmp));
+    memset(tmp, '0', MAXUID);
+    tmp[MAXUID]= '\0';
+
     if (read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, NO_ONESHOT_READ, HEX) != RFIDlerConfig.DataBits)
         return FALSE;
 

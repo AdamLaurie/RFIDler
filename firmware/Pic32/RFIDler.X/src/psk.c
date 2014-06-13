@@ -715,7 +715,8 @@ BOOL psk1_raw_get_uid(BYTE *response)
     BYTE tmp[MAXUID + 1];
     BOOL blank= TRUE;
 
-    memset(tmp, '\0', sizeof(tmp));
+    memset(tmp, '0', MAXUID);
+    tmp[MAXUID]= '\0';
 
     if(!read_psk1_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, RFIDlerConfig.PSK_Quality, FALSE, HEX) == RFIDlerConfig.DataBits)
         return FALSE;

@@ -486,3 +486,4 @@ BOOL vtag_copy_from_tag(BYTE *tagtype, BYTE *pass);
 BOOL vtag_create_from_uid(BYTE *tagtype, BYTE source_tagtype, BYTE *uid);
 BOOL vtag_convert(BYTE *tagtype);
 BOOL vtag_write_to_tag(BYTE *pass);
+BOOL vtag_write_blocks(unsigned int startblock, BYTE *data);

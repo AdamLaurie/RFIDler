@@ -488,7 +488,11 @@ License instead of this License.
 #include "uid.h"
 #include "fdxb.h"
 #include "comms.h"
+#include "hid.h"
 #include "awid.h"
+#include "em.h"
+#include "indala.h"
+#include "unique.h"
 
 // tagtype #defines in rfidler.h
 const BYTE *TagTypes[]= {
@@ -567,6 +571,46 @@ unsigned int tag_get_datablocks(BYTE tag)
         case TAG_TYPE_Q5:
         case TAG_TYPE_T55X7:
             return q5_datablocks();
+
+        default:
+            return 0;
+    }
+}
+
+unsigned int tag_get_databits(BYTE tag)
+{
+    switch(tag)
+    {
+        case TAG_TYPE_EM4X02:
+            return EM4X02_DATABITS;
+            
+        case TAG_TYPE_HID_26:
+            return HID26_DATABITS;
+
+        case TAG_TYPE_AWID_26:
+            return AWID26_DATABITS;
+
+        case TAG_TYPE_FDXB:
+            return FDXB_DATABITS;
+
+        case TAG_TYPE_HITAG1:
+            return hitag1_datablocks() * hitag1_blocksize();
+
+        case TAG_TYPE_HITAG2:
+            return hitag2_datablocks() * hitag2_blocksize();
+
+        case TAG_TYPE_INDALA_64:
+            return INDALA_64_DATABITS;
+
+        case TAG_TYPE_INDALA_224:
+            return INDALA_224_DATABITS;
+
+        case TAG_TYPE_Q5:
+        case TAG_TYPE_T55X7:
+            return q5_datablocks() * q5_blocksize();
+
+        case TAG_TYPE_UNIQUE:
+            return UNIQUE_DATABITS;
 
         default:
             return 0;

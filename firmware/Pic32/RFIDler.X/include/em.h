@@ -478,7 +478,7 @@ License instead of this License.
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+#define EM4X02_DATABITS         64
 
 BOOL em4x02_get_uid(BYTE *response);
 BOOL em4x02_hex_to_uid(BYTE *response, BYTE *hex);

@@ -478,7 +478,7 @@ License instead of this License.
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+#define HID26_DATABITS      96
 
 BOOL hid26_hex_to_uid(unsigned char *response, unsigned char *hid26);
 BOOL bcd_to_hid26_bin(unsigned char *hid26, unsigned char *bcd);

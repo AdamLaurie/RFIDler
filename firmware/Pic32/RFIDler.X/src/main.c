@@ -2256,6 +2256,23 @@ BYTE ProcessSerialCommand(char *command)
         eod();
     }
 
+    if (strncmp(command, "VWRITE ", 7) == 0)
+    {
+        if(sscanf(command + 7,"%u %s", &tmpint, &local_tmp) == 2)
+        {
+            if(vtag_write_blocks(tmpint, local_tmp))
+            {
+                commandok= command_ack(DATA);
+                UserMessage("%s\r\n", local_tmp);
+                eod();
+            }
+            else
+                commandok= command_nack("VTAG write failed!");
+        }
+        else
+            commandok= command_nack("Invalid block number or no data!");
+    }
+
     // pinouts
     if (strcmp(command, "WIRING") == 0 || strcmp(command, "WIRES") == 0 || strcmp(command, "PINS") == 0)
     {
@@ -2485,6 +2502,7 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    UID                                                          Read TAG UID\r\n");
             UserMessage("%s", "    VERSION                                                      Show firmware version\r\n");
             UserMessage("%s", "    VTAG                                                         Show contents of Virtual TAG\r\n");
+            UserMessage("%s", "    VWRITE <BLOCK> <HEX DATA>                                    Write VTAG data block(s)\r\n");
             UserMessage("%s", "    WIEGAND-LEARN                                                Learn Wiegand input timings\r\n");
             UserMessage("%s", "    WIEGAND-OUT <OFF|ON>                                         Set Wiegand output OFF or ON\r\n");
             UserMessage("%s", "    WIEGAND-READ                                                 Read Wiegand input\r\n");

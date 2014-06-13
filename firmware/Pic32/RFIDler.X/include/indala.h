@@ -478,7 +478,8 @@ License instead of this License.
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+#define INDALA_64_DATABITS      64
+#define INDALA_224_DATABITS     224
 
 // definitions for Indala devices
 

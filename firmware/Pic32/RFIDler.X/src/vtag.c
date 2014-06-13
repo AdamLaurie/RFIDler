@@ -785,3 +785,21 @@ BOOL vtag_write_to_tag(BYTE *pass)
     tag_set(tagtype);
     return TRUE;
 }
+
+BOOL vtag_write_blocks(unsigned int startblock, BYTE *data)
+{
+    unsigned int user_block_no;
+
+    // check data doesn't overrun emulation tag capacity
+    if(strlen(data) * 4 > (RFIDlerVTag.DataBlocks - startblock) * RFIDlerVTag.BlockSize || startblock >= RFIDlerVTag.DataBlocks)
+        return FALSE;
+    // check data doesn't overrun emulated tag size
+    if(RFIDlerVTag.EmulatedTagType != TAG_TYPE_NONE && config_user_block(&user_block_no, RFIDlerVTag.TagType))
+        if((((strlen(data) * 4) / RFIDlerVTag.BlockSize) + startblock) - 1 > tag_get_databits(RFIDlerVTag.EmulatedTagType) / RFIDlerVTag.BlockSize)
+            return FALSE;
+    memcpy(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * startblock)], data, strlen(data));
+    // copy raw hex back to UID
+    if(config_user_block(&user_block_no, RFIDlerVTag.TagType))
+        memcpy(RFIDlerVTag.UID, &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], HEXDIGITS(RFIDlerVTag.BlockSize * (RFIDlerVTag.DataBlocks - user_block_no)));
+    return TRUE;
+}

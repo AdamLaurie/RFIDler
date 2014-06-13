@@ -478,7 +478,7 @@ License instead of this License.
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+#define AWID26_DATABITS      96
 
 BOOL awid26_hex_to_uid(unsigned char *response, unsigned char *awid26);
 BOOL bcd_to_awid26_bin(unsigned char *awid26, unsigned char *bcd);

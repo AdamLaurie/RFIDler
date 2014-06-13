@@ -479,6 +479,7 @@ License instead of this License.
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 
+#define UNIQUE_DATABITS     64
 
 
 BOOL unique_get_uid(BYTE *response);

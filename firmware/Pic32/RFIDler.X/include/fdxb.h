@@ -478,6 +478,7 @@ License instead of this License.
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
+#define FDXB_DATABITS       128
 
 
 BOOL fdxb_get_uid(BYTE *response);

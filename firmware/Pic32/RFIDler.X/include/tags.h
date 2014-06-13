@@ -485,6 +485,7 @@ BYTE auto_detect_tag_type(void);
 BYTE tag_get_type(BYTE *tag);
 unsigned int tag_get_blocksize(BYTE tag);
 unsigned int tag_get_datablocks(BYTE tag);
+unsigned int tag_get_databits(BYTE tag);
 BOOL tag_set(BYTE tag);
 BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype);
 

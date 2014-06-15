@@ -2245,7 +2245,7 @@ BYTE ProcessSerialCommand(char *command)
     if (strcmp(command, "VERSION") == 0)
     {
         commandok= command_ack(DATA);
-        UserMessageNum("%04d-alpha\r\n", VERSION);
+        UserMessageNum("%04d-beta\r\n", VERSION);
         eod();
     }
 

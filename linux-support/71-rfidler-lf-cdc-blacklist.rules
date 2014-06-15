@@ -1,8 +1,8 @@
 # place this file in /etc/udev/rules.d  and run 'sudo udevadm control --reload-rules'
 
 ACTION!="add|change", GOTO="mm_usb_device_blacklist_end"
-SUBSYSTEM!="usb", GOTO="mm_usb_device_blacklist_end"
-ENV{DEVTYPE}!="usb_device",  GOTO="mm_usb_device_blacklist_end"
+SUBSYSTEM!="tty", GOTO="mm_usb_device_blacklist_end"
+# ENV{DEVTYPE}!="usb_device",  GOTO="mm_usb_device_blacklist_end"
 
 # http://wiki.openmoko.org/wiki/USB_Product_IDs
 # openmoko issued id for rfidler-lf

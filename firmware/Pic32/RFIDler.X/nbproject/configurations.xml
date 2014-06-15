@@ -184,7 +184,8 @@
         <property key="place-data-into-section" value="false"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
-        <property key="preprocessor-macros" value="VERSION=`git rev-list HEAD|wc -l`"/>
+        <property key="preprocessor-macros"
+                  value="VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="use-cci" value="false"/>
@@ -259,6 +260,20 @@
       </C32Global>
       <PK3OBPlatformTool>
       </PK3OBPlatformTool>
+      <item path="procdefs.ld" ex="true" overriding="false">
+        <C32>
+        </C32>
+        <C32-AR>
+        </C32-AR>
+        <C32-AS>
+        </C32-AS>
+        <C32-LD>
+        </C32-LD>
+        <C32CPP>
+        </C32CPP>
+        <C32Global>
+        </C32Global>
+      </item>
     </conf>
     <conf name="debug" type="2">
       <toolsSet>
@@ -351,7 +366,7 @@
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
         <property key="preprocessor-macros"
-                  value="RFIDLER_DEBUG;VERSION=`git rev-list HEAD|wc -l`"/>
+                  value="RFIDLER_DEBUG;VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="use-cci" value="false"/>

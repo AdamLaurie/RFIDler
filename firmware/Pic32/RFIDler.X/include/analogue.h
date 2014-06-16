@@ -131,4 +131,5 @@
 
 void init_adc(BOOL slow);
 void analogue_sample(BYTE *target, unsigned int length);
+void analogue_xml_out(BYTE *buffer, unsigned int length);
 unsigned long analogue_frequency(void);

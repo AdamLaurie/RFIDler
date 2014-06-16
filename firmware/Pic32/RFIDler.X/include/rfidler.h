@@ -144,6 +144,8 @@
 #define COMMS_BUFFER_SIZE   128
 
 #define SAMPLEMASK          0x7e    // mask to remove top and bottom bit from analogue sample - we will then use those for reader & bit period
+#define TOP_BIT             0x80
+#define BOTTOM_BIT          0x01
 
 // globals
 

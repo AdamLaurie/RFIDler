@@ -189,4 +189,13 @@ unsigned long get_reader_pulse(unsigned int timeout_us);
 unsigned long get_reader_gap(unsigned int timeout_us);
 unsigned int crc_ccitt(BYTE *data, unsigned int length);
 unsigned int crc16(unsigned int crc, BYTE *data, unsigned int length, unsigned int mask);
+void space_indent(BYTE count);
+void xml_version(void);
+void xml_header(BYTE *item, BYTE *indent);
+void xml_footer(BYTE *item, BYTE *indent);
+void xml_indented_text(BYTE *data, BYTE indent);
+void xml_item_text(BYTE *item, BYTE *data, BYTE *indent);
+void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent);
+void xml_indented_array(BYTE *data, BYTE mask, unsigned int length, BYTE indent);
+void xml_item_array(BYTE *item, BYTE *data, BYTE mask, unsigned int length, BYTE *indent);
 

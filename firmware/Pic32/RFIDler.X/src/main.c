@@ -831,7 +831,9 @@ BYTE ProcessSerialCommand(char *command)
             {
                 commandok= command_ack(DATA);
                 analogue_sample(SampleAnalogue, tmpint);
-                hexprintbinarray(SampleAnalogue, tmpint);
+                //hexprintbinarray(SampleAnalogue, tmpint);
+                //UserMessage("%s", "\r\n");
+                analogue_xml_out(SampleAnalogue, tmpint);
                 eod();
             }
         }
@@ -2069,7 +2071,7 @@ BYTE ProcessSerialCommand(char *command)
         if(strcmp(command, "HELP") == 0 || Interface == INTERFACE_CLI)
         {
             command_ack(DATA);
-            UserMessage("%s", "    ANALOGUE <# OF SAMPLES>                                      Read Analogue port & output in *raw binary* (not suitable for CLI!)\r\n");
+            UserMessage("%s", "    ANALOGUE <# OF SAMPLES>                                      Sample raw coil & output in XML (HEX)\r\n");
             UserMessage("%s", "    API                                                          Switch to API mode\r\n");
             UserMessage("%s", "    ASK <HEX UID> <FC> <RATE> <REPEAT>                           Emulate ASK, Field Clock in uS/100, Data Rate in RF/n\r\n");
             UserMessage("%s", "    AUTH [HEX KEY] [BLOCK]                                       Authenticate in CRYPTO mode\r\n");

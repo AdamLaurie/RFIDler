@@ -807,4 +807,82 @@ unsigned int crc16(unsigned int crc, BYTE *data, unsigned int length, unsigned i
     return crc;
 }
 
+void space_indent(BYTE count)
+{
+    while(count)
+    {
+        UserMessage("%s", " ");
+        --count;
+    }
+}
 
+// some simple XML helper routines
+void xml_version(void)
+{
+    UserMessage("%s", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+}
+
+void xml_header(BYTE *item, BYTE *indent)
+{
+    UserMessage("%s", "\r\n");
+    space_indent(*indent);
+    UserMessage("<%s>", item);
+    (*indent) += 2;
+}
+
+void xml_footer(BYTE *item, BYTE *indent)
+{
+    UserMessage("%s", "\r\n");
+    if(*indent > 1)
+        (*indent) -= 2;
+    else
+        *indent= 0;
+    space_indent(*indent);
+    UserMessage("<\\%s>", item);
+}
+
+void xml_indented_text(BYTE *data, BYTE indent)
+{
+    UserMessage("%s", "\r\n");
+    space_indent(indent);
+    UserMessage("%s", data);
+}
+
+void xml_item_text(BYTE *item, BYTE *data, BYTE *indent)
+{
+    xml_header(item, indent);
+    xml_indented_text(data, *indent);
+    xml_footer(item, indent);
+}
+
+void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent)
+{
+    BYTE tmp[4];
+
+    xml_header(item, indent);
+    sprintf(tmp, "%d", num);
+    xml_indented_text(tmp, *indent);
+    xml_footer(item, indent);
+}
+
+void xml_indented_array(BYTE *data, BYTE mask, unsigned int length, BYTE indent)
+{
+    unsigned int i;
+
+    for(i= 0 ; i < length ; ++i)
+    {
+        if(!(i % 32))
+        {
+            UserMessage("%s", "\r\n");
+            space_indent(indent);
+        }
+        UserMessageNum("%02lx", data[i] & mask);
+    }
+}
+
+void xml_item_array(BYTE *item, BYTE *data, BYTE mask, unsigned int length, BYTE *indent)
+{
+    xml_header(item, indent);
+    xml_indented_array(data, mask, length, *indent);
+    xml_footer(item, indent);
+}

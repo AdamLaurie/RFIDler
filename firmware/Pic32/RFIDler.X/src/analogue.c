@@ -155,11 +155,60 @@ void analogue_sample(BYTE *target, unsigned int length)
 
     init_adc(FAST);
     // get one sample per byte - max value from ADC is 1024 so divide by 4
-    // add in digital sample state and reader bit period for display purposes
+    // add in digital sample state (top bit) and reader bit period (bottom bit) for display purposes
     for(i= 0 ; i < length ; ++i)
-        target[i]= ((read_adc() >> 2) & SAMPLEMASK) + READER_DATA + (ReaderPeriod << 7);
-        //UserBinaryByte((BYTE) ((read_adc() / 4) & SAMPLEMASK) + READER_DATA + (ReaderPeriod << 7));
+        target[i]= ((read_adc() >> 2) & SAMPLEMASK) + (READER_DATA << 7) + ReaderPeriod;
+        //UserBinaryByte((BYTE) ((read_adc() / 4) & SAMPLEMASK) + (READER_DATA << 7) + ReaderPeriod);
     //UserBinary(SampleAnalogue, tmpint);
+}
+
+// output analogue buffer as XML
+void analogue_xml_out(BYTE *buffer, unsigned int length)
+{
+    BYTE indent= 0, tmp;
+
+    // header
+    xml_version();
+    xml_header("RFIDler_Samples", &indent);
+    xml_item_text("Description", "RFIDler Analogue Coil Samples", &indent);
+
+    // pots
+    xml_header("Pot_Data", &indent);
+    xml_item_text("Description", "Potentiometer Settings (Decimal)", &indent);
+    xml_header("Pot_High_Data", &indent);
+    xml_item_text("Description", "Potentiometer High Setting", &indent);
+    get_mcp414_wiper(0, FALSE, &tmp);
+    xml_item_decimal("Data", tmp, &indent);
+    xml_footer("Pot_High_Data", &indent);
+    xml_header("Pot_Low_Data", &indent);
+    xml_item_text("Description", "Potentiometer Low Setting", &indent);
+    get_mcp414_wiper(1, FALSE, &tmp);
+    xml_item_decimal("Data", tmp, &indent);
+    xml_footer("Pot_Low_Data", &indent);
+    xml_footer("Pot_Data", &indent);
+
+
+    // raw coil
+    xml_header("Coil_Data", &indent);
+    xml_item_text("Description", "Analogue Circuit Raw Data (HEX)", &indent);
+    xml_item_array("Data", buffer, SAMPLEMASK, length, &indent);
+    xml_footer("Coil_Data", &indent);
+    
+    // reader circuit
+    xml_header("Reader_Data", &indent);
+    xml_item_text("Description", "Analogue Circuit Digital Reader Data", &indent);
+    xml_item_array("Data", buffer, TOP_BIT, length, &indent);
+    xml_footer("Reader_Data", &indent);
+
+
+    // bit period
+    xml_header("Bit_Period_Data", &indent);
+    xml_item_text("Description", "Bit Period", &indent);
+    xml_item_array("Data", buffer, BOTTOM_BIT, length, &indent);
+    xml_footer("Bit_Period_Data", &indent);
+    
+    // end
+    xml_footer("RFIDler_Samples", &indent);
 }
 
 // determine resonant frequency of coil

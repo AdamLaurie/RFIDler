@@ -823,7 +823,7 @@ BYTE ProcessSerialCommand(char *command)
     // experimental - figure out rates etc for analogue grabbing
     if (strncmp(command, "ANALOGUE ", 9) == 0)
     {
-        if(sscanf(command + 9, "%d", &tmpint) == 1 || tmpint > sizeof(SampleAnalogue))
+        if(sscanf(command + 9, "%d", &tmpint) == 1 && tmpint <= sizeof(SampleAnalogue))
         {
             if(mGetLED_Clock() != mLED_ON)
                 commandok= command_nack("No clock running!");

@@ -173,19 +173,19 @@ void analogue_xml_out(BYTE *buffer, unsigned int length)
     xml_item_text("Description", "RFIDler Analogue Coil Samples", &indent);
 
     // pots
-    xml_header("Pot_Data", &indent);
+    xml_header("Pots", &indent);
     xml_item_text("Description", "Potentiometer Settings (Decimal)", &indent);
-    xml_header("Pot_High_Data", &indent);
+    xml_header("Pot_High", &indent);
     xml_item_text("Description", "Potentiometer High Setting", &indent);
     get_mcp414_wiper(0, FALSE, &tmp);
     xml_item_decimal("Data", tmp, &indent);
-    xml_footer("Pot_High_Data", &indent);
-    xml_header("Pot_Low_Data", &indent);
+    xml_footer("Pot_High", &indent);
+    xml_header("Pot_Low", &indent);
     xml_item_text("Description", "Potentiometer Low Setting", &indent);
     get_mcp414_wiper(1, FALSE, &tmp);
     xml_item_decimal("Data", tmp, &indent);
-    xml_footer("Pot_Low_Data", &indent);
-    xml_footer("Pot_Data", &indent);
+    xml_footer("Pot_Low", &indent);
+    xml_footer("Pots", &indent);
 
 
     // raw coil
@@ -195,17 +195,17 @@ void analogue_xml_out(BYTE *buffer, unsigned int length)
     xml_footer("Coil_Data", &indent);
     
     // reader circuit
-    xml_header("Reader_Data", &indent);
-    xml_item_text("Description", "Analogue Circuit Digital Reader Data", &indent);
+    xml_header("Reader_Output", &indent);
+    xml_item_text("Description", "Analogue Circuit Digital Reader Output (HIGH/LOW)", &indent);
     xml_item_array("Data", buffer, TOP_BIT, length, &indent);
-    xml_footer("Reader_Data", &indent);
+    xml_footer("Reader_Output", &indent);
 
 
     // bit period
-    xml_header("Bit_Period_Data", &indent);
-    xml_item_text("Description", "Bit Period", &indent);
+    xml_header("Bit_Period", &indent);
+    xml_item_text("Description", "Modulation Scheme Bit Period (TICKS)", &indent);
     xml_item_array("Data", buffer, BOTTOM_BIT, length, &indent);
-    xml_footer("Bit_Period_Data", &indent);
+    xml_footer("Bit_Period", &indent);
     
     // end
     xml_footer("RFIDler_Samples", &indent);

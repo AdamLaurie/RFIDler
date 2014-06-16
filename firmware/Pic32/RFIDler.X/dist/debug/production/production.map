@@ -450,117 +450,117 @@ section                    address  length [bytes]      (dec)  Description
 .text.__ldexp           0x9d044a88          0x1d0         464   
 .text                   0x9d044c58          0x1a0         416  App's exec code 
 .text.scale             0x9d044df8          0x194         404   
-.text.fround            0x9d044f8c          0x17c         380   
-.rodata                 0x9d045108          0x16c         364  Read-only const 
-.text.NVMProgram        0x9d045274          0x16c         364   
-.text                   0x9d0453e0          0x2d0         720  App's exec code 
-.text._filbuf           0x9d0456b0          0x168         360   
-.text.SpiChnOpen        0x9d045818          0x150         336   
-.text.fputc             0x9d045968          0x140         320   
-.text.read              0x9d045aa8          0x140         320   
-.rodata                 0x9d045be8          0x12c         300  Read-only const 
-.text._flsbuf           0x9d045d14          0x12c         300   
-.text                   0x9d045e40          0x120         288  App's exec code 
-.text._NVMOperation     0x9d045f60          0x114         276   
-.text.fgetc             0x9d046074          0x108         264   
-.rodata                 0x9d04617c          0x104         260  Read-only const 
-.text.__ldexpf          0x9d046280          0x104         260   
-.rodata                 0x9d046384          0x398         920  Read-only const 
-.text                   0x9d04671c           0xd4         212  App's exec code 
-.text.general_exception 0x9d0467f0           0xd0         208   
-.rodata                 0x9d0468c0          0x260         608  Read-only const 
-.text.SpiChnClose       0x9d046b20           0xbc         188   
-.text                   0x9d046bdc           0xb8         184  App's exec code 
-.text._mon_putc         0x9d046c94           0xb4         180   
-.text                   0x9d046d48           0xa8         168  App's exec code 
-.rodata                 0x9d046df0           0xa4         164  Read-only const 
-.text                   0x9d046e94          0x144         324  App's exec code 
-.rodata                 0x9d046fd8           0xa0         160  Read-only const 
-.text.atoi              0x9d047078           0xa0         160   
-.rodata                 0x9d047118           0x9c         156  Read-only const 
-.text                   0x9d0471b4           0x98         152  App's exec code 
-.text.rand              0x9d04724c           0x98         152   
-.rodata                 0x9d0472e4           0x94         148  Read-only const 
-.text.range             0x9d047378          0x120         288   
-.text.fflush            0x9d047498           0x90         144   
-.rodata                 0x9d047528           0x84         132  Read-only const 
-.text.write             0x9d0475ac           0x84         132   
-.rodata                 0x9d047630           0x80         128  Read-only const 
-.text.SoftReset         0x9d0476b0           0x78         120   
-.text.strncmp           0x9d047728           0x74         116   
-.text.ungetc            0x9d04779c           0x74         116   
-.text                   0x9d047810           0x6c         108  App's exec code 
-.rodata                 0x9d04787c           0x68         104  Read-only const 
-.text._sprintf_cdnopuxX 0x9d0478e4           0x68         104   
-.text.sprintf           0x9d04794c           0x68         104   
-.rodata                 0x9d0479b4           0xcc         204  Read-only const 
-.text.OpenSPI1          0x9d047a80           0x60          96   
-.text.wspace            0x9d047ae0           0xc0         192   
-.text.strncpy           0x9d047ba0           0x5c          92   
-.rodata                 0x9d047bfc           0x54          84  Read-only const 
-.text._sscanf_cdfFnopsu 0x9d047c50           0x54          84   
-.text.INTEnable         0x9d047ca4           0x50          80   
-.rodata                 0x9d047cf4           0x4c          76  Read-only const 
-.text                   0x9d047d40           0x4c          76  App's exec code 
-.text._DefaultInterrupt 0x9d047d8c           0x48          72   
-.rodata.f5pow.f5pow     0x9d047dd4           0x48          72   
-.text                   0x9d047e1c           0x88         136  App's exec code 
-.rodata                 0x9d047ea4           0x80         128  Read-only const 
-.text.PORTSetPinsDigita 0x9d047f24           0x3c          60   
-.text.PORTSetPinsDigita 0x9d047f60           0x3c          60   
-.text                   0x9d047f9c           0x38          56  App's exec code 
-.text.INTSetVectorPrior 0x9d047fd4           0x38          56   
-.text.INTSetVectorSubPr 0x9d04800c           0x38          56   
-.text.NVMWriteRow       0x9d048044           0x38          56   
-.text.INTEnableSystemMu 0x9d04807c           0x34          52   
-.text.INTConfigureSyste 0x9d0480b0           0x30          48   
-.text.INTGetVectorPrior 0x9d0480e0           0x2c          44   
-.text.INTGetVectorSubPr 0x9d04810c           0x2c          44   
-.text.NVMErasePage      0x9d048138           0x2c          44   
-.text.INTClearFlag      0x9d048164           0x28          40   
-.text.INTSetFlag        0x9d04818c           0x28          40   
-.text.INTGetFlag        0x9d0481b4           0x28          40   
-.text.INTGetEnable      0x9d0481dc           0x28          40   
-.text.PORTResetPins     0x9d048204           0x28          40   
-.text.strtod            0x9d04822c           0x28          40   
-.text.tolower           0x9d048254           0x24          36   
-.text.toupper           0x9d048278           0x24          36   
-.rodata                 0x9d04829c           0x20          32  Read-only const 
-.text.getcSPI1          0x9d0482bc           0x20          32   
-.rodata                 0x9d0482dc           0x1c          28  Read-only const 
-.text.INTRestoreInterru 0x9d0482f8           0x1c          28   
-.text.srand             0x9d048314           0x1c          28   
-.text._dstrtod          0x9d048330           0x1c          28   
-.text.strtof            0x9d04834c           0x1c          28   
-.text.strtodf           0x9d048368           0x1c          28   
-.text.CheKseg0CacheOff  0x9d048384           0x18          24   
-.text.CheKseg0CacheOn   0x9d04839c           0x18          24   
-.text                   0x9d0483b4           0x18          24  App's exec code 
-.text.isalnum           0x9d0483cc           0x18          24   
-.text.isalpha           0x9d0483e4           0x18          24   
-.text.iscntrl           0x9d0483fc           0x18          24   
-.text.isdigit           0x9d048414           0x18          24   
-.text.isgraph           0x9d04842c           0x18          24   
-.text.islower           0x9d048444           0x18          24   
-.text.isprint           0x9d04845c           0x18          24   
-.text.ispunct           0x9d048474           0x18          24   
-.text.isspace           0x9d04848c           0x18          24   
-.text.isupper           0x9d0484a4           0x18          24   
-.text.isxdigit          0x9d0484bc           0x18          24   
-.rodata.f5pow.f5pow     0x9d0484d4           0x18          24   
-.rodata                 0x9d0484ec           0x40          64  Read-only const 
-.text._bootstrap_except 0x9d04852c            0xc          12   
-.text._general_exceptio 0x9d048538            0xc          12   
-.text.INTEnableInterrup 0x9d048544            0x8           8   
-.text.INTDisableInterru 0x9d04854c            0x8           8   
-.text._on_reset         0x9d048554            0x8           8   
-.text._on_bootstrap     0x9d04855c            0x8           8   
-.text.isascii           0x9d048564            0x8           8   
-.text.toascii           0x9d04856c            0x8           8   
-.text._tolower          0x9d048574            0x8           8   
-.text._toupper          0x9d04857c            0x8           8   
-.rodata                 0x9d048584            0x8           8  Read-only const 
-      Total kseg0_program_mem used  :     0x41b6c      269164  53.7% of 0x7a600
+.rodata                 0x9d044f8c          0x184         388  Read-only const 
+.text.fround            0x9d045110          0x17c         380   
+.text.NVMProgram        0x9d04528c          0x16c         364   
+.text                   0x9d0453f8          0x2d0         720  App's exec code 
+.text._filbuf           0x9d0456c8          0x168         360   
+.text.SpiChnOpen        0x9d045830          0x150         336   
+.text.fputc             0x9d045980          0x140         320   
+.text.read              0x9d045ac0          0x140         320   
+.rodata                 0x9d045c00          0x12c         300  Read-only const 
+.text._flsbuf           0x9d045d2c          0x12c         300   
+.text                   0x9d045e58          0x120         288  App's exec code 
+.text._NVMOperation     0x9d045f78          0x114         276   
+.text.fgetc             0x9d04608c          0x108         264   
+.rodata                 0x9d046194          0x104         260  Read-only const 
+.text.__ldexpf          0x9d046298          0x104         260   
+.rodata                 0x9d04639c          0x398         920  Read-only const 
+.text                   0x9d046734           0xd4         212  App's exec code 
+.text.general_exception 0x9d046808           0xd0         208   
+.rodata                 0x9d0468d8          0x260         608  Read-only const 
+.text.SpiChnClose       0x9d046b38           0xbc         188   
+.text                   0x9d046bf4           0xb8         184  App's exec code 
+.text._mon_putc         0x9d046cac           0xb4         180   
+.text                   0x9d046d60           0xa8         168  App's exec code 
+.rodata                 0x9d046e08           0xa4         164  Read-only const 
+.text                   0x9d046eac          0x144         324  App's exec code 
+.rodata                 0x9d046ff0           0xa0         160  Read-only const 
+.text.atoi              0x9d047090           0xa0         160   
+.rodata                 0x9d047130           0x9c         156  Read-only const 
+.text                   0x9d0471cc           0x98         152  App's exec code 
+.text.rand              0x9d047264           0x98         152   
+.rodata                 0x9d0472fc           0x94         148  Read-only const 
+.text.range             0x9d047390          0x120         288   
+.text.fflush            0x9d0474b0           0x90         144   
+.rodata                 0x9d047540           0x84         132  Read-only const 
+.text.write             0x9d0475c4           0x84         132   
+.rodata                 0x9d047648           0x80         128  Read-only const 
+.text.SoftReset         0x9d0476c8           0x78         120   
+.text.strncmp           0x9d047740           0x74         116   
+.text.ungetc            0x9d0477b4           0x74         116   
+.text                   0x9d047828           0x6c         108  App's exec code 
+.rodata                 0x9d047894           0x68         104  Read-only const 
+.text._sprintf_cdnopuxX 0x9d0478fc           0x68         104   
+.text.sprintf           0x9d047964           0x68         104   
+.rodata                 0x9d0479cc           0xcc         204  Read-only const 
+.text.OpenSPI1          0x9d047a98           0x60          96   
+.text.wspace            0x9d047af8           0xc0         192   
+.text.strncpy           0x9d047bb8           0x5c          92   
+.rodata                 0x9d047c14           0x54          84  Read-only const 
+.text._sscanf_cdfFnopsu 0x9d047c68           0x54          84   
+.text.INTEnable         0x9d047cbc           0x50          80   
+.rodata                 0x9d047d0c           0x4c          76  Read-only const 
+.text                   0x9d047d58           0x4c          76  App's exec code 
+.text._DefaultInterrupt 0x9d047da4           0x48          72   
+.rodata.f5pow.f5pow     0x9d047dec           0x48          72   
+.text                   0x9d047e34           0x88         136  App's exec code 
+.rodata                 0x9d047ebc           0x80         128  Read-only const 
+.text.PORTSetPinsDigita 0x9d047f3c           0x3c          60   
+.text.PORTSetPinsDigita 0x9d047f78           0x3c          60   
+.text                   0x9d047fb4           0x38          56  App's exec code 
+.text.INTSetVectorPrior 0x9d047fec           0x38          56   
+.text.INTSetVectorSubPr 0x9d048024           0x38          56   
+.text.NVMWriteRow       0x9d04805c           0x38          56   
+.text.INTEnableSystemMu 0x9d048094           0x34          52   
+.text.INTConfigureSyste 0x9d0480c8           0x30          48   
+.text.INTGetVectorPrior 0x9d0480f8           0x2c          44   
+.text.INTGetVectorSubPr 0x9d048124           0x2c          44   
+.text.NVMErasePage      0x9d048150           0x2c          44   
+.text.INTClearFlag      0x9d04817c           0x28          40   
+.text.INTSetFlag        0x9d0481a4           0x28          40   
+.text.INTGetFlag        0x9d0481cc           0x28          40   
+.text.INTGetEnable      0x9d0481f4           0x28          40   
+.text.PORTResetPins     0x9d04821c           0x28          40   
+.text.strtod            0x9d048244           0x28          40   
+.text.tolower           0x9d04826c           0x24          36   
+.text.toupper           0x9d048290           0x24          36   
+.rodata                 0x9d0482b4           0x20          32  Read-only const 
+.text.getcSPI1          0x9d0482d4           0x20          32   
+.rodata                 0x9d0482f4           0x1c          28  Read-only const 
+.text.INTRestoreInterru 0x9d048310           0x1c          28   
+.text.srand             0x9d04832c           0x1c          28   
+.text._dstrtod          0x9d048348           0x1c          28   
+.text.strtof            0x9d048364           0x1c          28   
+.text.strtodf           0x9d048380           0x1c          28   
+.text.CheKseg0CacheOff  0x9d04839c           0x18          24   
+.text.CheKseg0CacheOn   0x9d0483b4           0x18          24   
+.text                   0x9d0483cc           0x18          24  App's exec code 
+.text.isalnum           0x9d0483e4           0x18          24   
+.text.isalpha           0x9d0483fc           0x18          24   
+.text.iscntrl           0x9d048414           0x18          24   
+.text.isdigit           0x9d04842c           0x18          24   
+.text.isgraph           0x9d048444           0x18          24   
+.text.islower           0x9d04845c           0x18          24   
+.text.isprint           0x9d048474           0x18          24   
+.text.ispunct           0x9d04848c           0x18          24   
+.text.isspace           0x9d0484a4           0x18          24   
+.text.isupper           0x9d0484bc           0x18          24   
+.text.isxdigit          0x9d0484d4           0x18          24   
+.rodata.f5pow.f5pow     0x9d0484ec           0x18          24   
+.rodata                 0x9d048504           0x40          64  Read-only const 
+.text._bootstrap_except 0x9d048544            0xc          12   
+.text._general_exceptio 0x9d048550            0xc          12   
+.text.INTEnableInterrup 0x9d04855c            0x8           8   
+.text.INTDisableInterru 0x9d048564            0x8           8   
+.text._on_reset         0x9d04856c            0x8           8   
+.text._on_bootstrap     0x9d048574            0x8           8   
+.text.isascii           0x9d04857c            0x8           8   
+.text.toascii           0x9d048584            0x8           8   
+.text._tolower          0x9d04858c            0x8           8   
+.text._toupper          0x9d048594            0x8           8   
+.rodata                 0x9d04859c            0x8           8  Read-only const 
+      Total kseg0_program_mem used  :     0x41b84      269188  53.7% of 0x7a600
 
 kseg0 Boot-Memory Usage
 section                    address  length [bytes]      (dec)  Description
@@ -644,7 +644,7 @@ section                    address  length [bytes]      (dec)  Description
 .bev_excpt              0x9d006380           0x10          16  BEV-Exception 
          Total kseg1_boot_mem used  :       0x204         516  44.2% of 0x490
         --------------------------------------------------------------------------
-         Total Program Memory used  :     0x41f80      270208  53.1% of 0x7c400
+         Total Program Memory used  :     0x41f98      270232  53.1% of 0x7c400
         --------------------------------------------------------------------------
 
 
@@ -5394,537 +5394,537 @@ LOAD data_init
 .text.scale     0x9d044df8      0x194
  .text.scale    0x9d044df8      0x194 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt.o)
 
-.text.fround    0x9d044f8c      0x17c
- .text.fround   0x9d044f8c      0x17c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt.o)
+.rodata         0x9d044f8c      0x184
+ .rodata        0x9d044f8c      0x184 build/debug/production/src/analogue.o
 
-.rodata         0x9d045108      0x16c
- .rodata        0x9d045108      0x16c build/debug/production/src/analogue.o
+.text.fround    0x9d045110      0x17c
+ .text.fround   0x9d045110      0x17c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt.o)
 
 .text.NVMProgram
-                0x9d045274      0x16c
+                0x9d04528c      0x16c
  .text.NVMProgram
-                0x9d045274      0x16c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_program_lib.o)
-                0x9d045274                NVMProgram
+                0x9d04528c      0x16c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_program_lib.o)
+                0x9d04528c                NVMProgram
 
-.text           0x9d0453e0      0x2d0
- .text          0x9d0453e0      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memcpy.o)
-                0x9d0453e0                memcpy
- .text          0x9d045548      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(strlen.o)
-                0x9d045548                strlen
+.text           0x9d0453f8      0x2d0
+ .text          0x9d0453f8      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memcpy.o)
+                0x9d0453f8                memcpy
+ .text          0x9d045560      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(strlen.o)
+                0x9d045560                strlen
 
-.text._filbuf   0x9d0456b0      0x168
- .text._filbuf  0x9d0456b0      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(filbuf.o)
-                0x9d0456b0                _filbuf
+.text._filbuf   0x9d0456c8      0x168
+ .text._filbuf  0x9d0456c8      0x168 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(filbuf.o)
+                0x9d0456c8                _filbuf
 
 .text.SpiChnOpen
-                0x9d045818      0x150
+                0x9d045830      0x150
  .text.SpiChnOpen
-                0x9d045818      0x150 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_chn_open_lib.o)
-                0x9d045818                SpiChnOpen
+                0x9d045830      0x150 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_chn_open_lib.o)
+                0x9d045830                SpiChnOpen
 
-.text.fputc     0x9d045968      0x140
- .text.fputc    0x9d045968      0x140 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(_fputc_simple.o)
-                0x9d045968                fputc
+.text.fputc     0x9d045980      0x140
+ .text.fputc    0x9d045980      0x140 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(_fputc_simple.o)
+                0x9d045980                fputc
 
-.text.read      0x9d045aa8      0x140
- .text.read     0x9d045aa8      0x140 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(read.o)
-                0x9d045aa8                read
+.text.read      0x9d045ac0      0x140
+ .text.read     0x9d045ac0      0x140 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(read.o)
+                0x9d045ac0                read
 
-.rodata         0x9d045be8      0x12c
- .rodata        0x9d045be8      0x12c build/debug/production/src/mcp414x.o
+.rodata         0x9d045c00      0x12c
+ .rodata        0x9d045c00      0x12c build/debug/production/src/mcp414x.o
 
-.text._flsbuf   0x9d045d14      0x12c
- .text._flsbuf  0x9d045d14      0x12c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(_flsbuf_simple.o)
-                0x9d045d14                _flsbuf
+.text._flsbuf   0x9d045d2c      0x12c
+ .text._flsbuf  0x9d045d2c      0x12c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(_flsbuf_simple.o)
+                0x9d045d2c                _flsbuf
 
-.text           0x9d045e40      0x120
- .text          0x9d045e40      0x120 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(strcmp.o)
-                0x9d045e40                strcmp
+.text           0x9d045e58      0x120
+ .text          0x9d045e58      0x120 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(strcmp.o)
+                0x9d045e58                strcmp
 
 .text._NVMOperation
-                0x9d045f60      0x114
+                0x9d045f78      0x114
  .text._NVMOperation
-                0x9d045f60      0x114 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_operation_lib.o)
-                0x9d045f60                _NVMOperation
+                0x9d045f78      0x114 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_operation_lib.o)
+                0x9d045f78                _NVMOperation
 
-.text.fgetc     0x9d046074      0x108
- .text.fgetc    0x9d046074      0x108 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(fgetc.o)
-                0x9d046074                fgetc
+.text.fgetc     0x9d04608c      0x108
+ .text.fgetc    0x9d04608c      0x108 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(fgetc.o)
+                0x9d04608c                fgetc
 
-.rodata         0x9d04617c      0x104
- .rodata        0x9d04617c      0x104 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctype.o)
-                0x9d04617c                _ctype
+.rodata         0x9d046194      0x104
+ .rodata        0x9d046194      0x104 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctype.o)
+                0x9d046194                _ctype
 
-.text.__ldexpf  0x9d046280      0x104
+.text.__ldexpf  0x9d046298      0x104
  .text.__ldexpf
-                0x9d046280      0x104 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_ldexpf.o)
-                0x9d046280                __ldexpf
+                0x9d046298      0x104 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_ldexpf.o)
+                0x9d046298                __ldexpf
 
-.rodata         0x9d046384      0x398
- .rodata        0x9d046384       0xf0 build/debug/production/_ext/71113213/SD-SPI.o
-                0x9d046384                sdmmc_cmdtable
- .rodata        0x9d046474       0xec build/debug/production/src/hitag.o
- .rodata        0x9d046560       0xe8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt.o)
- .rodata        0x9d046648       0xd4 build/debug/production/src/usb_descriptors.o
-                0x9d046648                device_dsc
-                0x9d04665c                configDescriptor1
-                0x9d0466a0                sd000
-                0x9d0466a4                sd001
-                0x9d0466d8                sd002
-                0x9d04670c                USB_CD_Ptr
-                0x9d046710                USB_SD_Ptr
+.rodata         0x9d04639c      0x398
+ .rodata        0x9d04639c       0xf0 build/debug/production/_ext/71113213/SD-SPI.o
+                0x9d04639c                sdmmc_cmdtable
+ .rodata        0x9d04648c       0xec build/debug/production/src/hitag.o
+ .rodata        0x9d046578       0xe8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt.o)
+ .rodata        0x9d046660       0xd4 build/debug/production/src/usb_descriptors.o
+                0x9d046660                device_dsc
+                0x9d046674                configDescriptor1
+                0x9d0466b8                sd000
+                0x9d0466bc                sd001
+                0x9d0466f0                sd002
+                0x9d046724                USB_CD_Ptr
+                0x9d046728                USB_SD_Ptr
 
-.text           0x9d04671c       0xd4
- .text          0x9d04671c       0xd4 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_floatundisf.o)
-                0x9d04671c                __floatundisf
+.text           0x9d046734       0xd4
+ .text          0x9d046734       0xd4 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_floatundisf.o)
+                0x9d046734                __floatundisf
 
 .text.general_exception
-                0x9d0467f0       0xd0
+                0x9d046808       0xd0
  .text.general_exception
-                0x9d0467f0       0xd0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(general-exception.o)
-                0x9d0467f0                _general_exception_context
+                0x9d046808       0xd0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(general-exception.o)
+                0x9d046808                _general_exception_context
 
-.rodata         0x9d0468c0      0x260
- .rodata        0x9d0468c0       0xd0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt_cdnopuxX.eo)
- .rodata        0x9d046990       0xc8 build/debug/production/src/tags.o
- .rodata        0x9d046a58       0xc8 build/debug/production/src/vtag.o
+.rodata         0x9d0468d8      0x260
+ .rodata        0x9d0468d8       0xd0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doprnt_cdnopuxX.eo)
+ .rodata        0x9d0469a8       0xc8 build/debug/production/src/tags.o
+ .rodata        0x9d046a70       0xc8 build/debug/production/src/vtag.o
 
 .text.SpiChnClose
-                0x9d046b20       0xbc
+                0x9d046b38       0xbc
  .text.SpiChnClose
-                0x9d046b20       0xbc /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_chn_close_lib.o)
-                0x9d046b20                SpiChnClose
+                0x9d046b38       0xbc /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_chn_close_lib.o)
+                0x9d046b38                SpiChnClose
 
-.text           0x9d046bdc       0xb8
- .text          0x9d046bdc       0xb8 build/debug/production/src/write.o
-                0x9d046bdc                write_tag
+.text           0x9d046bf4       0xb8
+ .text          0x9d046bf4       0xb8 build/debug/production/src/write.o
+                0x9d046bf4                write_tag
 
 .text._mon_putc
-                0x9d046c94       0xb4
+                0x9d046cac       0xb4
  .text._mon_putc
-                0x9d046c94       0xb4 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(_mon_putc.o)
-                0x9d046c94                _mon_putc
+                0x9d046cac       0xb4 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(_mon_putc.o)
+                0x9d046cac                _mon_putc
 
-.text           0x9d046d48       0xa8
- .text          0x9d046d48       0xa8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memset.o)
-                0x9d046d48                memset
+.text           0x9d046d60       0xa8
+ .text          0x9d046d60       0xa8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memset.o)
+                0x9d046d60                memset
 
-.rodata         0x9d046df0       0xa4
- .rodata        0x9d046df0       0xa4 build/debug/production/src/util.o
-                0x9d046df0                TimeScaler
-                0x9d046df4                TimeScaler2
+.rodata         0x9d046e08       0xa4
+ .rodata        0x9d046e08       0xa4 build/debug/production/src/util.o
+                0x9d046e08                TimeScaler
+                0x9d046e0c                TimeScaler2
 
-.text           0x9d046e94      0x144
- .text          0x9d046e94       0xa4 build/debug/production/src/select.o
-                0x9d046e94                select_tag
- .text          0x9d046f38       0xa0 build/debug/production/src/login.o
-                0x9d046f38                tag_login
+.text           0x9d046eac      0x144
+ .text          0x9d046eac       0xa4 build/debug/production/src/select.o
+                0x9d046eac                select_tag
+ .text          0x9d046f50       0xa0 build/debug/production/src/login.o
+                0x9d046f50                tag_login
 
-.rodata         0x9d046fd8       0xa0
- .rodata        0x9d046fd8       0xa0 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_io_tbl_libp.o)
-                0x9d046fd8                _SpiIoTbl
+.rodata         0x9d046ff0       0xa0
+ .rodata        0x9d046ff0       0xa0 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_io_tbl_libp.o)
+                0x9d046ff0                _SpiIoTbl
 
-.text.atoi      0x9d047078       0xa0
- .text.atoi     0x9d047078       0xa0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(atoi.o)
-                0x9d047078                atoi
+.text.atoi      0x9d047090       0xa0
+ .text.atoi     0x9d047090       0xa0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(atoi.o)
+                0x9d047090                atoi
 
-.rodata         0x9d047118       0x9c
- .rodata        0x9d047118       0x9c build/debug/production/src/q5.o
+.rodata         0x9d047130       0x9c
+ .rodata        0x9d047130       0x9c build/debug/production/src/q5.o
 
-.text           0x9d0471b4       0x98
- .text          0x9d0471b4       0x98 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memcmp.o)
-                0x9d0471b4                memcmp
+.text           0x9d0471cc       0x98
+ .text          0x9d0471cc       0x98 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(memcmp.o)
+                0x9d0471cc                memcmp
 
-.text.rand      0x9d04724c       0x98
- .text.rand     0x9d04724c       0x98 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(rand.o)
-                0x9d04724c                rand
+.text.rand      0x9d047264       0x98
+ .text.rand     0x9d047264       0x98 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(rand.o)
+                0x9d047264                rand
 
-.rodata         0x9d0472e4       0x94
- .rodata        0x9d0472e4       0x94 build/debug/production/src/sdcard.o
+.rodata         0x9d0472fc       0x94
+ .rodata        0x9d0472fc       0x94 build/debug/production/src/sdcard.o
 
-.text.range     0x9d047378      0x120
- .text.range    0x9d047378       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdfFnopsuxX.eo)
- .text.range    0x9d047408       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdnopuxX.eo)
+.text.range     0x9d047390      0x120
+ .text.range    0x9d047390       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdfFnopsuxX.eo)
+ .text.range    0x9d047420       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdnopuxX.eo)
 
-.text.fflush    0x9d047498       0x90
- .text.fflush   0x9d047498       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(fflush.o)
-                0x9d047498                fflush
+.text.fflush    0x9d0474b0       0x90
+ .text.fflush   0x9d0474b0       0x90 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(fflush.o)
+                0x9d0474b0                fflush
 
-.rodata         0x9d047528       0x84
- .rodata        0x9d047528       0x84 build/debug/production/src/clock.o
+.rodata         0x9d047540       0x84
+ .rodata        0x9d047540       0x84 build/debug/production/src/clock.o
 
-.text.write     0x9d0475ac       0x84
- .text.write    0x9d0475ac       0x84 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(write.o)
-                0x9d0475ac                write
+.text.write     0x9d0475c4       0x84
+ .text.write    0x9d0475c4       0x84 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(write.o)
+                0x9d0475c4                write
 
-.rodata         0x9d047630       0x80
- .rodata        0x9d047630       0x80 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_brg_tbl_lib_legacy.o)
-                0x9d047630                _SpiBrgConvTbl
+.rodata         0x9d047648       0x80
+ .rodata        0x9d047648       0x80 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_brg_tbl_lib_legacy.o)
+                0x9d047648                _SpiBrgConvTbl
 
 .text.SoftReset
-                0x9d0476b0       0x78
+                0x9d0476c8       0x78
  .text.SoftReset
-                0x9d0476b0       0x78 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(soft_reset_lib.o)
-                0x9d0476b0                SoftReset
+                0x9d0476c8       0x78 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(soft_reset_lib.o)
+                0x9d0476c8                SoftReset
 
-.text.strncmp   0x9d047728       0x74
- .text.strncmp  0x9d047728       0x74 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strncmp.o)
-                0x9d047728                strncmp
+.text.strncmp   0x9d047740       0x74
+ .text.strncmp  0x9d047740       0x74 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strncmp.o)
+                0x9d047740                strncmp
 
-.text.ungetc    0x9d04779c       0x74
- .text.ungetc   0x9d04779c       0x74 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ungetc.o)
-                0x9d04779c                ungetc
+.text.ungetc    0x9d0477b4       0x74
+ .text.ungetc   0x9d0477b4       0x74 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ungetc.o)
+                0x9d0477b4                ungetc
 
-.text           0x9d047810       0x6c
- .text          0x9d047810       0x6c build/debug/production/src/auth.o
-                0x9d047810                tag_auth
+.text           0x9d047828       0x6c
+ .text          0x9d047828       0x6c build/debug/production/src/auth.o
+                0x9d047828                tag_auth
 
-.rodata         0x9d04787c       0x68
- .rodata        0x9d04787c       0x68 build/debug/production/src/wiegand.o
+.rodata         0x9d047894       0x68
+ .rodata        0x9d047894       0x68 build/debug/production/src/wiegand.o
 
 .text._sprintf_cdnopuxX
-                0x9d0478e4       0x68
+                0x9d0478fc       0x68
  .text._sprintf_cdnopuxX
-                0x9d0478e4       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sprintf_cdnopuxX.eo)
-                0x9d0478e4                _sprintf_cdnopuxX
+                0x9d0478fc       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sprintf_cdnopuxX.eo)
+                0x9d0478fc                _sprintf_cdnopuxX
 
-.text.sprintf   0x9d04794c       0x68
- .text.sprintf  0x9d04794c       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sprintf.o)
-                0x9d04794c                sprintf
+.text.sprintf   0x9d047964       0x68
+ .text.sprintf  0x9d047964       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sprintf.o)
+                0x9d047964                sprintf
 
-.rodata         0x9d0479b4       0xcc
- .rodata        0x9d0479b4       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(powersf.o)
-                0x9d0479b4                _powers_f
-                0x9d0479e8                _npowers_f
- .rodata        0x9d047a1c       0x64 build/debug/production/src/auto.o
+.rodata         0x9d0479cc       0xcc
+ .rodata        0x9d0479cc       0x68 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(powersf.o)
+                0x9d0479cc                _powers_f
+                0x9d047a00                _npowers_f
+ .rodata        0x9d047a34       0x64 build/debug/production/src/auto.o
 
-.text.OpenSPI1  0x9d047a80       0x60
+.text.OpenSPI1  0x9d047a98       0x60
  .text.OpenSPI1
-                0x9d047a80       0x60 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_open_spi1_lib_legacy.o)
-                0x9d047a80                OpenSPI1
+                0x9d047a98       0x60 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_open_spi1_lib_legacy.o)
+                0x9d047a98                OpenSPI1
 
-.text.wspace    0x9d047ae0       0xc0
- .text.wspace   0x9d047ae0       0x60 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdfFnopsuxX.eo)
- .text.wspace   0x9d047b40       0x60 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdnopuxX.eo)
+.text.wspace    0x9d047af8       0xc0
+ .text.wspace   0x9d047af8       0x60 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdfFnopsuxX.eo)
+ .text.wspace   0x9d047b58       0x60 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(doscan_cdnopuxX.eo)
 
-.text.strncpy   0x9d047ba0       0x5c
- .text.strncpy  0x9d047ba0       0x5c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strncpy.o)
-                0x9d047ba0                strncpy
+.text.strncpy   0x9d047bb8       0x5c
+ .text.strncpy  0x9d047bb8       0x5c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strncpy.o)
+                0x9d047bb8                strncpy
 
-.rodata         0x9d047bfc       0x54
- .rodata        0x9d047bfc       0x54 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(_ports_tbl_libp.o)
-                0x9d047bfc                PortRegTbl
+.rodata         0x9d047c14       0x54
+ .rodata        0x9d047c14       0x54 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(_ports_tbl_libp.o)
+                0x9d047c14                PortRegTbl
 
 .text._sscanf_cdfFnopsuxX
-                0x9d047c50       0x54
+                0x9d047c68       0x54
  .text._sscanf_cdfFnopsuxX
-                0x9d047c50       0x54 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sscanf_cdfFnopsuxX.eo)
-                0x9d047c50                _sscanf_cdfFnopsuxX
-                0x9d047c50                _sscanf_cdnopuxX
+                0x9d047c68       0x54 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(sscanf_cdfFnopsuxX.eo)
+                0x9d047c68                _sscanf_cdfFnopsuxX
+                0x9d047c68                _sscanf_cdnopuxX
 
 .text.INTEnable
-                0x9d047ca4       0x50
+                0x9d047cbc       0x50
  .text.INTEnable
-                0x9d047ca4       0x50 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d047ca4                INTEnable
+                0x9d047cbc       0x50 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d047cbc                INTEnable
 
-.rodata         0x9d047cf4       0x4c
- .rodata        0x9d047cf4       0x4c build/debug/production/src/comms.o
+.rodata         0x9d047d0c       0x4c
+ .rodata        0x9d047d0c       0x4c build/debug/production/src/comms.o
 
-.text           0x9d047d40       0x4c
- .text          0x9d047d40       0x4c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(floatunsisf.o)
-                0x9d047d40                __floatunsisf
+.text           0x9d047d58       0x4c
+ .text          0x9d047d58       0x4c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(floatunsisf.o)
+                0x9d047d58                __floatunsisf
 
 .text._DefaultInterrupt
-                0x9d047d8c       0x48
+                0x9d047da4       0x48
  .text._DefaultInterrupt
-                0x9d047d8c       0x48 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(defaultinterrupt.o)
-                0x9d047d8c                _DefaultInterrupt
+                0x9d047da4       0x48 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(defaultinterrupt.o)
+                0x9d047da4                _DefaultInterrupt
 
 .rodata.f5pow.f5pow
-                0x9d047dd4       0x48
+                0x9d047dec       0x48
  .rodata.f5pow.f5pow
-                0x9d047dd4       0x48 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_strtod.o)
+                0x9d047dec       0x48 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_strtod.o)
 
-.text           0x9d047e1c       0x88
- .text          0x9d047e1c       0x44 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_lshrdi3.o)
-                0x9d047e1c                __lshrdi3
- .text          0x9d047e60       0x44 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_ashldi3.o)
-                0x9d047e60                __ashldi3
+.text           0x9d047e34       0x88
+ .text          0x9d047e34       0x44 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_lshrdi3.o)
+                0x9d047e34                __lshrdi3
+ .text          0x9d047e78       0x44 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_ashldi3.o)
+                0x9d047e78                __ashldi3
 
-.rodata         0x9d047ea4       0x80
- .rodata        0x9d047ea4       0x40 build/debug/production/src/hid.o
- .rodata        0x9d047ee4       0x40 build/debug/production/src/awid.o
+.rodata         0x9d047ebc       0x80
+ .rodata        0x9d047ebc       0x40 build/debug/production/src/hid.o
+ .rodata        0x9d047efc       0x40 build/debug/production/src/awid.o
 
 .text.PORTSetPinsDigitalIn
-                0x9d047f24       0x3c
+                0x9d047f3c       0x3c
  .text.PORTSetPinsDigitalIn
-                0x9d047f24       0x3c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_set_pins_digital_in_lib.o)
-                0x9d047f24                PORTSetPinsDigitalIn
+                0x9d047f3c       0x3c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_set_pins_digital_in_lib.o)
+                0x9d047f3c                PORTSetPinsDigitalIn
 
 .text.PORTSetPinsDigitalOut
-                0x9d047f60       0x3c
+                0x9d047f78       0x3c
  .text.PORTSetPinsDigitalOut
-                0x9d047f60       0x3c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_set_pins_digital_out_lib.o)
-                0x9d047f60                PORTSetPinsDigitalOut
+                0x9d047f78       0x3c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_set_pins_digital_out_lib.o)
+                0x9d047f78                PORTSetPinsDigitalOut
 
-.text           0x9d047f9c       0x38
- .text          0x9d047f9c       0x38 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/crt0.o
-                0x9d047fc8                __crt0_exit
+.text           0x9d047fb4       0x38
+ .text          0x9d047fb4       0x38 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/crt0.o
+                0x9d047fe0                __crt0_exit
 
 .text.INTSetVectorPriority
-                0x9d047fd4       0x38
+                0x9d047fec       0x38
  .text.INTSetVectorPriority
-                0x9d047fd4       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d047fd4                INTSetVectorPriority
+                0x9d047fec       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d047fec                INTSetVectorPriority
 
 .text.INTSetVectorSubPriority
-                0x9d04800c       0x38
+                0x9d048024       0x38
  .text.INTSetVectorSubPriority
-                0x9d04800c       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d04800c                INTSetVectorSubPriority
+                0x9d048024       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d048024                INTSetVectorSubPriority
 
 .text.NVMWriteRow
-                0x9d048044       0x38
+                0x9d04805c       0x38
  .text.NVMWriteRow
-                0x9d048044       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_write_row_lib.o)
-                0x9d048044                NVMWriteRow
+                0x9d04805c       0x38 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_write_row_lib.o)
+                0x9d04805c                NVMWriteRow
 
 .text.INTEnableSystemMultiVectoredInt
-                0x9d04807c       0x34
+                0x9d048094       0x34
  .text.INTEnableSystemMultiVectoredInt
-                0x9d04807c       0x34 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_enable_mv_int_lib.o)
-                0x9d04807c                INTEnableSystemMultiVectoredInt
+                0x9d048094       0x34 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_enable_mv_int_lib.o)
+                0x9d048094                INTEnableSystemMultiVectoredInt
 
 .text.INTConfigureSystem
-                0x9d0480b0       0x30
+                0x9d0480c8       0x30
  .text.INTConfigureSystem
-                0x9d0480b0       0x30 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_configure_system_lib.o)
-                0x9d0480b0                INTConfigureSystem
+                0x9d0480c8       0x30 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_configure_system_lib.o)
+                0x9d0480c8                INTConfigureSystem
 
 .text.INTGetVectorPriority
-                0x9d0480e0       0x2c
+                0x9d0480f8       0x2c
  .text.INTGetVectorPriority
-                0x9d0480e0       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d0480e0                INTGetVectorPriority
+                0x9d0480f8       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d0480f8                INTGetVectorPriority
 
 .text.INTGetVectorSubPriority
-                0x9d04810c       0x2c
+                0x9d048124       0x2c
  .text.INTGetVectorSubPriority
-                0x9d04810c       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d04810c                INTGetVectorSubPriority
+                0x9d048124       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d048124                INTGetVectorSubPriority
 
 .text.NVMErasePage
-                0x9d048138       0x2c
+                0x9d048150       0x2c
  .text.NVMErasePage
-                0x9d048138       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_erase_page_lib.o)
-                0x9d048138                NVMErasePage
+                0x9d048150       0x2c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(nvm_erase_page_lib.o)
+                0x9d048150                NVMErasePage
 
 .text.INTClearFlag
-                0x9d048164       0x28
+                0x9d04817c       0x28
  .text.INTClearFlag
-                0x9d048164       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d048164                INTClearFlag
+                0x9d04817c       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d04817c                INTClearFlag
 
 .text.INTSetFlag
-                0x9d04818c       0x28
+                0x9d0481a4       0x28
  .text.INTSetFlag
-                0x9d04818c       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d04818c                INTSetFlag
+                0x9d0481a4       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d0481a4                INTSetFlag
 
 .text.INTGetFlag
-                0x9d0481b4       0x28
+                0x9d0481cc       0x28
  .text.INTGetFlag
-                0x9d0481b4       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d0481b4                INTGetFlag
+                0x9d0481cc       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d0481cc                INTGetFlag
 
 .text.INTGetEnable
-                0x9d0481dc       0x28
+                0x9d0481f4       0x28
  .text.INTGetEnable
-                0x9d0481dc       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
-                0x9d0481dc                INTGetEnable
+                0x9d0481f4       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_tbl_lib.o)
+                0x9d0481f4                INTGetEnable
 
 .text.PORTResetPins
-                0x9d048204       0x28
+                0x9d04821c       0x28
  .text.PORTResetPins
-                0x9d048204       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_reset_pins_lib.o)
-                0x9d048204                PORTResetPins
+                0x9d04821c       0x28 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(port_reset_pins_lib.o)
+                0x9d04821c                PORTResetPins
 
-.text.strtod    0x9d04822c       0x28
- .text.strtod   0x9d04822c       0x28 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtod.o)
-                0x9d04822c                strtod
+.text.strtod    0x9d048244       0x28
+ .text.strtod   0x9d048244       0x28 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtod.o)
+                0x9d048244                strtod
 
-.text.tolower   0x9d048254       0x24
- .text.tolower  0x9d048254       0x24 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048254                tolower
+.text.tolower   0x9d04826c       0x24
+ .text.tolower  0x9d04826c       0x24 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04826c                tolower
 
-.text.toupper   0x9d048278       0x24
- .text.toupper  0x9d048278       0x24 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048278                toupper
+.text.toupper   0x9d048290       0x24
+ .text.toupper  0x9d048290       0x24 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048290                toupper
 
-.rodata         0x9d04829c       0x20
- .rodata        0x9d04829c       0x20 build/debug/production/src/debug_pins.o
+.rodata         0x9d0482b4       0x20
+ .rodata        0x9d0482b4       0x20 build/debug/production/src/debug_pins.o
 
-.text.getcSPI1  0x9d0482bc       0x20
+.text.getcSPI1  0x9d0482d4       0x20
  .text.getcSPI1
-                0x9d0482bc       0x20 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_getc_spi1_lib_legacy.o)
-                0x9d0482bc                getcSPI1
+                0x9d0482d4       0x20 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_getc_spi1_lib_legacy.o)
+                0x9d0482d4                getcSPI1
 
-.rodata         0x9d0482dc       0x1c
- .rodata        0x9d0482dc       0x1c build/debug/production/src/detect.o
+.rodata         0x9d0482f4       0x1c
+ .rodata        0x9d0482f4       0x1c build/debug/production/src/detect.o
 
 .text.INTRestoreInterrupts
-                0x9d0482f8       0x1c
+                0x9d048310       0x1c
  .text.INTRestoreInterrupts
-                0x9d0482f8       0x1c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_restore_interrupts_lib.o)
-                0x9d0482f8                INTRestoreInterrupts
+                0x9d048310       0x1c /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_restore_interrupts_lib.o)
+                0x9d048310                INTRestoreInterrupts
 
-.text.srand     0x9d048314       0x1c
- .text.srand    0x9d048314       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(rand.o)
-                0x9d048314                srand
+.text.srand     0x9d04832c       0x1c
+ .text.srand    0x9d04832c       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(rand.o)
+                0x9d04832c                srand
 
-.text._dstrtod  0x9d048330       0x1c
+.text._dstrtod  0x9d048348       0x1c
  .text._dstrtod
-                0x9d048330       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtod.o)
-                0x9d048330                _dstrtod
+                0x9d048348       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtod.o)
+                0x9d048348                _dstrtod
 
-.text.strtof    0x9d04834c       0x1c
- .text.strtof   0x9d04834c       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtof.o)
-                0x9d04834c                strtof
+.text.strtof    0x9d048364       0x1c
+ .text.strtof   0x9d048364       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtof.o)
+                0x9d048364                strtof
 
-.text.strtodf   0x9d048368       0x1c
- .text.strtodf  0x9d048368       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtof.o)
-                0x9d048368                strtodf
+.text.strtodf   0x9d048380       0x1c
+ .text.strtodf  0x9d048380       0x1c /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(strtof.o)
+                0x9d048380                strtodf
 
 .text.CheKseg0CacheOff
-                0x9d048384       0x18
+                0x9d04839c       0x18
  .text.CheKseg0CacheOff
-                0x9d048384       0x18 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(pcache.o)
-                0x9d048384                CheKseg0CacheOff
+                0x9d04839c       0x18 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(pcache.o)
+                0x9d04839c                CheKseg0CacheOff
 
 .text.CheKseg0CacheOn
-                0x9d04839c       0x18
+                0x9d0483b4       0x18
  .text.CheKseg0CacheOn
-                0x9d04839c       0x18 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(pcache.o)
-                0x9d04839c                CheKseg0CacheOn
+                0x9d0483b4       0x18 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(pcache.o)
+                0x9d0483b4                CheKseg0CacheOn
 
-.text           0x9d0483b4       0x18
- .text          0x9d0483b4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-nmi-handler.o)
-                0x9d0483b4                _nmi_handler
+.text           0x9d0483cc       0x18
+ .text          0x9d0483cc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-nmi-handler.o)
+                0x9d0483cc                _nmi_handler
 
-.text.isalnum   0x9d0483cc       0x18
- .text.isalnum  0x9d0483cc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d0483cc                isalnum
+.text.isalnum   0x9d0483e4       0x18
+ .text.isalnum  0x9d0483e4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d0483e4                isalnum
 
-.text.isalpha   0x9d0483e4       0x18
- .text.isalpha  0x9d0483e4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d0483e4                isalpha
+.text.isalpha   0x9d0483fc       0x18
+ .text.isalpha  0x9d0483fc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d0483fc                isalpha
 
-.text.iscntrl   0x9d0483fc       0x18
- .text.iscntrl  0x9d0483fc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d0483fc                iscntrl
+.text.iscntrl   0x9d048414       0x18
+ .text.iscntrl  0x9d048414       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048414                iscntrl
 
-.text.isdigit   0x9d048414       0x18
- .text.isdigit  0x9d048414       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048414                isdigit
+.text.isdigit   0x9d04842c       0x18
+ .text.isdigit  0x9d04842c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04842c                isdigit
 
-.text.isgraph   0x9d04842c       0x18
- .text.isgraph  0x9d04842c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d04842c                isgraph
+.text.isgraph   0x9d048444       0x18
+ .text.isgraph  0x9d048444       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048444                isgraph
 
-.text.islower   0x9d048444       0x18
- .text.islower  0x9d048444       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048444                islower
+.text.islower   0x9d04845c       0x18
+ .text.islower  0x9d04845c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04845c                islower
 
-.text.isprint   0x9d04845c       0x18
- .text.isprint  0x9d04845c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d04845c                isprint
+.text.isprint   0x9d048474       0x18
+ .text.isprint  0x9d048474       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048474                isprint
 
-.text.ispunct   0x9d048474       0x18
- .text.ispunct  0x9d048474       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048474                ispunct
+.text.ispunct   0x9d04848c       0x18
+ .text.ispunct  0x9d04848c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04848c                ispunct
 
-.text.isspace   0x9d04848c       0x18
- .text.isspace  0x9d04848c       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d04848c                isspace
+.text.isspace   0x9d0484a4       0x18
+ .text.isspace  0x9d0484a4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d0484a4                isspace
 
-.text.isupper   0x9d0484a4       0x18
- .text.isupper  0x9d0484a4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d0484a4                isupper
+.text.isupper   0x9d0484bc       0x18
+ .text.isupper  0x9d0484bc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d0484bc                isupper
 
-.text.isxdigit  0x9d0484bc       0x18
+.text.isxdigit  0x9d0484d4       0x18
  .text.isxdigit
-                0x9d0484bc       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d0484bc                isxdigit
+                0x9d0484d4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d0484d4                isxdigit
 
 .rodata.f5pow.f5pow
-                0x9d0484d4       0x18
+                0x9d0484ec       0x18
  .rodata.f5pow.f5pow
-                0x9d0484d4       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_strtof.o)
+                0x9d0484ec       0x18 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libe.a(_strtof.o)
 
-.rodata         0x9d0484ec       0x40
- .rodata        0x9d0484ec       0x14 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_map_tbl_libp.o)
-                0x9d0484ec                _SpiMapTbl
- .rodata        0x9d048500       0x10 build/debug/production/src/hitagcrypto.o
- .rodata        0x9d048510       0x10 build/debug/production/src/fdxb.o
- .rodata        0x9d048520        0xc build/debug/production/_ext/71113213/FSIO.o
+.rodata         0x9d048504       0x40
+ .rodata        0x9d048504       0x14 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(spi_map_tbl_libp.o)
+                0x9d048504                _SpiMapTbl
+ .rodata        0x9d048518       0x10 build/debug/production/src/hitagcrypto.o
+ .rodata        0x9d048528       0x10 build/debug/production/src/fdxb.o
+ .rodata        0x9d048538        0xc build/debug/production/_ext/71113213/FSIO.o
 
 .text._bootstrap_exception_handler
-                0x9d04852c        0xc
+                0x9d048544        0xc
  .text._bootstrap_exception_handler
-                0x9d04852c        0xc /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-bootstrap-exception-handler.o)
-                0x9d04852c                _bootstrap_exception_handler
+                0x9d048544        0xc /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-bootstrap-exception-handler.o)
+                0x9d048544                _bootstrap_exception_handler
 
 .text._general_exception_handler
-                0x9d048538        0xc
+                0x9d048550        0xc
  .text._general_exception_handler
-                0x9d048538        0xc /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-general-exception-handler.o)
-                0x9d048538                _general_exception_handler
+                0x9d048550        0xc /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-general-exception-handler.o)
+                0x9d048550                _general_exception_handler
 
 .text.INTEnableInterrupts
-                0x9d048544        0x8
+                0x9d04855c        0x8
  .text.INTEnableInterrupts
-                0x9d048544        0x8 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_enable_interrupts_lib.o)
-                0x9d048544                INTEnableInterrupts
+                0x9d04855c        0x8 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_enable_interrupts_lib.o)
+                0x9d04855c                INTEnableInterrupts
 
 .text.INTDisableInterrupts
-                0x9d04854c        0x8
+                0x9d048564        0x8
  .text.INTDisableInterrupts
-                0x9d04854c        0x8 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_disable_interrupts_lib.o)
-                0x9d04854c                INTDisableInterrupts
+                0x9d048564        0x8 /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a(int_disable_interrupts_lib.o)
+                0x9d048564                INTDisableInterrupts
 
 .text._on_reset
-                0x9d048554        0x8
+                0x9d04856c        0x8
  .text._on_reset
-                0x9d048554        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-on-reset.o)
-                0x9d048554                _on_reset
+                0x9d04856c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-on-reset.o)
+                0x9d04856c                _on_reset
 
 .text._on_bootstrap
-                0x9d04855c        0x8
+                0x9d048574        0x8
  .text._on_bootstrap
-                0x9d04855c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-on-bootstrap.o)
-                0x9d04855c                _on_bootstrap
+                0x9d048574        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(default-on-bootstrap.o)
+                0x9d048574                _on_bootstrap
 
-.text.isascii   0x9d048564        0x8
- .text.isascii  0x9d048564        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048564                isascii
+.text.isascii   0x9d04857c        0x8
+ .text.isascii  0x9d04857c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04857c                isascii
 
-.text.toascii   0x9d04856c        0x8
- .text.toascii  0x9d04856c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d04856c                toascii
+.text.toascii   0x9d048584        0x8
+ .text.toascii  0x9d048584        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048584                toascii
 
-.text._tolower  0x9d048574        0x8
+.text._tolower  0x9d04858c        0x8
  .text._tolower
-                0x9d048574        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d048574                _tolower
+                0x9d04858c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d04858c                _tolower
 
-.text._toupper  0x9d04857c        0x8
+.text._toupper  0x9d048594        0x8
  .text._toupper
-                0x9d04857c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
-                0x9d04857c                _toupper
+                0x9d048594        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libc.a(ctypef.o)
+                0x9d048594                _toupper
 
-.rodata         0x9d048584        0x8
- .rodata        0x9d048584        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_floatundisf.o)
+.rodata         0x9d04859c        0x8
+ .rodata        0x9d04859c        0x8 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/libgcc.a(_floatundisf.o)
 
 .text%z362      0x00000000        0x0
  .text          0x00000000        0x0 /opt/microchip/xc32/v1.21/bin/../lib/gcc/pic32mx/4.5.2/../../../../pic32mx/lib/libpic32.a(errno.o)

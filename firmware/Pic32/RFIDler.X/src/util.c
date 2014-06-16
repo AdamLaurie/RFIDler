@@ -838,7 +838,7 @@ void xml_footer(BYTE *item, BYTE *indent)
     else
         *indent= 0;
     space_indent(*indent);
-    UserMessage("<\\%s>", item);
+    UserMessage("</%s>", item);
 }
 
 void xml_indented_text(BYTE *data, BYTE indent)

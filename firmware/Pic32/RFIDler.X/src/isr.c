@@ -158,9 +158,6 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
     
     mLED_Clock_On();
 
-    // toggle bit period flag for analogue sampler
-    ReaderPeriod= !ReaderPeriod;
-
     // process RWD commands (if any)
     switch (RWD_State)
     {
@@ -439,7 +436,14 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 
     // reset interrupt
     mT4ClearIntFlag();
-    
+
+    // toggle bit period flag for analogue sampler
+    ReaderPeriod= !ReaderPeriod;
+
+    if(FakeRead)
+        return;
+
+
     // don't do anything unless we've got data to read - we may have been left running due to higher level error.
     if(!HW_Bits)
     {

@@ -143,9 +143,7 @@
 
 #define COMMS_BUFFER_SIZE   128
 
-#define SAMPLEMASK          0x7e    // mask to remove top and bottom bit from analogue sample - we will then use those for reader & bit period
-#define TOP_BIT             0x80
-#define BOTTOM_BIT          0x01
+#define SAMPLEMASK          ~(BIT_1 | BIT_0)    // mask to remove two bottom bits from analogue sample - we will then use those for reader & bit period
 
 // globals
 
@@ -164,6 +162,7 @@ extern BYTE             ReaderPeriod;                       // Flag for sample d
 extern unsigned char    Comms_In_Buffer[COMMS_BUFFER_SIZE]; // USB/Serial buffer
 extern BYTE             Interface;                          // user interface - CLI or API
 extern BYTE             CommsChannel;                       // user comms channel - USB or UART
+extern BOOL             FakeRead;                           // flag for analogue sampler to signal it wants access to buffers during read
 
 
 // RWD (read/write device) coil state
@@ -262,6 +261,7 @@ extern rtccDate	RTC_date;			// date structure
 // digital pots
 #define POTLOW_DEFAULT      100
 #define POTHIGH_DEFAULT     150
+#define DC_OFFSET           28                 // analogue circuit DC offset (as close as we can get without using 2 LSB)
 
 // RWD/clock states
 #define                 RWD_STATE_INACTIVE              0       // RWD not in use
@@ -354,6 +354,9 @@ extern rtccDate	RTC_date;			// date structure
 
 #define VOLATILE                        FALSE
 #define NON_VOLATILE                    TRUE
+
+#define NEWLINE                         TRUE
+#define NO_NEWLINE                      FALSE
 
 #define WIPER_HIGH                      0
 #define WIPER_LOW                       1

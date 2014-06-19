@@ -192,7 +192,7 @@ unsigned int crc16(unsigned int crc, BYTE *data, unsigned int length, unsigned i
 void space_indent(BYTE count);
 void xml_version(void);
 void xml_header(BYTE *item, BYTE *indent);
-void xml_footer(BYTE *item, BYTE *indent);
+void xml_footer(BYTE *item, BYTE *indent, BOOL newline);
 void xml_indented_text(BYTE *data, BYTE indent);
 void xml_item_text(BYTE *item, BYTE *data, BYTE *indent);
 void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent);

@@ -175,6 +175,9 @@ unsigned int read_psk1_data(unsigned int period_us, unsigned int ticks, BYTE *da
     // if we're not doing a 1-shot read, we can grab double the data to allow for sync search
     read_PSK1_HW_clock(period_us, ticks, TmpBits, bits * repeat, timeout_us, min_pulse_us);
 
+    if(FakeRead)
+        return 0;
+
     // reset timer
     if(timeout_us)
         GetTimer_us(RESET);
@@ -357,7 +360,6 @@ void read_PSK1_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, uns
 
     // start ISR to read PSK data
     InitHWReaderISR(CONVERT_TO_TICKS(period) * ticks - 1L, TRUE);
-
 }
 
 BOOL psk1_raw_get_uid(BYTE *response)

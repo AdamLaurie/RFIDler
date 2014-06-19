@@ -241,6 +241,9 @@ unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned 
     if(!read_FSK_HW_clock(period_us, ticks, TmpBits, bits * repeat, timeout_us))
         return 0;
 
+    if(FakeRead)
+        return 0;
+
     // reset timer
     if(timeout_us)
         GetTimer_us(RESET);

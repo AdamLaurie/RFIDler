@@ -186,7 +186,9 @@ BOOL             EMU_Background= FALSE;         // Emulate in the background unt
 unsigned int     EMU_DataBitRate;               // Number of Frame Clocks per bit
 BYTE             TmpBits[TMP_LARGE_BUFF_LEN];   // Shared scratchpad
 BYTE             SampleAnalogue[8192];          // Samples for analogue display
-BYTE             ReaderPeriod;                  // reder period flag for analogue display - toggled by reader ISR
+BYTE             ReaderPeriod= FALSE;           // reder period flag for analogue display - toggled by reader ISR
+BOOL             FakeRead= FALSE;               // flag for analogue sampler to signal it wants access to buffers during read
+
 
 // globals for RWD commands
 BYTE             RWD_State= RWD_STATE_INACTIVE;
@@ -825,8 +827,8 @@ BYTE ProcessSerialCommand(char *command)
     {
         if(sscanf(command + 9, "%d", &tmpint) == 1 && tmpint <= sizeof(SampleAnalogue))
         {
-            if(mGetLED_Clock() != mLED_ON)
-                commandok= command_nack("No clock running!");
+            if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
+                commandok= command_nack("Set TAG type first!");
             else
             {
                 commandok= command_ack(DATA);

@@ -152,18 +152,26 @@ void init_adc(BOOL slow)
 void analogue_sample(BYTE *target, unsigned int length)
 {
     unsigned int i;
+    float sample;
 
     init_adc(FAST);
-    // get one sample per byte - max value from ADC is 1024 so divide by 4
-    // add in digital sample state (top bit) and reader bit period (bottom bit) for display purposes
+    FakeRead= TRUE;
+    // start read
+    get_tag_uid(TmpBuff);
+    // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
+    // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
-        target[i]= ((read_adc() >> 2) & SAMPLEMASK) + (READER_DATA << 7) + ReaderPeriod;
-        //UserBinaryByte((BYTE) ((read_adc() / 4) & SAMPLEMASK) + (READER_DATA << 7) + ReaderPeriod);
-    //UserBinary(SampleAnalogue, tmpint);
+    {
+        // pots are 5v but circuit is 3.3v so scale to match pot settings
+        sample= ((float) ((read_adc() + DC_OFFSET) >> 2) / 5.0F) * 3.3F;
+        target[i]= (((BYTE) sample) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
+    }
+    FakeRead= FALSE;
+    stop_HW_clock();
 }
 
 // output analogue buffer as XML
-void analogue_xml_out(BYTE *buffer, unsigned int length)
+void analogue_xml_out(BYTE *data, unsigned int length)
 {
     BYTE indent= 0, tmp;
 
@@ -171,6 +179,24 @@ void analogue_xml_out(BYTE *buffer, unsigned int length)
     xml_version();
     xml_header("RFIDler_Samples", &indent);
     xml_item_text("Description", "RFIDler Analogue Coil Samples", &indent);
+
+    // tag
+    xml_header("Tag", &indent);
+    xml_item_text("Description", "Tag Settings", &indent);
+    xml_header("Tag_Type", &indent);
+    xml_item_text("Description", "Tag Type", &indent);
+    xml_item_text("Data", (BYTE *) TagTypes[RFIDlerConfig.TagType], &indent);
+    xml_footer("Tag_Type", &indent);
+    xml_header("Modulation", &indent);
+    xml_item_text("Description", "Modulation Scheme", &indent);
+    xml_item_text("Data", (BYTE *) ModulationSchemes[RFIDlerConfig.Modulation], &indent);
+    xml_footer("Modulation", &indent);
+    xml_header("Data_Rate", &indent);
+    xml_item_text("Description", "Data Rate (Frame Clocks)", &indent);
+    sprintf(TmpBits, "%d",RFIDlerConfig.DataRate);
+    xml_item_text("Data", TmpBits, &indent);
+    xml_footer("Data_Rate", &indent);
+    xml_footer("Tag", &indent);
 
     // pots
     xml_header("Pots", &indent);
@@ -188,27 +214,29 @@ void analogue_xml_out(BYTE *buffer, unsigned int length)
     xml_footer("Pots", &indent);
 
 
+    // samples
+    xml_header("Samples", &indent);
+    xml_item_text("Description", "Time Based Sample Arrays", &indent);
     // raw coil
     xml_header("Coil_Data", &indent);
     xml_item_text("Description", "Analogue Circuit Raw Data (HEX)", &indent);
-    xml_item_array("Data", buffer, SAMPLEMASK, length, &indent);
+    xml_item_array("Data", data, SAMPLEMASK, length, &indent);
     xml_footer("Coil_Data", &indent);
-    
     // reader circuit
     xml_header("Reader_Output", &indent);
     xml_item_text("Description", "Analogue Circuit Digital Reader Output (HIGH/LOW)", &indent);
-    xml_item_array("Data", buffer, TOP_BIT, length, &indent);
+    xml_item_array("Data", data, BIT_1, length, &indent);
     xml_footer("Reader_Output", &indent);
-
-
     // bit period
     xml_header("Bit_Period", &indent);
     xml_item_text("Description", "Modulation Scheme Bit Period (TICKS)", &indent);
-    xml_item_array("Data", buffer, BOTTOM_BIT, length, &indent);
+    xml_item_array("Data", data, BIT_0, length, &indent);
     xml_footer("Bit_Period", &indent);
+    xml_footer("Samples", &indent);
     
     // end
     xml_footer("RFIDler_Samples", &indent);
+    UserMessage("%s", "\r\n");
 }
 
 // determine resonant frequency of coil

@@ -205,6 +205,9 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
     if(!read_ASK_HW_clock(period_us, ticks, TmpBits, bits * repeat, timeout_us, oneshot))
         return 0;
 
+    if(FakeRead)
+        return 0;
+
     // reset timer
     if(timeout_us)
         GetTimer_us(RESET);

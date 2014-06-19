@@ -830,14 +830,16 @@ void xml_header(BYTE *item, BYTE *indent)
     (*indent) += 2;
 }
 
-void xml_footer(BYTE *item, BYTE *indent)
+void xml_footer(BYTE *item, BYTE *indent, BOOL newline)
 {
-    UserMessage("%s", "\r\n");
+    if(newline)
+        UserMessage("%s", "\r\n");
     if(*indent > 1)
         (*indent) -= 2;
     else
         *indent= 0;
-    space_indent(*indent);
+    if(newline)
+        space_indent(*indent);
     UserMessage("</%s>", item);
 }
 
@@ -851,8 +853,8 @@ void xml_indented_text(BYTE *data, BYTE indent)
 void xml_item_text(BYTE *item, BYTE *data, BYTE *indent)
 {
     xml_header(item, indent);
-    xml_indented_text(data, *indent);
-    xml_footer(item, indent);
+    UserMessage("%s", data);
+    xml_footer(item, indent, NO_NEWLINE);
 }
 
 void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent)
@@ -861,8 +863,8 @@ void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent)
 
     xml_header(item, indent);
     sprintf(tmp, "%d", num);
-    xml_indented_text(tmp, *indent);
-    xml_footer(item, indent);
+    UserMessage("%s", tmp);
+    xml_footer(item, indent, NO_NEWLINE);
 }
 
 void xml_indented_array(BYTE *data, BYTE mask, unsigned int length, BYTE indent)
@@ -884,5 +886,5 @@ void xml_item_array(BYTE *item, BYTE *data, BYTE mask, unsigned int length, BYTE
 {
     xml_header(item, indent);
     xml_indented_array(data, mask, length, *indent);
-    xml_footer(item, indent);
+    xml_footer(item, indent, NEWLINE);
 }

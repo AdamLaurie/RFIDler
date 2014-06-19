@@ -251,7 +251,7 @@ void show_mcp414_wipers(void)
     else
         UserMessageNum("\r\nHigh NV POT (wiper 0) read failed! %d", tmpc);
     if(!get_mcp414_wiper(1, TRUE, &tmpc))
-        UserMessageNum("\r\n  Low NV POT (wiper 1) value %d", tmpc);
+        UserMessageNum("\r\n  Low NV POT (wiper 1) value %d\r\n", tmpc);
     else
-        UserMessageNum("\r\nLow NV POT (wiper 1) read failed! %d", tmpc);
+        UserMessageNum("\r\nLow NV POT (wiper 1) read failed! %d\r\n", tmpc);
 }

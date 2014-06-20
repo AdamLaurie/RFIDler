@@ -158,6 +158,7 @@ if len(sys.argv) < 3:
 	print '  Commands:'
 	print
 	print '    DEBUG <OFF|ON>           Show serial comms'
+	print '    FLASH <IMAGE.HEX>        Set bootloader mode and flash IMAGE.HEX'
 	print '    PLOT <SAMPLES>           Plot raw coil samples (max 8192)'
 	print '    PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>'
 	print '    QUIET                    Supress confirmation of sent command (show results only)'
@@ -190,6 +191,28 @@ while current < len(sys.argv):
 			else:
 				print 'Unknown option:', sys.argv[current]
 				exit(True)
+		current += 1
+		continue
+
+	if command == 'FLASH':
+		result, reason= rfidler.command('BL')
+		if not result:
+			print 'could not set bootloader mode!'
+			exit(True)
+		rfidler.disconnect()
+		time.sleep(1)
+		if os.path.exists('/dev/hidraw1'):
+			print 'bootloader mode - flashing...'
+			os.system('mphidflash -r -w %s' % sys.argv[current])
+		else:
+			print 'bootloader not detected!'
+			exit(True)
+		print 'waiting for reboot...'
+		while 42:
+			rfidler.disconnect()
+			result, reason= rfidler.connect(port)
+			if result:
+				break
 		current += 1
 		continue
 

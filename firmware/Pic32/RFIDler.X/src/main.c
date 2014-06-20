@@ -1283,7 +1283,7 @@ BYTE ProcessSerialCommand(char *command)
     if (strcmp(command, "FREQUENCY") == 0)
     {
         commandok= command_ack(DATA);
-        UserMessageNum("%d", analogue_frequency());
+        UserMessageNum("%d\r\n", analogue_frequency());
         eod();
     }
 

@@ -332,7 +332,7 @@ BOOL tag_set(BYTE tag)
             break;
 
       case TAG_TYPE_AWID_26:
-            RFIDlerConfig.FrameClock= 745; // 134.2 KHz
+            RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
             RFIDlerConfig.Modulation= MOD_MODE_FSK;
             RFIDlerConfig.PotHigh=  100;
             RFIDlerConfig.DataRate= 50;
@@ -398,9 +398,9 @@ BOOL tag_set(BYTE tag)
             break;
                   
         case TAG_TYPE_HID_26:
-            RFIDlerConfig.FrameClock= 745; // 134.2 KHz
+            RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
             RFIDlerConfig.Modulation= MOD_MODE_FSK;
-            RFIDlerConfig.PotHigh=  120;
+            RFIDlerConfig.PotHigh=  100;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 10;

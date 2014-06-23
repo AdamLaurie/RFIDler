@@ -17,7 +17,7 @@ _RESET_ADDR              = 0x9D006000;
 _BEV_EXCPT_ADDR          = 0x9D006380;
 _DBG_EXCPT_ADDR          = 0x9D006480;
 _DBG_CODE_ADDR           = 0xBFC02000;
-_DBG_CODE_SIZE	         = 0xFF0     ;
+_DBG_CODE_SIZE           = 0xFF0     ;
 _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
 
 /*************************************************************************
@@ -29,7 +29,7 @@ _GEN_EXCPT_ADDR          = _ebase_address + 0x180;
  *************************************************************************/
 MEMORY
 {
-  kseg0_program_mem    (rx)  : ORIGIN = 0x9D006E00, LENGTH = 0x7A600
+  kseg0_program_mem    (rx)  : ORIGIN = 0x9D006E00, LENGTH = 0x79200
   kseg0_boot_mem             : ORIGIN = 0x9D006490, LENGTH = 0x970
   exception_mem              : ORIGIN = 0x9D005000, LENGTH = 0x1000
   kseg1_boot_mem             : ORIGIN = 0x9D006000, LENGTH = 0x490

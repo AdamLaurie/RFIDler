@@ -261,7 +261,8 @@ extern rtccDate	RTC_date;			// date structure
 // digital pots
 #define POTLOW_DEFAULT      100
 #define POTHIGH_DEFAULT     150
-#define DC_OFFSET           28                 // analogue circuit DC offset (as close as we can get without using 2 LSB)
+#define DC_OFFSET           60                 // analogue circuit DC offset (as close as we can get without using 2 LSB)
+#define VOLTS_TO_POT        0.019607843F
 
 // RWD/clock states
 #define                 RWD_STATE_INACTIVE              0       // RWD not in use

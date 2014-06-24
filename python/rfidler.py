@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 """
 /***************************************************************************
@@ -219,9 +219,12 @@ while current < len(sys.argv):
 	if command == 'PLOT':
 		result, data= rfidler.command('ANALOGUE %s' % sys.argv[current])
 		current += 1
-		# make sure we always have a full scale
-		pyplot.ylim(-5, 260)
 		if result:
+			# create graphic objects
+			fig, ax1= pyplot.subplots()
+			# we need second subplot for voltage scale
+			ax2= ax1.twinx()
+
 			# get xml sections
 			xml= ET.fromstring(''.join(data))
 			samples= xml.find('Samples')
@@ -234,7 +237,7 @@ while current < len(sys.argv):
 			out= data.text.replace(' ','')
 			out= map(ord, out.decode("hex"))
 			x= range(len(out))
-			pyplot.plot(x, out, color= 'b')
+			ax1.plot(x, out, color= 'b')
 
 			# reader HIGH/LOW
 			raw= samples.find('Reader_Output')
@@ -248,8 +251,8 @@ while current < len(sys.argv):
 					out[i]= 258
 				else:
 					out[i]= 4
-			pyplot.plot(x, out, '-', color='g')
-			pyplot.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
+			ax1.plot(x, out, '-', color='g')
+			ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center', label= 'Reader Logic')
 
 			# bit period
 			raw= samples.find('Bit_Period')
@@ -271,7 +274,7 @@ while current < len(sys.argv):
 						fill1= i
 					# fill every other stripe
 					if toggle:
-						pyplot.axvspan(fill, fill1, facecolor='r', alpha= 0.1)
+						ax1.axvspan(fill, fill1, facecolor='r', alpha= 0.1)
 					toggle= not toggle
 			# find first stripe and add legend
 			for i in range(len(out)):
@@ -279,7 +282,7 @@ while current < len(sys.argv):
 					break
 			legend= tag.find('Data_Rate')
 			data= legend.find('Data').text
-			pyplot.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color= 'r', alpha= 0.5, rotation= 270, ha= 'center', va= 'top')
+			ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color= 'r', alpha= 0.5, rotation= 270, ha= 'center', va= 'top')
 
 
 			# pot settings
@@ -287,17 +290,26 @@ while current < len(sys.argv):
 			for element in 'Pot_High', 'Pot_Low':
 				raw= pots.find(element)
 				data= raw.find('Data').text
-				out= [int(data)] * len(x)
-				pyplot.plot(x, out, '--', color= color)
-				pyplot.text(len(out) + 10, out[0], '%s: %d' % (element, out[0]), color= color)
+				# convert pot setting to volts
+				# pots are 5v over 255 steps, so 1 step is 0.019607843v
+				out= [float(data) * 0.019607843] * len(x)
+				ax2.plot(x, out, '--', color= color)
+				ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * 0.019607843, data), color= color)
 				color= 'm'
 
 			# done - label and show graph
+			# ADC scale needs to match volts (5v / 3.3v)
+			ax1.set_ylim(-5, 256 * 1.515151515)
 			title= tag.find('Tag_Type')
 			pyplot.title('RFIDler - ' + title.find('Data').text)
-			pyplot.ylabel('Signal Strength')
-			pyplot.xlabel('Sample Number')
-			pyplot.figure(1).canvas.set_window_title('RFIDler plot')
+			ax1.set_ylabel('Signal Strength (ADC)')
+			ax1.set_xlabel('Sample Number')
+			fig.canvas.set_window_title('RFIDler plot')
+			# volts scale up to 5.0v as that is max pot setting
+			# note that the ADC will clip at 3.3v, so although we can use a higher pot setting, 
+			# we can't see token samples above 3.3v
+			ax2.set_ylim(0, 5.0)
+			ax2.set_ylabel('Signal Strength (Volts)', rotation= 270)
 			pyplot.show()
 		else:
 			output('Failed: ' + data)

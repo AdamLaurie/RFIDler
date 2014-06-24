@@ -161,11 +161,7 @@ void analogue_sample(BYTE *target, unsigned int length)
     // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
     // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
-    {
-        // pots are 5v but circuit is 3.3v so scale to match pot settings
-        sample= ((float) ((read_adc() + DC_OFFSET) >> 2) / 5.0F) * 3.3F;
-        target[i]= (((BYTE) sample) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
-    }
+        target[i]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
     FakeRead= FALSE;
     stop_HW_clock();
 }

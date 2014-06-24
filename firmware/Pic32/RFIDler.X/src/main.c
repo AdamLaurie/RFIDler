@@ -1432,6 +1432,20 @@ BYTE ProcessSerialCommand(char *command)
            commandok= command_nack("Invalid parameter!");
     }
 
+    if (strncmp(command, "POTSETV ", 8) == 0)
+    {
+        if(sscanf(command + 8,"%c %lf", &tmpc, &tmpfloat) == 2 && tmpc == 'H' || tmpc == 'L')
+        {
+            tmpint1= (int) (tmpfloat / VOLTS_TO_POT);
+            if(!set_mcp414_wiper(tmpc == 'H' ? WIPER_HIGH : WIPER_LOW, VOLATILE, tmpint1, local_tmp))
+                commandok= command_ack(NO_DATA);
+            else
+                commandok= command_nack("POT set failed!");
+        }
+        else
+           commandok= command_nack("Invalid parameter!");
+    }
+
     if (strncmp(command, "PSK1 ", 5) == 0)
     {
         if(sscanf(command + 5,"%s %ld %u %u %u", &local_tmp, &tmplong, &tmpint, &tmpint1, &tmpint2) == 5)
@@ -2116,7 +2130,7 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    POTS                                                         Show POT wiper settings\r\n");
             UserMessage("%s", "    POTINC <H|L> <1-255>                                         Increment POT\r\n");
             UserMessage("%s", "    POTDEC <H|L> <1-255>                                         Decrement POT\r\n");
-            UserMessage("%s", "    POTSET[NV] <H|L> <0-255>                                     Set [Non Volatile] POT wiper\r\n");
+            UserMessage("%s", "    POTSET[V][NV] <H|L> <0-255>                                  Set [Volts][Non Volatile] POT wiper\r\n");
             UserMessage("%s", "    PSK1 <HEX UID> <FC> <RATE> <SUB> <REPEAT>                    Emulate PSK1, Field Clock in uS/100, Data Rate in RF/n,\r\n");
             UserMessage("%s", "                                                                 Sub Carrier in RF/n\r\n");
             UserMessage("%s", "    PWM <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX>      Set PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n");

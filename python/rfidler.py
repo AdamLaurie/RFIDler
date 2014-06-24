@@ -147,6 +147,10 @@ from matplotlib import pyplot
 # global flags
 Quiet= False
 
+# global constants
+ADC_To_Volts= 0.012890625 # 3.3 / 256
+POT_To_Volts= 0.019607843 # 5 / 255
+
 def output(message):
 	if not Quiet:
 		print message
@@ -236,8 +240,9 @@ while current < len(sys.argv):
 			data= raw.find('Data')
 			out= data.text.replace(' ','')
 			out= map(ord, out.decode("hex"))
+			out[:] = [x * ADC_To_Volts for x in out] 
 			x= range(len(out))
-			ax1.plot(x, out, color= 'b')
+			ax2.plot(x, out, color= 'b', label= "Raw Data")
 
 			# reader HIGH/LOW
 			raw= samples.find('Reader_Output')
@@ -251,8 +256,16 @@ while current < len(sys.argv):
 					out[i]= 258
 				else:
 					out[i]= 4
+			ax1.plot(x, out, '-', color='g', label= 'Reader Logic')
+			# show compressed version
+			for i in range(len(out)):
+				if out[i] == 258:
+					out[i]= 320
+				else:
+					out[i]= 300
 			ax1.plot(x, out, '-', color='g')
-			ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center', label= 'Reader Logic')
+					
+			#ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
 
 			# bit period
 			raw= samples.find('Bit_Period')
@@ -287,14 +300,13 @@ while current < len(sys.argv):
 
 			# pot settings
 			color= 'r'
-			for element in 'Pot_High', 'Pot_Low':
-				raw= pots.find(element)
+			for element in 'Pot_High', 'Pot_Low ':
+				raw= pots.find(element.strip())
 				data= raw.find('Data').text
 				# convert pot setting to volts
-				# pots are 5v over 255 steps, so 1 step is 0.019607843v
-				out= [float(data) * 0.019607843] * len(x)
-				ax2.plot(x, out, '--', color= color)
-				ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * 0.019607843, data), color= color)
+				out= [float(data) * POT_To_Volts] * len(x)
+				ax2.plot(x, out, '--', color= color, label= element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
+				#ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
 				color= 'm'
 
 			# done - label and show graph
@@ -304,12 +316,14 @@ while current < len(sys.argv):
 			pyplot.title('RFIDler - ' + title.find('Data').text)
 			ax1.set_ylabel('Signal Strength (ADC)')
 			ax1.set_xlabel('Sample Number')
+			ax1.legend(loc=2)
 			fig.canvas.set_window_title('RFIDler plot')
 			# volts scale up to 5.0v as that is max pot setting
 			# note that the ADC will clip at 3.3v, so although we can use a higher pot setting, 
 			# we can't see token samples above 3.3v
 			ax2.set_ylim(0, 5.0)
 			ax2.set_ylabel('Signal Strength (Volts)', rotation= 270)
+			ax2.legend(loc=1)
 			pyplot.show()
 		else:
 			output('Failed: ' + data)

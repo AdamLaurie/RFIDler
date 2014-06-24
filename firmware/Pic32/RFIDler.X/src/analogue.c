@@ -151,8 +151,11 @@ void init_adc(BOOL slow)
 
 void analogue_sample(BYTE *target, unsigned int length)
 {
-    unsigned int i;
+    unsigned int i, scale;
     float sample;
+
+    // we have a static buffer for samples, so if we want to see more, scale sample rate accordingly
+    scale= (((length - 1) / sizeof(SampleAnalogue))) + 1;
 
     init_adc(FAST);
     FakeRead= TRUE;
@@ -161,7 +164,7 @@ void analogue_sample(BYTE *target, unsigned int length)
     // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
     // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
-        target[i]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
+        target[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
     FakeRead= FALSE;
     stop_HW_clock();
 }
@@ -170,6 +173,9 @@ void analogue_sample(BYTE *target, unsigned int length)
 void analogue_xml_out(BYTE *data, unsigned int length)
 {
     BYTE indent= 0, tmp;
+
+    if(length > sizeof(SampleAnalogue))
+        length= sizeof(SampleAnalogue);
 
     // header
     xml_version();

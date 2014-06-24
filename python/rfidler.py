@@ -313,6 +313,7 @@ while current < len(sys.argv):
 			# ADC scale needs to match volts (5v / 3.3v)
 			ax1.set_ylim(-5, 256 * 1.515151515)
 			title= tag.find('Tag_Type')
+			pyplot.xlim(0, len(x))
 			pyplot.title('RFIDler - ' + title.find('Data').text)
 			ax1.set_ylabel('Signal Strength (ADC)')
 			ax1.set_xlabel('Sample Number')

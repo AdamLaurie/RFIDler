@@ -825,7 +825,7 @@ BYTE ProcessSerialCommand(char *command)
     // experimental - figure out rates etc for analogue grabbing
     if (strncmp(command, "ANALOGUE ", 9) == 0)
     {
-        if(sscanf(command + 9, "%d", &tmpint) == 1 && tmpint <= sizeof(SampleAnalogue))
+        if(sscanf(command + 9, "%d", &tmpint) == 1)
         {
             if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
                 commandok= command_nack("Set TAG type first!");
@@ -833,8 +833,6 @@ BYTE ProcessSerialCommand(char *command)
             {
                 commandok= command_ack(DATA);
                 analogue_sample(SampleAnalogue, tmpint);
-                //hexprintbinarray(SampleAnalogue, tmpint);
-                //UserMessage("%s", "\r\n");
                 analogue_xml_out(SampleAnalogue, tmpint);
                 eod();
             }

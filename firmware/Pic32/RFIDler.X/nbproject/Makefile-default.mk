@@ -65,7 +65,7 @@ FIXDEPS=fixDeps
 	${MAKE}  -f nbproject/Makefile-default.mk dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 
 MP_PROCESSOR_OPTION=32MX795F512L
-MP_LINKER_FILE_OPTION=,--script="procdefs.ld"
+MP_LINKER_FILE_OPTION=
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: assemble
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
@@ -84,463 +84,463 @@ ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 ${OBJECTDIR}/_ext/71113213/SD-SPI.o: /microchip_solutions_v2013-06-15/Microchip/MDD\ File\ System/SD-SPI.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/71113213 
 	@${RM} ${OBJECTDIR}/_ext/71113213/SD-SPI.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" -o ${OBJECTDIR}/_ext/71113213/SD-SPI.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" -o ${OBJECTDIR}/_ext/71113213/SD-SPI.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c"   
 	
 ${OBJECTDIR}/_ext/71113213/FSIO.o: /microchip_solutions_v2013-06-15/Microchip/MDD\ File\ System/FSIO.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/71113213 
 	@${RM} ${OBJECTDIR}/_ext/71113213/FSIO.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/FSIO.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/FSIO.o.d" -o ${OBJECTDIR}/_ext/71113213/FSIO.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/FSIO.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/FSIO.o.d" -o ${OBJECTDIR}/_ext/71113213/FSIO.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c"   
 	
 ${OBJECTDIR}/_ext/2096855388/SClib.o: /microchip_solutions_v2013-06-15/Microchip/Smart\ Card/SClib.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/2096855388 
 	@${RM} ${OBJECTDIR}/_ext/2096855388/SClib.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SClib.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SClib.o.d" -o ${OBJECTDIR}/_ext/2096855388/SClib.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SClib.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SClib.o.d" -o ${OBJECTDIR}/_ext/2096855388/SClib.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c"   
 	
 ${OBJECTDIR}/_ext/2096855388/SCpic32.o: /microchip_solutions_v2013-06-15/Microchip/Smart\ Card/SCpic32.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/2096855388 
 	@${RM} ${OBJECTDIR}/_ext/2096855388/SCpic32.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" -o ${OBJECTDIR}/_ext/2096855388/SCpic32.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" -o ${OBJECTDIR}/_ext/2096855388/SCpic32.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c"   
 	
 ${OBJECTDIR}/_ext/870548313/usb_device.o: /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/870548313 
 	@${RM} ${OBJECTDIR}/_ext/870548313/usb_device.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/870548313/usb_device.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/870548313/usb_device.o.d" -o ${OBJECTDIR}/_ext/870548313/usb_device.o /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/870548313/usb_device.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/870548313/usb_device.o.d" -o ${OBJECTDIR}/_ext/870548313/usb_device.o /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c   
 	
 ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o: /microchip_solutions_v2013-06-15/Microchip/USB/CDC\ Device\ Driver/usb_function_cdc.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/1379786196 
 	@${RM} ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" -o ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o "/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" -o ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o "/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c"   
 	
 ${OBJECTDIR}/src/indala.o: src/indala.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/indala.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/indala.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/indala.o.d" -o ${OBJECTDIR}/src/indala.o src/indala.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/indala.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/indala.o.d" -o ${OBJECTDIR}/src/indala.o src/indala.c   
 	
 ${OBJECTDIR}/src/main.o: src/main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/main.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/main.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/main.o.d" -o ${OBJECTDIR}/src/main.o src/main.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/main.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/main.o.d" -o ${OBJECTDIR}/src/main.o src/main.c   
 	
 ${OBJECTDIR}/src/psk.o: src/psk.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/psk.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/psk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/psk.o.d" -o ${OBJECTDIR}/src/psk.o src/psk.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/psk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/psk.o.d" -o ${OBJECTDIR}/src/psk.o src/psk.c   
 	
 ${OBJECTDIR}/src/usb_descriptors.o: src/usb_descriptors.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/usb_descriptors.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/usb_descriptors.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/usb_descriptors.o.d" -o ${OBJECTDIR}/src/usb_descriptors.o src/usb_descriptors.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/usb_descriptors.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/usb_descriptors.o.d" -o ${OBJECTDIR}/src/usb_descriptors.o src/usb_descriptors.c   
 	
 ${OBJECTDIR}/src/util.o: src/util.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/util.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/util.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/util.o.d" -o ${OBJECTDIR}/src/util.o src/util.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/util.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/util.o.d" -o ${OBJECTDIR}/src/util.o src/util.c   
 	
 ${OBJECTDIR}/src/emulate.o: src/emulate.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/emulate.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/emulate.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/emulate.o.d" -o ${OBJECTDIR}/src/emulate.o src/emulate.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/emulate.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/emulate.o.d" -o ${OBJECTDIR}/src/emulate.o src/emulate.c   
 	
 ${OBJECTDIR}/src/ask.o: src/ask.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/ask.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/ask.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/ask.o.d" -o ${OBJECTDIR}/src/ask.o src/ask.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/ask.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/ask.o.d" -o ${OBJECTDIR}/src/ask.o src/ask.c   
 	
 ${OBJECTDIR}/src/fsk.o: src/fsk.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/fsk.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/fsk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fsk.o.d" -o ${OBJECTDIR}/src/fsk.o src/fsk.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/fsk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fsk.o.d" -o ${OBJECTDIR}/src/fsk.o src/fsk.c   
 	
 ${OBJECTDIR}/src/clock.o: src/clock.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/clock.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/clock.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/clock.o.d" -o ${OBJECTDIR}/src/clock.o src/clock.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/clock.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/clock.o.d" -o ${OBJECTDIR}/src/clock.o src/clock.c   
 	
 ${OBJECTDIR}/src/rwd.o: src/rwd.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/rwd.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/rwd.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/rwd.o.d" -o ${OBJECTDIR}/src/rwd.o src/rwd.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/rwd.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/rwd.o.d" -o ${OBJECTDIR}/src/rwd.o src/rwd.c   
 	
 ${OBJECTDIR}/src/detect.o: src/detect.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/detect.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/detect.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/detect.o.d" -o ${OBJECTDIR}/src/detect.o src/detect.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/detect.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/detect.o.d" -o ${OBJECTDIR}/src/detect.o src/detect.c   
 	
 ${OBJECTDIR}/src/hitagcrypto.o: src/hitagcrypto.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hitagcrypto.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hitagcrypto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitagcrypto.o.d" -o ${OBJECTDIR}/src/hitagcrypto.o src/hitagcrypto.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hitagcrypto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitagcrypto.o.d" -o ${OBJECTDIR}/src/hitagcrypto.o src/hitagcrypto.c   
 	
 ${OBJECTDIR}/src/wiegand.o: src/wiegand.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/wiegand.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/wiegand.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/wiegand.o.d" -o ${OBJECTDIR}/src/wiegand.o src/wiegand.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/wiegand.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/wiegand.o.d" -o ${OBJECTDIR}/src/wiegand.o src/wiegand.c   
 	
 ${OBJECTDIR}/src/comms.o: src/comms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/comms.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/comms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/comms.o.d" -o ${OBJECTDIR}/src/comms.o src/comms.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/comms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/comms.o.d" -o ${OBJECTDIR}/src/comms.o src/comms.c   
 	
 ${OBJECTDIR}/src/nvm.o: src/nvm.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/nvm.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/nvm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/nvm.o.d" -o ${OBJECTDIR}/src/nvm.o src/nvm.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/nvm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/nvm.o.d" -o ${OBJECTDIR}/src/nvm.o src/nvm.c   
 	
 ${OBJECTDIR}/src/mcp414x.o: src/mcp414x.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/mcp414x.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/mcp414x.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/mcp414x.o.d" -o ${OBJECTDIR}/src/mcp414x.o src/mcp414x.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/mcp414x.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/mcp414x.o.d" -o ${OBJECTDIR}/src/mcp414x.o src/mcp414x.c   
 	
 ${OBJECTDIR}/src/spi.o: src/spi.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/spi.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/spi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/spi.o.d" -o ${OBJECTDIR}/src/spi.o src/spi.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/spi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/spi.o.d" -o ${OBJECTDIR}/src/spi.o src/spi.c   
 	
 ${OBJECTDIR}/src/uart3.o: src/uart3.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/uart3.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/uart3.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uart3.o.d" -o ${OBJECTDIR}/src/uart3.o src/uart3.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/uart3.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uart3.o.d" -o ${OBJECTDIR}/src/uart3.o src/uart3.c   
 	
 ${OBJECTDIR}/src/tags.o: src/tags.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/tags.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/tags.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/tags.o.d" -o ${OBJECTDIR}/src/tags.o src/tags.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/tags.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/tags.o.d" -o ${OBJECTDIR}/src/tags.o src/tags.c   
 	
 ${OBJECTDIR}/src/unique.o: src/unique.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/unique.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/unique.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/unique.o.d" -o ${OBJECTDIR}/src/unique.o src/unique.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/unique.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/unique.o.d" -o ${OBJECTDIR}/src/unique.o src/unique.c   
 	
 ${OBJECTDIR}/src/led.o: src/led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/led.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/led.o.d" -o ${OBJECTDIR}/src/led.o src/led.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/led.o.d" -o ${OBJECTDIR}/src/led.o src/led.c   
 	
 ${OBJECTDIR}/src/em.o: src/em.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/em.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/em.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/em.o.d" -o ${OBJECTDIR}/src/em.o src/em.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/em.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/em.o.d" -o ${OBJECTDIR}/src/em.o src/em.c   
 	
 ${OBJECTDIR}/src/hid.o: src/hid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hid.o.d" -o ${OBJECTDIR}/src/hid.o src/hid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hid.o.d" -o ${OBJECTDIR}/src/hid.o src/hid.c   
 	
 ${OBJECTDIR}/src/read.o: src/read.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/read.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/read.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/read.o.d" -o ${OBJECTDIR}/src/read.o src/read.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/read.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/read.o.d" -o ${OBJECTDIR}/src/read.o src/read.c   
 	
 ${OBJECTDIR}/src/isr.o: src/isr.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/isr.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/isr.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/isr.o.d" -o ${OBJECTDIR}/src/isr.o src/isr.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/isr.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/isr.o.d" -o ${OBJECTDIR}/src/isr.o src/isr.c   
 	
 ${OBJECTDIR}/src/auto.o: src/auto.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/auto.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/auto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auto.o.d" -o ${OBJECTDIR}/src/auto.o src/auto.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/auto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auto.o.d" -o ${OBJECTDIR}/src/auto.o src/auto.c   
 	
 ${OBJECTDIR}/src/fdxb.o: src/fdxb.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/fdxb.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/fdxb.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fdxb.o.d" -o ${OBJECTDIR}/src/fdxb.o src/fdxb.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/fdxb.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fdxb.o.d" -o ${OBJECTDIR}/src/fdxb.o src/fdxb.c   
 	
 ${OBJECTDIR}/src/hitag.o: src/hitag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hitag.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hitag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitag.o.d" -o ${OBJECTDIR}/src/hitag.o src/hitag.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hitag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitag.o.d" -o ${OBJECTDIR}/src/hitag.o src/hitag.c   
 	
 ${OBJECTDIR}/src/uid.o: src/uid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/uid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/uid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uid.o.d" -o ${OBJECTDIR}/src/uid.o src/uid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/uid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uid.o.d" -o ${OBJECTDIR}/src/uid.o src/uid.c   
 	
 ${OBJECTDIR}/src/login.o: src/login.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/login.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/login.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/login.o.d" -o ${OBJECTDIR}/src/login.o src/login.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/login.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/login.o.d" -o ${OBJECTDIR}/src/login.o src/login.c   
 	
 ${OBJECTDIR}/src/write.o: src/write.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/write.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/write.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/write.o.d" -o ${OBJECTDIR}/src/write.o src/write.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/write.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/write.o.d" -o ${OBJECTDIR}/src/write.o src/write.c   
 	
 ${OBJECTDIR}/src/auth.o: src/auth.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/auth.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/auth.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auth.o.d" -o ${OBJECTDIR}/src/auth.o src/auth.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/auth.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auth.o.d" -o ${OBJECTDIR}/src/auth.o src/auth.c   
 	
 ${OBJECTDIR}/src/q5.o: src/q5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/q5.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/q5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/q5.o.d" -o ${OBJECTDIR}/src/q5.o src/q5.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/q5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/q5.o.d" -o ${OBJECTDIR}/src/q5.o src/q5.c   
 	
 ${OBJECTDIR}/src/vtag.o: src/vtag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/vtag.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/vtag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/vtag.o.d" -o ${OBJECTDIR}/src/vtag.o src/vtag.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/vtag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/vtag.o.d" -o ${OBJECTDIR}/src/vtag.o src/vtag.c   
 	
 ${OBJECTDIR}/src/config.o: src/config.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/config.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/config.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/config.o.d" -o ${OBJECTDIR}/src/config.o src/config.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/config.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/config.o.d" -o ${OBJECTDIR}/src/config.o src/config.c   
 	
 ${OBJECTDIR}/src/select.o: src/select.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/select.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/select.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/select.o.d" -o ${OBJECTDIR}/src/select.o src/select.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/select.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/select.o.d" -o ${OBJECTDIR}/src/select.o src/select.c   
 	
 ${OBJECTDIR}/src/sdcard.o: src/sdcard.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/sdcard.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/sdcard.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/sdcard.o.d" -o ${OBJECTDIR}/src/sdcard.o src/sdcard.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/sdcard.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/sdcard.o.d" -o ${OBJECTDIR}/src/sdcard.o src/sdcard.c   
 	
 ${OBJECTDIR}/src/debug_pins.o: src/debug_pins.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/debug_pins.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/debug_pins.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/debug_pins.o.d" -o ${OBJECTDIR}/src/debug_pins.o src/debug_pins.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/debug_pins.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/debug_pins.o.d" -o ${OBJECTDIR}/src/debug_pins.o src/debug_pins.c   
 	
 ${OBJECTDIR}/src/awid.o: src/awid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/awid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/awid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/awid.o.d" -o ${OBJECTDIR}/src/awid.o src/awid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/awid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/awid.o.d" -o ${OBJECTDIR}/src/awid.o src/awid.c   
 	
 ${OBJECTDIR}/src/analogue.o: src/analogue.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/analogue.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/analogue.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/analogue.o.d" -o ${OBJECTDIR}/src/analogue.o src/analogue.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/analogue.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/analogue.o.d" -o ${OBJECTDIR}/src/analogue.o src/analogue.c   
 	
 else
 ${OBJECTDIR}/_ext/71113213/SD-SPI.o: /microchip_solutions_v2013-06-15/Microchip/MDD\ File\ System/SD-SPI.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/71113213 
 	@${RM} ${OBJECTDIR}/_ext/71113213/SD-SPI.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" -o ${OBJECTDIR}/_ext/71113213/SD-SPI.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/SD-SPI.o.d" -o ${OBJECTDIR}/_ext/71113213/SD-SPI.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c"   
 	
 ${OBJECTDIR}/_ext/71113213/FSIO.o: /microchip_solutions_v2013-06-15/Microchip/MDD\ File\ System/FSIO.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/71113213 
 	@${RM} ${OBJECTDIR}/_ext/71113213/FSIO.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/FSIO.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/FSIO.o.d" -o ${OBJECTDIR}/_ext/71113213/FSIO.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/71113213/FSIO.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/71113213/FSIO.o.d" -o ${OBJECTDIR}/_ext/71113213/FSIO.o "/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c"   
 	
 ${OBJECTDIR}/_ext/2096855388/SClib.o: /microchip_solutions_v2013-06-15/Microchip/Smart\ Card/SClib.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/2096855388 
 	@${RM} ${OBJECTDIR}/_ext/2096855388/SClib.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SClib.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SClib.o.d" -o ${OBJECTDIR}/_ext/2096855388/SClib.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SClib.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SClib.o.d" -o ${OBJECTDIR}/_ext/2096855388/SClib.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c"   
 	
 ${OBJECTDIR}/_ext/2096855388/SCpic32.o: /microchip_solutions_v2013-06-15/Microchip/Smart\ Card/SCpic32.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/2096855388 
 	@${RM} ${OBJECTDIR}/_ext/2096855388/SCpic32.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" -o ${OBJECTDIR}/_ext/2096855388/SCpic32.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/2096855388/SCpic32.o.d" -o ${OBJECTDIR}/_ext/2096855388/SCpic32.o "/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c"   
 	
 ${OBJECTDIR}/_ext/870548313/usb_device.o: /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/870548313 
 	@${RM} ${OBJECTDIR}/_ext/870548313/usb_device.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/870548313/usb_device.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/870548313/usb_device.o.d" -o ${OBJECTDIR}/_ext/870548313/usb_device.o /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/870548313/usb_device.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/870548313/usb_device.o.d" -o ${OBJECTDIR}/_ext/870548313/usb_device.o /microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c   
 	
 ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o: /microchip_solutions_v2013-06-15/Microchip/USB/CDC\ Device\ Driver/usb_function_cdc.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/_ext/1379786196 
 	@${RM} ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" -o ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o "/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c"   
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o.d" -o ${OBJECTDIR}/_ext/1379786196/usb_function_cdc.o "/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c"   
 	
 ${OBJECTDIR}/src/indala.o: src/indala.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/indala.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/indala.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/indala.o.d" -o ${OBJECTDIR}/src/indala.o src/indala.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/indala.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/indala.o.d" -o ${OBJECTDIR}/src/indala.o src/indala.c   
 	
 ${OBJECTDIR}/src/main.o: src/main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/main.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/main.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/main.o.d" -o ${OBJECTDIR}/src/main.o src/main.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/main.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/main.o.d" -o ${OBJECTDIR}/src/main.o src/main.c   
 	
 ${OBJECTDIR}/src/psk.o: src/psk.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/psk.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/psk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/psk.o.d" -o ${OBJECTDIR}/src/psk.o src/psk.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/psk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/psk.o.d" -o ${OBJECTDIR}/src/psk.o src/psk.c   
 	
 ${OBJECTDIR}/src/usb_descriptors.o: src/usb_descriptors.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/usb_descriptors.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/usb_descriptors.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/usb_descriptors.o.d" -o ${OBJECTDIR}/src/usb_descriptors.o src/usb_descriptors.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/usb_descriptors.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/usb_descriptors.o.d" -o ${OBJECTDIR}/src/usb_descriptors.o src/usb_descriptors.c   
 	
 ${OBJECTDIR}/src/util.o: src/util.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/util.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/util.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/util.o.d" -o ${OBJECTDIR}/src/util.o src/util.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/util.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/util.o.d" -o ${OBJECTDIR}/src/util.o src/util.c   
 	
 ${OBJECTDIR}/src/emulate.o: src/emulate.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/emulate.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/emulate.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/emulate.o.d" -o ${OBJECTDIR}/src/emulate.o src/emulate.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/emulate.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/emulate.o.d" -o ${OBJECTDIR}/src/emulate.o src/emulate.c   
 	
 ${OBJECTDIR}/src/ask.o: src/ask.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/ask.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/ask.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/ask.o.d" -o ${OBJECTDIR}/src/ask.o src/ask.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/ask.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/ask.o.d" -o ${OBJECTDIR}/src/ask.o src/ask.c   
 	
 ${OBJECTDIR}/src/fsk.o: src/fsk.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/fsk.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/fsk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fsk.o.d" -o ${OBJECTDIR}/src/fsk.o src/fsk.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/fsk.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fsk.o.d" -o ${OBJECTDIR}/src/fsk.o src/fsk.c   
 	
 ${OBJECTDIR}/src/clock.o: src/clock.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/clock.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/clock.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/clock.o.d" -o ${OBJECTDIR}/src/clock.o src/clock.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/clock.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/clock.o.d" -o ${OBJECTDIR}/src/clock.o src/clock.c   
 	
 ${OBJECTDIR}/src/rwd.o: src/rwd.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/rwd.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/rwd.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/rwd.o.d" -o ${OBJECTDIR}/src/rwd.o src/rwd.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/rwd.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/rwd.o.d" -o ${OBJECTDIR}/src/rwd.o src/rwd.c   
 	
 ${OBJECTDIR}/src/detect.o: src/detect.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/detect.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/detect.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/detect.o.d" -o ${OBJECTDIR}/src/detect.o src/detect.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/detect.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/detect.o.d" -o ${OBJECTDIR}/src/detect.o src/detect.c   
 	
 ${OBJECTDIR}/src/hitagcrypto.o: src/hitagcrypto.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hitagcrypto.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hitagcrypto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitagcrypto.o.d" -o ${OBJECTDIR}/src/hitagcrypto.o src/hitagcrypto.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hitagcrypto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitagcrypto.o.d" -o ${OBJECTDIR}/src/hitagcrypto.o src/hitagcrypto.c   
 	
 ${OBJECTDIR}/src/wiegand.o: src/wiegand.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/wiegand.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/wiegand.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/wiegand.o.d" -o ${OBJECTDIR}/src/wiegand.o src/wiegand.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/wiegand.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/wiegand.o.d" -o ${OBJECTDIR}/src/wiegand.o src/wiegand.c   
 	
 ${OBJECTDIR}/src/comms.o: src/comms.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/comms.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/comms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/comms.o.d" -o ${OBJECTDIR}/src/comms.o src/comms.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/comms.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/comms.o.d" -o ${OBJECTDIR}/src/comms.o src/comms.c   
 	
 ${OBJECTDIR}/src/nvm.o: src/nvm.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/nvm.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/nvm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/nvm.o.d" -o ${OBJECTDIR}/src/nvm.o src/nvm.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/nvm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/nvm.o.d" -o ${OBJECTDIR}/src/nvm.o src/nvm.c   
 	
 ${OBJECTDIR}/src/mcp414x.o: src/mcp414x.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/mcp414x.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/mcp414x.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/mcp414x.o.d" -o ${OBJECTDIR}/src/mcp414x.o src/mcp414x.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/mcp414x.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/mcp414x.o.d" -o ${OBJECTDIR}/src/mcp414x.o src/mcp414x.c   
 	
 ${OBJECTDIR}/src/spi.o: src/spi.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/spi.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/spi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/spi.o.d" -o ${OBJECTDIR}/src/spi.o src/spi.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/spi.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/spi.o.d" -o ${OBJECTDIR}/src/spi.o src/spi.c   
 	
 ${OBJECTDIR}/src/uart3.o: src/uart3.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/uart3.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/uart3.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uart3.o.d" -o ${OBJECTDIR}/src/uart3.o src/uart3.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/uart3.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uart3.o.d" -o ${OBJECTDIR}/src/uart3.o src/uart3.c   
 	
 ${OBJECTDIR}/src/tags.o: src/tags.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/tags.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/tags.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/tags.o.d" -o ${OBJECTDIR}/src/tags.o src/tags.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/tags.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/tags.o.d" -o ${OBJECTDIR}/src/tags.o src/tags.c   
 	
 ${OBJECTDIR}/src/unique.o: src/unique.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/unique.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/unique.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/unique.o.d" -o ${OBJECTDIR}/src/unique.o src/unique.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/unique.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/unique.o.d" -o ${OBJECTDIR}/src/unique.o src/unique.c   
 	
 ${OBJECTDIR}/src/led.o: src/led.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/led.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/led.o.d" -o ${OBJECTDIR}/src/led.o src/led.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/led.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/led.o.d" -o ${OBJECTDIR}/src/led.o src/led.c   
 	
 ${OBJECTDIR}/src/em.o: src/em.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/em.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/em.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/em.o.d" -o ${OBJECTDIR}/src/em.o src/em.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/em.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/em.o.d" -o ${OBJECTDIR}/src/em.o src/em.c   
 	
 ${OBJECTDIR}/src/hid.o: src/hid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hid.o.d" -o ${OBJECTDIR}/src/hid.o src/hid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hid.o.d" -o ${OBJECTDIR}/src/hid.o src/hid.c   
 	
 ${OBJECTDIR}/src/read.o: src/read.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/read.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/read.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/read.o.d" -o ${OBJECTDIR}/src/read.o src/read.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/read.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/read.o.d" -o ${OBJECTDIR}/src/read.o src/read.c   
 	
 ${OBJECTDIR}/src/isr.o: src/isr.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/isr.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/isr.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/isr.o.d" -o ${OBJECTDIR}/src/isr.o src/isr.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/isr.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/isr.o.d" -o ${OBJECTDIR}/src/isr.o src/isr.c   
 	
 ${OBJECTDIR}/src/auto.o: src/auto.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/auto.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/auto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auto.o.d" -o ${OBJECTDIR}/src/auto.o src/auto.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/auto.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auto.o.d" -o ${OBJECTDIR}/src/auto.o src/auto.c   
 	
 ${OBJECTDIR}/src/fdxb.o: src/fdxb.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/fdxb.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/fdxb.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fdxb.o.d" -o ${OBJECTDIR}/src/fdxb.o src/fdxb.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/fdxb.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/fdxb.o.d" -o ${OBJECTDIR}/src/fdxb.o src/fdxb.c   
 	
 ${OBJECTDIR}/src/hitag.o: src/hitag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/hitag.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/hitag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitag.o.d" -o ${OBJECTDIR}/src/hitag.o src/hitag.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/hitag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/hitag.o.d" -o ${OBJECTDIR}/src/hitag.o src/hitag.c   
 	
 ${OBJECTDIR}/src/uid.o: src/uid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/uid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/uid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uid.o.d" -o ${OBJECTDIR}/src/uid.o src/uid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/uid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/uid.o.d" -o ${OBJECTDIR}/src/uid.o src/uid.c   
 	
 ${OBJECTDIR}/src/login.o: src/login.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/login.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/login.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/login.o.d" -o ${OBJECTDIR}/src/login.o src/login.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/login.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/login.o.d" -o ${OBJECTDIR}/src/login.o src/login.c   
 	
 ${OBJECTDIR}/src/write.o: src/write.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/write.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/write.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/write.o.d" -o ${OBJECTDIR}/src/write.o src/write.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/write.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/write.o.d" -o ${OBJECTDIR}/src/write.o src/write.c   
 	
 ${OBJECTDIR}/src/auth.o: src/auth.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/auth.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/auth.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auth.o.d" -o ${OBJECTDIR}/src/auth.o src/auth.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/auth.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/auth.o.d" -o ${OBJECTDIR}/src/auth.o src/auth.c   
 	
 ${OBJECTDIR}/src/q5.o: src/q5.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/q5.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/q5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/q5.o.d" -o ${OBJECTDIR}/src/q5.o src/q5.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/q5.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/q5.o.d" -o ${OBJECTDIR}/src/q5.o src/q5.c   
 	
 ${OBJECTDIR}/src/vtag.o: src/vtag.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/vtag.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/vtag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/vtag.o.d" -o ${OBJECTDIR}/src/vtag.o src/vtag.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/vtag.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/vtag.o.d" -o ${OBJECTDIR}/src/vtag.o src/vtag.c   
 	
 ${OBJECTDIR}/src/config.o: src/config.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/config.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/config.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/config.o.d" -o ${OBJECTDIR}/src/config.o src/config.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/config.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/config.o.d" -o ${OBJECTDIR}/src/config.o src/config.c   
 	
 ${OBJECTDIR}/src/select.o: src/select.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/select.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/select.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/select.o.d" -o ${OBJECTDIR}/src/select.o src/select.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/select.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/select.o.d" -o ${OBJECTDIR}/src/select.o src/select.c   
 	
 ${OBJECTDIR}/src/sdcard.o: src/sdcard.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/sdcard.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/sdcard.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/sdcard.o.d" -o ${OBJECTDIR}/src/sdcard.o src/sdcard.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/sdcard.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/sdcard.o.d" -o ${OBJECTDIR}/src/sdcard.o src/sdcard.c   
 	
 ${OBJECTDIR}/src/debug_pins.o: src/debug_pins.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/debug_pins.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/debug_pins.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/debug_pins.o.d" -o ${OBJECTDIR}/src/debug_pins.o src/debug_pins.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/debug_pins.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/debug_pins.o.d" -o ${OBJECTDIR}/src/debug_pins.o src/debug_pins.c   
 	
 ${OBJECTDIR}/src/awid.o: src/awid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/awid.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/awid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/awid.o.d" -o ${OBJECTDIR}/src/awid.o src/awid.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/awid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/awid.o.d" -o ${OBJECTDIR}/src/awid.o src/awid.c   
 	
 ${OBJECTDIR}/src/analogue.o: src/analogue.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/src 
 	@${RM} ${OBJECTDIR}/src/analogue.o.d 
-	@${FIXDEPS} "${OBJECTDIR}/src/analogue.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD|wc -l` -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/analogue.o.d" -o ${OBJECTDIR}/src/analogue.o src/analogue.c   
+	@${FIXDEPS} "${OBJECTDIR}/src/analogue.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION) -DVERSION=`git rev-list HEAD --count` -D_SUPPRESS_PLIB_WARNING=1 -I"/microchip_solutions_v2013-06-15/Microchip/Include" -I"/microchip_solutions_v2013-06-15/Microchip/Include/USB" -I"/opt/microchip/xc32/v1.21/pic32-libs/include" -I"./include" -MMD -MF "${OBJECTDIR}/src/analogue.o.d" -o ${OBJECTDIR}/src/analogue.o src/analogue.c   
 	
 endif
 
@@ -553,13 +553,13 @@ endif
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: link
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a 
+dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  /opt/microchip/xc32/v1.32/pic32mx/lib/libmchp_peripheral_32MX795F512L.a 
 	@${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_CC} $(MP_EXTRA_LD_PRE)  -mdebugger -D__MPLAB_DEBUGGER_PK3=1 -mprocessor=$(MP_PROCESSOR_OPTION)  -o dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} ${OBJECTFILES_QUOTED_IF_SPACED}   /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a      -Wl,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_LD_POST)$(MP_LINKER_FILE_OPTION),--defsym=__MPLAB_DEBUG=1,--defsym=__ICD2RAM=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1
+	${MP_CC} $(MP_EXTRA_LD_PRE)  -mdebugger -D__MPLAB_DEBUGGER_PK3=1 -mprocessor=$(MP_PROCESSOR_OPTION)  -o dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} ${OBJECTFILES_QUOTED_IF_SPACED}   /opt/microchip/xc32/v1.32/pic32mx/lib/libmchp_peripheral_32MX795F512L.a      -Wl,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_LD_POST)$(MP_LINKER_FILE_OPTION),--defsym=__MPLAB_DEBUG=1,--defsym=__ICD2RAM=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1
 else
-dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a 
+dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  /opt/microchip/xc32/v1.32/pic32mx/lib/libmchp_peripheral_32MX795F512L.a 
 	@${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_CC} $(MP_EXTRA_LD_PRE)  -mprocessor=$(MP_PROCESSOR_OPTION)  -o dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX} ${OBJECTFILES_QUOTED_IF_SPACED}   /opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a      -Wl,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_LD_POST)$(MP_LINKER_FILE_OPTION)
+	${MP_CC} $(MP_EXTRA_LD_PRE)  -mprocessor=$(MP_PROCESSOR_OPTION)  -o dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX} ${OBJECTFILES_QUOTED_IF_SPACED}   /opt/microchip/xc32/v1.32/pic32mx/lib/libmchp_peripheral_32MX795F512L.a      -Wl,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_LD_POST)$(MP_LINKER_FILE_OPTION)
 	${MP_CC_DIR}/xc32-bin2hex dist/${CND_CONF}/${IMAGE_TYPE}/RFIDler.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX} 
 endif
 

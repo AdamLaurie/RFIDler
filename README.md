@@ -52,13 +52,31 @@ Software Build environment
 Bootloader
 ==========
 
+	When the Bootloader is running the RFIDler appears on the USB as a HID, and waits for new RFIDler firmware to install in Flash memory.
+
+	There are several ways of entering the Bootloader, see "Loading new Firmware" section below.
+
       USB HID Bootloader is provided by the UBW32 project:
 
         http://www.schmalzhaus.com/UBW32/FW/HIDBoot.X/HIDBoot.X.zip
 
-      Bootloader client is mphidflash:
+      The Bootloader client, mphidflash, runs on Linux/Max/Windows and transmits & verifies the new firmware.
 
-        http://code.google.com/p/mphidflash/
+	    https://code.google.com/p/mphidflash/issues/detail?id=4 get the mphidflash-1.4-src.tar.gz file.
+
+		Notes:
+
+		1.  Windows users are suggested to install 7-Zip to decompress the .gz file, and again to unpack the .tar file.
+
+		2.  The project home at http://code.google.com/p/mphidflash/ currently has v1.3, which fails to program some firmware images.
+
+		    This problem is obvious as mphidflash reports a failure to verify to the programming.
+
+		    (Arguably the bug is actually in HIDBoot, and mphidflash v1.4 just works around it.)
+
+		3.  Mac users, sorry there is currently no precompiled mphidflash v1.4 available.
+		
+		    You have choice of using v1.3 and encountering programming failures from time to time, or installing Apple's Xcode and compiling v1.4.
 
       For convenience, a copy of the bootloader hex and an MPLAB hex load project is provided in firmware/Pic32/HIDBoot_MX795_Hex_Load.X
 

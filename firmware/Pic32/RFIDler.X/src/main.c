@@ -160,6 +160,7 @@
 #include "sc_config.h"
 #include "wiegand.h"
 #include "analogue.h"
+#include "iso_7816.h"
 
 // low level config
 #pragma config CP       = ON           // Code Protect
@@ -357,7 +358,7 @@ void UserInit(void)
     wiegand_set_pullups(TRUE);
 
     // ISO 7816 SmartCard
-    //SC_Initialize();
+    SC_Initialize();
 
     // coil in reader mode by default
     COIL_MODE_READER();
@@ -840,6 +841,14 @@ BYTE ProcessSerialCommand(char *command)
         else
             commandok= command_nack("Invalid number of samples!");
     }
+    
+    if (strncmp(command, "APDU ", 5) == 0)
+    {
+        commandok= command_ack(DATA);
+        iso_7816_send_hex_apdu(command + 5);
+        iso_7816_output();
+        eod();
+    }
 
     if (strcmp(command, "API") == 0)
     {
@@ -858,6 +867,19 @@ BYTE ProcessSerialCommand(char *command)
         }
         else
             commandok= command_nack("Invalid parameters!");
+    }
+
+    if (strcmp(command, "ATR") == 0)
+    {
+        if(SC_PowerOnATR())
+        {
+            commandok= command_ack(DATA);
+            hexprintbinarray(scCardATR, scATRLength);
+            UserMessage("%s", "\r\n");
+            eod();
+        }
+        else
+            commandok= command_nack("Failed!");
     }
 
     if (strncmp(command, "AUTH", 4) == 0)
@@ -1819,7 +1841,6 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strcmp(command, "TEST-SC") == 0)
     {
-        SC_Initialize();
         if(SC_PowerOnATR())
         {
             commandok= command_ack(DATA);
@@ -2086,8 +2107,10 @@ BYTE ProcessSerialCommand(char *command)
         {
             command_ack(DATA);
             UserMessage("%s", "    ANALOGUE <# OF SAMPLES>                                      Sample raw coil & output in XML (HEX)\r\n");
+            UserMessage("%s", "    APDU <CLA+INS+P1+P2[+LC+DATA][+LE]>                          Transmit (HEX) ISO-7816-4 APDU to SmartCard. Return is [DATA]+<SW1>+<SW2>\r\n");
             UserMessage("%s", "    API                                                          Switch to API mode\r\n");
             UserMessage("%s", "    ASK <HEX UID> <FC> <RATE> <REPEAT>                           Emulate ASK, Field Clock in uS/100, Data Rate in RF/n\r\n");
+            UserMessage("%s", "    ATR                                                          Get Answer To Reset from SmartCard\r\n");
             UserMessage("%s", "    AUTH [HEX KEY] [BLOCK]                                       Authenticate in CRYPTO mode\r\n");
             UserMessage("%s", "    AUTOPOT                                                      Auto-Detect ideal POT setting(s)\r\n");
             UserMessage("%s", "    AUTORATE                                                     Auto-Detect data rate\r\n");

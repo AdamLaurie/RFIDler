@@ -129,74 +129,126 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-#define CRC16_MASK_CCITT          0x1021  // CRC-CCITT mask (ISO 3309, used in X25, HDLC)
-#define CRC16_MASK_ISO_11785      0x8408  // ISO 11785 animal tags
-#define CRC16_MASK_CRC16          0xA001  // standard CRC16 mask (used in ARC files)
+// send iso 7816 apdu and automatically correct size error and get response data if offered
+// status is returned in cardResponse.SW1 and cardResponse.SW2
+// if available, data will be returned in apduData
+//
 
-// NB These macros reverse the bit order in each byte, not for the whole integer!
-#define rev8(X)   ((((X) >> 7) &1) + (((X) >> 5) &2) + (((X) >> 3) &4) \
-                  + (((X) >> 1) &8) + (((X) << 1) &16) + (((X) << 3) &32) \
-                  + (((X) << 5) &64) + (((X) << 7) &128) )
-#define rev16(X)  (rev8 (X) + (rev8 (X >> 8) << 8))
-#define rev32(X)  (rev16(X) + (rev16(X >> 16) << 16))
-#define rev64(X)  (rev32(X) + (rev32(X >> 32) << 32))
+#include "HardwareProfile.h"
+#include "rfidler.h"
+
+#include "./Smart Card/SClib.h"
+#include "iso_7816.h"
+#include "util.h"
 
 
-BYTE approx(unsigned long number, unsigned long target, unsigned char percentage);
-unsigned int bcdtouint(BYTE *bcd, BYTE length);
-unsigned long long bcdtoulonglong(BYTE *bcd, BYTE length);
-void inttobinarray(BYTE *target, unsigned int source, unsigned int bits);
-void ulongtobinarray(BYTE *target, unsigned long source, unsigned int bits);
-void ulonglongtobinarray(BYTE *target, unsigned long long source, unsigned int bits);
-void inttobinstring(BYTE *target, unsigned int source, unsigned int bits);
-void ulongtobinstring(BYTE *target, unsigned long source, unsigned int bits);
-BOOL ulongtohex(BYTE *target, unsigned long source);
-unsigned int binarraytoint(BYTE *bin, BYTE length);
-unsigned long long binarraytolonglong(BYTE *bin, BYTE length);
-unsigned long binarraytoulong(BYTE *bin, BYTE length);
-BYTE hextobyte(BYTE *hex);
-unsigned long hextoulong(BYTE *hex);
-unsigned long hexreversetoulong(BYTE *hex);
-unsigned long long hextoulonglong(BYTE *hex);
-unsigned long long hexreversetoulonglong(BYTE *hex);
-char hextolonglong(unsigned long long *out, unsigned char *hex);
-unsigned int hextobinarray(unsigned char *target, unsigned char *source);
-unsigned int hextobinstring(unsigned char *target, unsigned char *source);
-unsigned int binarraytohex(unsigned char *target, unsigned char *source, unsigned int length);
-void hexprintbinarray(BYTE *bin, unsigned int length);
-unsigned int binstringtohex(unsigned char *target, unsigned char *source);
-unsigned int binstringtobinarray(BYTE *target, BYTE *source);
-void binarraytobinstring(BYTE *target, BYTE *source, unsigned int length);
-void printhexasbin(unsigned char *hex);
-void printbinashex(unsigned char *bin);
-void invertbinstring(BYTE *target, BYTE *source);
-void printbinarray(unsigned char *bin, unsigned int length);
-unsigned char getbit(unsigned char byte, unsigned char bit);
-void bytestohex(unsigned char *target, unsigned char *source, unsigned int length);
-unsigned int manchester_encode(unsigned char *target, unsigned char *source, unsigned int length);
-unsigned int manchester_decode(unsigned char *target, unsigned char *source, unsigned int length);
-char * strip_newline(char *buff);
-unsigned int GetTimer_us(BYTE reset);
-unsigned long GetTimer_ticks(BYTE reset);
-BOOL command_ack(BOOL data);
-BOOL command_nack(BYTE *reason);
-BOOL command_unknown(void);
-void ToUpper(char *string);
-void TimerWait(unsigned long ticks);
-void string_reverse(unsigned char *string, unsigned int length);
-BOOL string_byteswap(unsigned char *string, unsigned int length);
-BYTE parity(unsigned char *string, BYTE type, unsigned int length);
-unsigned long get_reader_pulse(unsigned int timeout_us);
-unsigned long get_reader_gap(unsigned int timeout_us);
-unsigned int crc_ccitt(BYTE *data, unsigned int length);
-unsigned int crc16(unsigned int crc, BYTE *data, unsigned int length, unsigned int mask);
-void space_indent(BYTE count);
-void xml_version(void);
-void xml_header(BYTE *item, BYTE *indent);
-void xml_footer(BYTE *item, BYTE *indent, BOOL newline);
-void xml_indented_text(BYTE *data, BYTE indent);
-void xml_item_text(BYTE *item, BYTE *data, BYTE *indent);
-void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent);
-void xml_indented_array(BYTE *data, BYTE mask, unsigned int length, BYTE indent);
-void xml_item_array(BYTE *item, BYTE *data, BYTE mask, unsigned int length, BYTE *indent);
+// smart card global buffers
+SC_APDU_COMMAND cardCommand;
+SC_APDU_RESPONSE cardResponse;
+BYTE apduData[256];
 
+// send iso 7816 apdu and automatically correct size error and get response data if offered
+// status is returned in cardResponse.SW1 and cardResponse.SW2
+// if available, data will be returned in apduData
+BOOL send_iso_7816_apdu(BYTE cla, BYTE ins, BYTE p1, BYTE p2, BYTE lc, BYTE *data, BYTE le)
+{
+    // clear old return values in case execution fails
+    cardResponse.RXDATALEN= 0;
+    cardResponse.SW1= 0x00;
+    cardResponse.SW2= 0x00;
+
+    cardCommand.CLA= cla;
+    cardCommand.INS= ins;
+    cardCommand.P1= p1;
+    cardCommand.P2= p2;
+    cardCommand.LC= lc;
+    cardCommand.LE= le;
+
+    if(lc)
+        memcpy(apduData, data, lc);
+
+    WaitMilliSec(10);
+    if(!SC_TransactT0(&cardCommand, &cardResponse, apduData))
+        return FALSE;
+
+    // wrong length - retransmit with corrected LE
+    if(cardResponse.SW1 == 0x6c)
+    {
+        cardCommand.LE= cardResponse.SW2;
+        WaitMilliSec(10);
+        if(!SC_TransactT0(&cardCommand, &cardResponse, apduData))
+            return FALSE;
+    }
+
+    // get response bytes if requested by target
+    if(cardResponse.SW1 == 0x61)
+    {
+        cardCommand.CLA = 0x00;
+        cardCommand.INS = 0xC0;
+        cardCommand.P1 = 0x00;
+        cardCommand.P2 = 0x00;
+        cardCommand.LC = 0x00;
+        cardCommand.LE= cardResponse.SW2;
+        WaitMilliSec(10);
+        if(!SC_TransactT0(&cardCommand, &cardResponse, apduData))
+            return FALSE;
+    }
+
+    // check final response
+    if(cardResponse.SW1 == 0x90 && cardResponse.SW2 == 0x00)
+        return TRUE;
+
+    return FALSE;
+}
+
+// convert HEX string APDU and send
+BOOL iso_7816_send_hex_apdu(BYTE *apdu)
+{
+    BYTE cla, ins, p1, p2, lc= 0, le= 0, i= 0;
+
+    // clear old return values in case execution fails
+    cardResponse.RXDATALEN= 0;
+    cardResponse.SW1= 0x00;
+    cardResponse.SW2= 0x00;
+
+    // we must have at least CLA + INS + P1 + P2
+    if(strlen(apdu) < 8)
+        return FALSE;
+
+    // note we don't do any data validation!
+    cla= hextobyte(&apdu[0]);
+    ins= hextobyte(&apdu[2]);
+    p1= hextobyte(&apdu[4]);
+    p2= hextobyte(&apdu[6]);
+
+    // assume last parameter is LE if only one more byte
+    if(strlen(apdu) == 10)
+        le= hextobyte(&apdu[8]);
+    else
+    {
+        lc= hextobyte(&apdu[8]);
+        for(i= 0 ; i < lc ; ++i)
+            TmpBuff[i]= hextobyte(&apdu[10 + i * 2]);
+
+        // process LE if present
+        if((strlen(apdu) / 2) > i + 6)
+            return FALSE; // malformed apdu - too many bytes!
+        if((strlen(apdu) / 2) == i + 6)
+            le= hextobyte(&apdu[i + 5]);
+    }
+
+    return send_iso_7816_apdu(cla, ins, p1, p2, lc, TmpBuff, le);
+}
+
+// show return as [DATA]+<SW1>+<SW2>
+void iso_7816_output(void)
+{
+    WORD i;
+
+    for(i= 0 ; i < cardResponse.RXDATALEN; ++i)
+        UserMessageNum("%02X", apduData[i]);
+
+    UserMessageNum("%02X", cardResponse.SW1);
+    UserMessageNum("%02X\r\n", cardResponse.SW2);
+    UserMessage("%s", "\r\n");
+}

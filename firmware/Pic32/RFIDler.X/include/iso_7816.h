@@ -129,74 +129,12 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-#define CRC16_MASK_CCITT          0x1021  // CRC-CCITT mask (ISO 3309, used in X25, HDLC)
-#define CRC16_MASK_ISO_11785      0x8408  // ISO 11785 animal tags
-#define CRC16_MASK_CRC16          0xA001  // standard CRC16 mask (used in ARC files)
+#include "./Smart Card/SClib.h"
 
-// NB These macros reverse the bit order in each byte, not for the whole integer!
-#define rev8(X)   ((((X) >> 7) &1) + (((X) >> 5) &2) + (((X) >> 3) &4) \
-                  + (((X) >> 1) &8) + (((X) << 1) &16) + (((X) << 3) &32) \
-                  + (((X) << 5) &64) + (((X) << 7) &128) )
-#define rev16(X)  (rev8 (X) + (rev8 (X >> 8) << 8))
-#define rev32(X)  (rev16(X) + (rev16(X >> 16) << 16))
-#define rev64(X)  (rev32(X) + (rev32(X >> 32) << 32))
+extern SC_APDU_COMMAND cardCommand;
+extern SC_APDU_RESPONSE cardResponse;
+extern BYTE apduData[256];
 
-
-BYTE approx(unsigned long number, unsigned long target, unsigned char percentage);
-unsigned int bcdtouint(BYTE *bcd, BYTE length);
-unsigned long long bcdtoulonglong(BYTE *bcd, BYTE length);
-void inttobinarray(BYTE *target, unsigned int source, unsigned int bits);
-void ulongtobinarray(BYTE *target, unsigned long source, unsigned int bits);
-void ulonglongtobinarray(BYTE *target, unsigned long long source, unsigned int bits);
-void inttobinstring(BYTE *target, unsigned int source, unsigned int bits);
-void ulongtobinstring(BYTE *target, unsigned long source, unsigned int bits);
-BOOL ulongtohex(BYTE *target, unsigned long source);
-unsigned int binarraytoint(BYTE *bin, BYTE length);
-unsigned long long binarraytolonglong(BYTE *bin, BYTE length);
-unsigned long binarraytoulong(BYTE *bin, BYTE length);
-BYTE hextobyte(BYTE *hex);
-unsigned long hextoulong(BYTE *hex);
-unsigned long hexreversetoulong(BYTE *hex);
-unsigned long long hextoulonglong(BYTE *hex);
-unsigned long long hexreversetoulonglong(BYTE *hex);
-char hextolonglong(unsigned long long *out, unsigned char *hex);
-unsigned int hextobinarray(unsigned char *target, unsigned char *source);
-unsigned int hextobinstring(unsigned char *target, unsigned char *source);
-unsigned int binarraytohex(unsigned char *target, unsigned char *source, unsigned int length);
-void hexprintbinarray(BYTE *bin, unsigned int length);
-unsigned int binstringtohex(unsigned char *target, unsigned char *source);
-unsigned int binstringtobinarray(BYTE *target, BYTE *source);
-void binarraytobinstring(BYTE *target, BYTE *source, unsigned int length);
-void printhexasbin(unsigned char *hex);
-void printbinashex(unsigned char *bin);
-void invertbinstring(BYTE *target, BYTE *source);
-void printbinarray(unsigned char *bin, unsigned int length);
-unsigned char getbit(unsigned char byte, unsigned char bit);
-void bytestohex(unsigned char *target, unsigned char *source, unsigned int length);
-unsigned int manchester_encode(unsigned char *target, unsigned char *source, unsigned int length);
-unsigned int manchester_decode(unsigned char *target, unsigned char *source, unsigned int length);
-char * strip_newline(char *buff);
-unsigned int GetTimer_us(BYTE reset);
-unsigned long GetTimer_ticks(BYTE reset);
-BOOL command_ack(BOOL data);
-BOOL command_nack(BYTE *reason);
-BOOL command_unknown(void);
-void ToUpper(char *string);
-void TimerWait(unsigned long ticks);
-void string_reverse(unsigned char *string, unsigned int length);
-BOOL string_byteswap(unsigned char *string, unsigned int length);
-BYTE parity(unsigned char *string, BYTE type, unsigned int length);
-unsigned long get_reader_pulse(unsigned int timeout_us);
-unsigned long get_reader_gap(unsigned int timeout_us);
-unsigned int crc_ccitt(BYTE *data, unsigned int length);
-unsigned int crc16(unsigned int crc, BYTE *data, unsigned int length, unsigned int mask);
-void space_indent(BYTE count);
-void xml_version(void);
-void xml_header(BYTE *item, BYTE *indent);
-void xml_footer(BYTE *item, BYTE *indent, BOOL newline);
-void xml_indented_text(BYTE *data, BYTE indent);
-void xml_item_text(BYTE *item, BYTE *data, BYTE *indent);
-void xml_item_decimal(BYTE *item, BYTE num, BYTE *indent);
-void xml_indented_array(BYTE *data, BYTE mask, unsigned int length, BYTE indent);
-void xml_item_array(BYTE *item, BYTE *data, BYTE mask, unsigned int length, BYTE *indent);
-
+BOOL send_iso_7816_apdu(BYTE cla, BYTE ins, BYTE p1, BYTE p2, BYTE lc, BYTE *data, BYTE le);
+BOOL iso_7816_send_hex_apdu(BYTE *apdu);
+void iso_7816_output();

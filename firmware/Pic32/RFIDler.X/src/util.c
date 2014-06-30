@@ -265,6 +265,15 @@ unsigned long binarraytoulong(BYTE *bin, BYTE length)
     return out;
 }
 
+// convert 2 character hex string to BYTE
+BYTE hextobyte(BYTE *hex)
+{
+    int ret= 0;
+
+    sscanf(hex, "%2X", &ret);
+    return (BYTE) ret;
+}
+
 // convert 8 digit hex to unsigned long
 unsigned long hextoulong(BYTE *hex)
 {

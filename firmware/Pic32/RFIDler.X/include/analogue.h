@@ -130,6 +130,6 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 void init_adc(BOOL slow);
-void analogue_sample(BYTE *target, unsigned int length);
-void analogue_xml_out(BYTE *data, unsigned int length);
+void analogue_sample(unsigned int length);
+void analogue_xml_out(unsigned int length);
 unsigned long analogue_frequency(void);

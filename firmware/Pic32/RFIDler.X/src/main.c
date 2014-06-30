@@ -833,8 +833,8 @@ BYTE ProcessSerialCommand(char *command)
             else
             {
                 commandok= command_ack(DATA);
-                analogue_sample(SampleAnalogue, tmpint);
-                analogue_xml_out(SampleAnalogue, tmpint);
+                analogue_sample(tmpint);
+                analogue_xml_out(tmpint);
                 eod();
             }
         }

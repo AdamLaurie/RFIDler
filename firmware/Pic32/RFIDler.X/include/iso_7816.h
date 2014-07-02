@@ -133,7 +133,7 @@
 
 extern SC_APDU_COMMAND cardCommand;
 extern SC_APDU_RESPONSE cardResponse;
-extern BYTE apduData[256];
+extern BYTE apduData[255];
 
 BOOL send_iso_7816_apdu(BYTE cla, BYTE ins, BYTE p1, BYTE p2, BYTE lc, BYTE *data, BYTE le);
 BOOL iso_7816_send_hex_apdu(BYTE *apdu);

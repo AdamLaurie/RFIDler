@@ -145,7 +145,7 @@
 // smart card global buffers
 SC_APDU_COMMAND cardCommand;
 SC_APDU_RESPONSE cardResponse;
-BYTE apduData[256];
+BYTE apduData[255];
 
 // send iso 7816 apdu and automatically correct size error and get response data if offered
 // status is returned in cardResponse.SW1 and cardResponse.SW2

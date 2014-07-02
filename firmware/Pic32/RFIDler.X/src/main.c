@@ -473,6 +473,7 @@ BYTE ProcessIO(void)
                     return ProcessSerialCommand(command_buffer);
                     break;
 
+                // TODO: fix history - memory corruption?
                 // arrow key?
                 case 0x1B:
                     // get the next two bytes, overwriting current byte - should be '[' + command
@@ -525,7 +526,7 @@ BYTE ProcessIO(void)
 
                     commandbytes= strlen(command_buffer);
                     UserMessage("%s", command_buffer);
-                    
+
                     break;
                      
                 default:

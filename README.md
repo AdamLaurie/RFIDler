@@ -70,13 +70,9 @@ Bootloader
 
 		  mphidflash v1.3 has some known bugs where for some ROM binaries programming fails and a verification error is reported.
 		
-		  If you hit this problem check for a newer release version of mphidflash, or you can try v1.4 here
+		  If you hit this problem check for a newer release of mphidflash. Pre-compiled executables for all platforms are available here:
 
-		  https://code.google.com/p/mphidflash/issues/detail?id=4 get the mphidflash-1.4-src.tar.gz file.
-
-		  (Windows users are suggested to install 7-Zip to decompress the .gz file, and use it again to unpack the .tar file.)
-
-		  Mac users, sorry there is currently no precompiled mphidflash v1.4 available.
+		    https://code.google.com/p/mphidflash/
 
 Software Build
 ==============

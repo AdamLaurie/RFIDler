@@ -526,11 +526,20 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                WriteTimer5(0);
             }
 
-            // read data direct for normal ASK or only 2nd half of bit if manchester
-            if(!RFIDlerConfig.Manchester && !RFIDlerConfig.BiPhase || (RFIDlerConfig.Manchester && count % 2L))
+            // read data direct for normal ASK
+            if(!RFIDlerConfig.Manchester && !RFIDlerConfig.BiPhase)
             {
                 //DEBUG_PIN_1= out;
-                // always invert value as we are active low
+                *(EMU_Data++)= out ^ RFIDlerConfig.Invert;
+                // successful read resets timeout
+                WriteTimer5(0);
+            }
+
+            // read only 2nd half of bit if manchester
+            if (RFIDlerConfig.Manchester && count % 2L)
+            {
+                //DEBUG_PIN_1= out;
+                // always invert as we are now reading 2nd half bit, so opposite value
                 *(EMU_Data++)= !(out ^ RFIDlerConfig.Invert);
                 // successful read resets timeout
                 WriteTimer5(0);

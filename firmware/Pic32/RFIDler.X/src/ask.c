@@ -218,6 +218,7 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
             if (GetTimer_us(NO_RESET) > timeout_us)
                 return 0;
 
+
     if(Manchester_Error)
         return 0;
 
@@ -259,6 +260,7 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
         case BINARY:
         default:
             memcpy(data, TmpBits + i, bits);
+            data[bits]= '\0';
             return bits;
     }
 }
@@ -367,7 +369,7 @@ BOOL read_ASK_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, unsi
 
     // biphase cannot auto-align when it detects a half-bit error, so we must align
     // on a full bit before we start
-    if(!oneshot && RFIDlerConfig.BiPhase)
+    if(RFIDlerConfig.BiPhase && !oneshot)
     {
         dwell= period * ticks * 2;
         count= 0;

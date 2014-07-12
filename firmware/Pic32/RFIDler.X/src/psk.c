@@ -235,6 +235,7 @@ unsigned int read_psk1_data(unsigned int period_us, unsigned int ticks, BYTE *da
         case BINARY:
         default:
             memcpy(data, TmpBits + i, bits);
+            data[bits]= '\0';
             return bits;
     }
 }

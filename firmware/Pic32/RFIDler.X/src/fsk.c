@@ -296,6 +296,7 @@ unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned 
         case BINARY:
         default:
             memcpy(data, TmpBits + i, bits);
+            data[bits]= '\0';
             return bits;
     }
 }

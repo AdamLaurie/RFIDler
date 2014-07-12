@@ -186,7 +186,6 @@ unsigned int     EMU_Repeat;                    // Number of times to transmit f
 BOOL             EMU_Background= FALSE;         // Emulate in the background until told to stop
 unsigned int     EMU_DataBitRate;               // Number of Frame Clocks per bit
 BYTE             TmpBits[TMP_LARGE_BUFF_LEN];   // Shared scratchpad
-BYTE             SampleAnalogue[8192];          // Samples for analogue display
 BYTE             ReaderPeriod= FALSE;           // reder period flag for analogue display - toggled by reader ISR
 BOOL             FakeRead= FALSE;               // flag for analogue sampler to signal it wants access to buffers during read
 
@@ -213,7 +212,7 @@ volatile BOOL buttonPressed;
 volatile BYTE buttonCount;
 
 BYTE TmpBuff[NVM_PAGE_SIZE];  // we use this during page erase
-BYTE DataBuff[TMP_LARGE_BUFF_LEN]; // shared data buffer for external readers etc.
+BYTE DataBuff[ANALOGUE_BUFF_LEN]; // shared data buffer for external readers etc.
 unsigned int DataBuffCount= 0;
 
 BYTE Interface= INTERFACE_API;       // no menu/prompts by default

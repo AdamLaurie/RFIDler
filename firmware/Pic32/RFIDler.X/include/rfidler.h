@@ -140,6 +140,7 @@
 
 #define TMP_LARGE_BUFF_LEN  2048
 #define TMP_SMALL_BUFF_LEN  256
+#define ANALOGUE_BUFF_LEN   8192
 
 #define COMMS_BUFFER_SIZE   128
 
@@ -157,7 +158,6 @@ extern unsigned int     EMU_Repeat;                         // Number of times t
 extern BOOL             EMU_Background;                     // Emulate in the background until told to stop
 extern unsigned int     EMU_DataBitRate;                    // Number of Frame Clocks per bit
 extern BYTE             TmpBits[TMP_LARGE_BUFF_LEN];        // Shared scratchpad
-extern BYTE             SampleAnalogue[8192];               // Samples for analogue display
 extern BYTE             ReaderPeriod;                       // Flag for sample display
 extern unsigned char    Comms_In_Buffer[COMMS_BUFFER_SIZE]; // USB/Serial buffer
 extern BYTE             Interface;                          // user interface - CLI or API
@@ -233,7 +233,7 @@ typedef struct {
 extern StoredConfig RFIDlerConfig;
 extern VirtualTag RFIDlerVTag;
 extern BYTE TmpBuff[NVM_PAGE_SIZE];
-extern BYTE DataBuff[TMP_LARGE_BUFF_LEN];
+extern BYTE DataBuff[ANALOGUE_BUFF_LEN];
 extern unsigned int DataBuffCount;
 extern const BYTE *ModulationSchemes[];
 extern const BYTE *OnOff[];

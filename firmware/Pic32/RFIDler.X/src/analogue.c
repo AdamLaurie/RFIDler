@@ -154,7 +154,7 @@ void analogue_sample(unsigned int length)
     unsigned int i, scale;
 
     // we have a static buffer for samples, so if we want to see more, scale sample rate accordingly
-    scale= (((length - 1) / sizeof(SampleAnalogue))) + 1;
+    scale= (((length - 1) / sizeof(DataBuff))) + 1;
 
     init_adc(FAST);
     FakeRead= TRUE;
@@ -163,7 +163,7 @@ void analogue_sample(unsigned int length)
     // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
     // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
-        SampleAnalogue[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
+        DataBuff[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
     FakeRead= FALSE;
     stop_HW_clock();
 }
@@ -173,8 +173,8 @@ void analogue_xml_out(unsigned int length)
 {
     BYTE indent= 0, tmp;
 
-    if(length > sizeof(SampleAnalogue))
-        length= sizeof(SampleAnalogue);
+    if(length > sizeof(DataBuff))
+        length= sizeof(DataBuff);
 
     // header
     xml_version();
@@ -194,8 +194,8 @@ void analogue_xml_out(unsigned int length)
     xml_footer("Modulation", &indent);
     xml_header("Data_Rate", &indent);
     xml_item_text("Description", "Data Rate (Frame Clocks)", &indent);
-    sprintf(TmpBits, "%d",RFIDlerConfig.DataRate);
-    xml_item_text("Data", TmpBits, &indent);
+    sprintf(DataBuff, "%d",RFIDlerConfig.DataRate);
+    xml_item_text("Data", DataBuff, &indent);
     xml_footer("Data_Rate", &indent);
     xml_footer("Tag", &indent);
 
@@ -221,17 +221,17 @@ void analogue_xml_out(unsigned int length)
     // raw coil
     xml_header("Coil_Data", &indent);
     xml_item_text("Description", "Analogue Circuit Raw Data (HEX)", &indent);
-    xml_item_array("Data", SampleAnalogue, SAMPLEMASK, length, &indent);
+    xml_item_array("Data", DataBuff, SAMPLEMASK, length, &indent);
     xml_footer("Coil_Data", &indent);
     // reader circuit
     xml_header("Reader_Output", &indent);
     xml_item_text("Description", "Analogue Circuit Digital Reader Output (HIGH/LOW)", &indent);
-    xml_item_array("Data", SampleAnalogue, BIT_1, length, &indent);
+    xml_item_array("Data", DataBuff, BIT_1, length, &indent);
     xml_footer("Reader_Output", &indent);
     // bit period
     xml_header("Bit_Period", &indent);
     xml_item_text("Description", "Modulation Scheme Bit Period (TICKS)", &indent);
-    xml_item_array("Data", SampleAnalogue, BIT_0, length, &indent);
+    xml_item_array("Data", DataBuff, BIT_0, length, &indent);
     xml_footer("Bit_Period", &indent);
     xml_footer("Samples", &indent);
     

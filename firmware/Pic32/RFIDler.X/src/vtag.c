@@ -151,18 +151,25 @@ void vtag_dump(void)
     BYTE tmp[MAXBLOCKSIZE + 1], interpret;
     unsigned int i;
 
-    UserMessage("       Type: %s", (BYTE *) TagTypes[RFIDlerVTag.TagType]);
+    UserMessage("          Type: %s", (BYTE *) TagTypes[RFIDlerVTag.TagType]);
 
-    UserMessage("\r\n  Emulating: %s", (BYTE *) TagTypes[RFIDlerVTag.EmulatedTagType]);
+    UserMessage("\r\n     Emulating: %s", (BYTE *) TagTypes[RFIDlerVTag.EmulatedTagType]);
 
-    UserMessage("\r\n    Raw UID: %s", RFIDlerVTag.UID);
+    UserMessage("\r\n       Raw UID: %s", RFIDlerVTag.UID);
 
     // show interpreted UID
     if(RFIDlerVTag.EmulatedTagType == TAG_TYPE_NONE)
         interpret= RFIDlerVTag.TagType;
     else
         interpret= RFIDlerVTag.EmulatedTagType;
-    UserMessage("\r\n        UID: %s", interpret_uid(tmp, RFIDlerVTag.UID, interpret) ? tmp : (BYTE *) "invalid!");
+    UserMessage("\r\n           UID: %s", interpret_uid(tmp, RFIDlerVTag.UID, interpret) ? tmp : (BYTE *) "invalid!");
+
+    // show config block if present
+    if(config_block_number(&i, RFIDlerVTag.TagType))
+    {
+        UserMessage("%s","\r\n\r\n");
+        config_block_show(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * i)], RFIDlerVTag.TagType);
+    }
 
     if(RFIDlerVTag.DataBlocks == 0)
     {
@@ -170,14 +177,14 @@ void vtag_dump(void)
         return;
     }
 
-    UserMessage("%s", "\r\n       Data:");
+    UserMessage("%s", "\r\n          Data:");
     tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
     for(i= 0 ; i < RFIDlerVTag.DataBlocks ; ++i)
     {
         memcpy(tmp, &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * i)], HEXDIGITS(RFIDlerVTag.BlockSize));
         if(tmp[0])
         {
-            UserMessageNum("\r\n          %d: ", i);
+            UserMessageNum("\r\n             %d: ", i);
             UserMessage("%s", tmp);
         }
     }

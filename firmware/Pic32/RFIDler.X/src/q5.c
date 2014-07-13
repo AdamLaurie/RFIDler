@@ -394,23 +394,23 @@ BOOL q5_config_block_show(BYTE *config)
 {
     uint32_t    value= hextoulong(config);
 
-    UserMessage("         Config Block: %8s\r\n", config);
-    UserMessageNum("          Page Select: %d  = ", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT));
+    UserMessage("  Config Block: %.8s\r\n", config);
+    UserMessageNum("   Page Select: %d  = ", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT));
     UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT) ? "True" : "False");
-    UserMessageNum("           Fast Write: %d  = ", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE));
+    UserMessageNum("    Fast Write: %d  = ", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE));
     UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE) ? "True" : "False");
-    UserMessageNum("        Data Bit Rate: %02d = ", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE));
+    UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE));
     UserMessageNum("%d * FC\r\n", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE) * 2 + 2);
-    UserMessageNum("              Use AOR: %d  = ", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR));
+    UserMessageNum("       Use AOR: %d  = ", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR));
     UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR) ? "True" : "False");
-    UserMessageNum("              Use PWD: %d  = ", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD));
+    UserMessageNum("       Use PWD: %d  = ", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD));
     UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD) ? "True" : "False");
-    UserMessageNum("PSK Carrier Frequency: %d  = ", GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ));
+    UserMessageNum("   PSK Carrier: %d  = ", GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ));
     UserMessageNum("%d * FC\r\n", PSK_Rates[GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ)]);
-    UserMessageNum("           Modulation: %d  = ", GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION));
+    UserMessageNum("    Modulation: %d  = ", GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION));
     UserMessage("%s\r\n", (BYTE *) Q5_Modulation[GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION)]);
-    UserMessageNum("            Max Block: %d\r\n", GET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK));
-    UserMessageNum("                   ST: %d  = ", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST));
+    UserMessageNum("     Max Block: %d\r\n", GET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK));
+    UserMessageNum("            ST: %d  = ", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST));
     UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST) ? "True" : "False");
     return TRUE;
 }

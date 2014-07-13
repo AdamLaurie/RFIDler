@@ -158,6 +158,32 @@
 #define Q5_INDALA_64_CONFIG_BLOCK    "E600F014"      // emulate indala 64 bit
 #define Q5_INDALA_224_CONFIG_BLOCK   "E600F01E"      // emulate indala 224 bit
 
+// note that Q5 sends data in LSB order, so everything in the datasheet is effectively reversed
+// what is shown as "bit 32" is actually bit 0
+
+// config block masks
+#define Q5_MASK_PAGE_SELECT              0b00000000000010000000000000000000
+#define Q5_MASK_FAST_WRITE               0b00000000000001000000000000000000
+#define Q5_MASK_DATA_BIT_RATE            0b00000000000000111111000000000000
+#define Q5_MASK_USE_AOR                  0b00000000000000000000100000000000
+#define Q5_MASK_USE_PWD                  0b00000000000000000000010000000000
+#define Q5_MASK_PSK_CARRIER_FREQ         0b00000000000000000000001100000000
+#define Q5_MASK_INVERSE_DATA             0b00000000000000000000000010000000
+#define Q5_MASK_MODULATION               0b00000000000000000000000001110000
+#define Q5_MASK_MAX_BLOCK                0b00000000000000000000000000001110
+#define Q5_MASK_ST                       0b00000000000000000000000000000001
+
+// config block bit shifts
+#define Q5_SHIFT_PAGE_SELECT            19
+#define Q5_SHIFT_FAST_WRITE             18
+#define Q5_SHIFT_DATA_BIT_RATE          12
+#define Q5_SHIFT_USE_AOR                11
+#define Q5_SHIFT_USE_PWD                10
+#define Q5_SHIFT_PSK_CARRIER_FREQ        8
+#define Q5_SHIFT_INVERSE_DATA            7
+#define Q5_SHIFT_MODULATION              4
+#define Q5_SHIFT_MAX_BLOCK               1
+#define Q5_SHIFT_ST                      0
 
 BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
 BOOL q5_get_uid(BYTE *response);
@@ -170,5 +196,6 @@ BOOL q5_rwd_test(BYTE *pattern);
 unsigned int q5_blocksize();
 unsigned int q5_datablocks();
 unsigned int q5_config_block_number(void);
+BOOL q5_config_block_show(BYTE *config);
 unsigned int q5_user_block_number(void);
 BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype);

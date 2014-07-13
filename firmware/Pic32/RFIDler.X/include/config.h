@@ -129,8 +129,13 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
+#include <stdint.h>
 
+#define GET_CONFIG(config, mask, shift)         ((config & mask) >> shift)
+#define SET_CONFIG(config, mask, shift, value)  ((config & ~mask) | (value << shift))
 
 BOOL config_block_number(unsigned int *block, BYTE tagtype);
 BOOL config_user_block(unsigned int *block, BYTE tagtype);
+BOOL get_config_block(BYTE *out, BYTE tagtype);
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype);
+BOOL tag_show_config_block(BYTE tagtype);

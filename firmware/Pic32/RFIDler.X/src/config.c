@@ -134,6 +134,7 @@
 #include "HardwareProfile.h"
 #include "rfidler.h"
 #include "config.h"
+#include "read.h"
 
 BOOL config_block_number(unsigned int *block, BYTE tagtype)
 {
@@ -171,6 +172,16 @@ BOOL config_user_block(unsigned int *block, BYTE tagtype)
     }
 }
 
+// get current config block from tag
+BOOL get_config_block(BYTE *out, BYTE tagtype)
+{
+    int block;
+
+    if(config_block_number(&block, tagtype))
+        return read_tag(out, block, block);
+    return FALSE;
+}
+
 // get a config block suitable for emulating
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 {
@@ -183,6 +194,18 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
         case TAG_TYPE_T55X7:
             return q5_emulate_config_block(config, target_tagtype);
 
+        default:
+            return FALSE;
+    }
+}
+
+// display contents of tag config block if present
+BOOL config_block_show(BYTE *config, BYTE tagtype)
+{
+    switch(tagtype)
+    {
+        case TAG_TYPE_Q5:
+            return q5_config_block_show(config);
         default:
             return FALSE;
     }

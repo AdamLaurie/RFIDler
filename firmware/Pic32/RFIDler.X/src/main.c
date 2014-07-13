@@ -1804,6 +1804,23 @@ BYTE ProcessSerialCommand(char *command)
         tag_list();
         eod();
     }
+
+    if(strcmp(command, "TCONFIG") == 0)
+    {
+        if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
+            commandok= command_nack("Tag type not set!");
+        else
+        {
+            if (get_config_block(local_tmp, RFIDlerConfig.TagType))
+            {
+                commandok= command_ack(DATA);
+                config_block_show(local_tmp, RFIDlerConfig.TagType);
+                eod();
+            }
+            else
+                commandok= command_nack("Read failed or not supported for this tag type!");
+        }
+    }
     
     if (strcmp(command, "TEST-HITAG") == 0)
     {

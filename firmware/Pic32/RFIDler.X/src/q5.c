@@ -135,9 +135,12 @@
 #include "rwd.h"
 #include "util.h"
 #include "comms.h"
+#include "config.h"
 
 BOOL PWD_Mode= FALSE;
 BYTE Password[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0}; // 32 bits as HEX string set with LOGIN
+const BYTE *Q5_Modulation[]= {"Manchester", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "Biphase", "NRZ/Direct"};
+const BYTE PSK_Rates[]= {2, 4, 8, 8};
 
 // q5 needs special timings etc., so have a master send command routine to keep things simple
 // response length in bits
@@ -385,6 +388,31 @@ unsigned int q5_datablocks(void)
 unsigned int q5_config_block_number(void)
 {
     return Q5_CONFIG_BLOCK_NUMBER;
+}
+
+BOOL q5_config_block_show(BYTE *config)
+{
+    uint32_t    value= hextoulong(config);
+
+    UserMessage("         Config Block: %8s\r\n", config);
+    UserMessageNum("          Page Select: %d  = ", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT));
+    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT) ? "True" : "False");
+    UserMessageNum("           Fast Write: %d  = ", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE));
+    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE) ? "True" : "False");
+    UserMessageNum("        Data Bit Rate: %02d = ", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE));
+    UserMessageNum("%d * FC\r\n", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE) * 2 + 2);
+    UserMessageNum("              Use AOR: %d  = ", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR));
+    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR) ? "True" : "False");
+    UserMessageNum("              Use PWD: %d  = ", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD));
+    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD) ? "True" : "False");
+    UserMessageNum("PSK Carrier Frequency: %d  = ", GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ));
+    UserMessageNum("%d * FC\r\n", PSK_Rates[GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ)]);
+    UserMessageNum("           Modulation: %d  = ", GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION));
+    UserMessage("%s\r\n", (BYTE *) Q5_Modulation[GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION)]);
+    UserMessageNum("            Max Block: %d\r\n", GET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK));
+    UserMessageNum("                   ST: %d  = ", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST));
+    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST) ? "True" : "False");
+    return TRUE;
 }
 
 // return first usable data block

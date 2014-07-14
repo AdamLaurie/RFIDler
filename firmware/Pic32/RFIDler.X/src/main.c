@@ -218,14 +218,6 @@ unsigned int DataBuffCount= 0;
 BYTE Interface= INTERFACE_API;       // no menu/prompts by default
 BYTE CommsChannel= COMMS_NONE;
 
-// see rfdler.h for #defined constants
-const BYTE *ModulationSchemes[] = {
-    "None",
-    "ASK/OOK",
-    "FSK",
-    "PSK1"
-};
-
 const BYTE *OnOff[]= {
     "Off",
     "On"
@@ -1670,7 +1662,7 @@ BYTE ProcessSerialCommand(char *command)
         }
         else if(strcmp(command + 8,"FSK") == 0)
         {
-            RFIDlerConfig.Modulation= MOD_MODE_FSK;
+            RFIDlerConfig.Modulation= MOD_MODE_FSK1;
             commandok= command_ack(NO_DATA);
         }
         else if(strcmp(command + 8,"PSK1") == 0)

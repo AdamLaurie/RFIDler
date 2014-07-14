@@ -290,11 +290,14 @@ extern rtccDate	RTC_date;			// date structure
 
 #define MAX_HISTORY                     2 // disable most of history for now - memory issue
 
-// modulation modes
+// modulation modes - uppdate ModulationSchemes[] in tags.c if you change this
 #define MOD_MODE_NONE                   0
 #define MOD_MODE_ASK_OOK                1
-#define MOD_MODE_FSK                    2
-#define MOD_MODE_PSK1                   3
+#define MOD_MODE_FSK1                   2
+#define MOD_MODE_FSK2                   3
+#define MOD_MODE_PSK1                   4
+#define MOD_MODE_PSK2                   5
+#define MOD_MODE_PSK3                   6
 
 // TAG types - update TagTypes[] in tags.c if you add to this list
 #define TAG_TYPE_NONE                   0

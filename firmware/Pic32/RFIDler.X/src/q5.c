@@ -421,11 +421,85 @@ unsigned int q5_user_block_number(void)
     return Q5_USER_DATA_BLOCK;
 }
 
+// create a config block based on current tag settings
+BOOL q5_create_config_block(BYTE *config)
+{
+    uint32_t    value= hextoulong(config);
+    BYTE        tmp;
+
+    // data rate
+    value= SET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE, (RFIDlerConfig.DataRate - 2) / 2);
+
+    // psk sub-carrier
+    if((tmp= RFIDlerConfig.DataRateSub0))
+    {
+        if(tmp == 2)
+            tmp= 0;
+        else
+            if (tmp == 4)
+                tmp= 1;
+            else
+                tmp= 2;
+        value= SET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ, tmp);
+    }
+
+    // modulation
+    if(RFIDlerConfig.Manchester && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+        tmp= Q5_MOD_MANCHESTER;
+    else
+    {
+        if(RFIDlerConfig.BiPhase && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+            tmp= Q5_MOD_BIPHASE;
+        else
+            switch(RFIDlerConfig.Modulation)
+            {
+                case MOD_MODE_ASK_OOK:
+                    tmp= Q5_MOD_DIRECT;
+                    break;
+                case MOD_MODE_FSK1:
+                    tmp= Q5_MOD_FSK1;
+                    break;
+                case MOD_MODE_FSK2:
+                    tmp= Q5_MOD_FSK2;
+                    break;
+                case MOD_MODE_PSK1:
+                    tmp= Q5_MOD_PSK1;
+                    break;
+                case MOD_MODE_PSK2:
+                    tmp= Q5_MOD_PSK2;
+                    break;
+                case MOD_MODE_PSK3:
+                    tmp= Q5_MOD_PSK3;
+                    break;
+                default:
+                    return FALSE;
+            }
+    }
+    value= SET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION, tmp);
+
+    // data blocks
+    value= SET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK, RFIDlerConfig.DataBits / Q5_BLOCKSIZE);
+
+    ulongtohex(config, value);
+
+    return TRUE;
+}
+
 // set a config block suitable for emulating
 BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 {
     switch (target_tagtype)
     {
+       case TAG_TYPE_ASK_RAW:
+       case TAG_TYPE_FSK1_RAW:
+       case TAG_TYPE_FSK2_RAW:
+       case TAG_TYPE_PSK1_RAW:
+       case TAG_TYPE_PSK2_RAW:
+       case TAG_TYPE_PSK3_RAW:
+           memcpy(config, Q5_DEFAULT_CONFIG_BLOCK, HEXDIGITS(Q5_BLOCKSIZE));
+           q5_create_config_block(config);
+           return TRUE;
+
        case TAG_TYPE_AWID_26:
        case TAG_TYPE_HID_26:
             memcpy(config, Q5_HID_26_CONFIG_BLOCK, HEXDIGITS(Q5_BLOCKSIZE));

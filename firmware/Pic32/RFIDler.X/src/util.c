@@ -224,8 +224,10 @@ void ulonglongtobinarray(BYTE *target, unsigned long long source, unsigned int b
 
 BOOL ulongtohex(BYTE *target, unsigned long source)
 {
-    if(sprintf(target, "%08X", source) != 1)
-        return FALSE;
+    BYTE tmp[9];
+
+    sprintf(tmp, "%08lX", source);
+    memcpy(target, tmp, 8);
     return TRUE;
 }
 

@@ -185,6 +185,17 @@
 #define Q5_SHIFT_MAX_BLOCK               1
 #define Q5_SHIFT_ST                      0
 
+// Q5 modulation settings
+#define Q5_MOD_MANCHESTER               0
+#define Q5_MOD_PSK1                     1
+#define Q5_MOD_PSK2                     2
+#define Q5_MOD_PSK3                     3
+#define Q5_MOD_FSK1                     4
+#define Q5_MOD_FSK2                     5
+#define Q5_MOD_BIPHASE                  6
+#define Q5_MOD_DIRECT                   7
+
+
 BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
 BOOL q5_get_uid(BYTE *response);
 BOOL q5_hex_to_uid(BYTE *response, BYTE *hex);

@@ -168,6 +168,18 @@ const BYTE *TagTypes[]= {
     NULL
 };
 
+// see rfidler.h for #defined constants
+const BYTE *ModulationSchemes[] = {
+    "None",
+    "ASK/OOK",
+    "FSK",
+    "FSK",
+    "PSK",
+    "PSK",
+    "PSK",
+    NULL
+};
+
 void tag_list(void)
 {
     unsigned char i;
@@ -193,7 +205,16 @@ BYTE tag_get_type(BYTE *tag)
 unsigned int tag_get_blocksize(BYTE tag)
 {
     switch(tag)
-    {        
+    {
+        // raw tag types return blocksize of emulator tag
+        case TAG_TYPE_ASK_RAW:
+        case TAG_TYPE_FSK1_RAW:
+        case TAG_TYPE_FSK2_RAW:
+        case TAG_TYPE_PSK1_RAW:
+        case TAG_TYPE_PSK2_RAW:
+        case TAG_TYPE_PSK3_RAW:
+            return tag_get_blocksize(RFIDlerVTag.TagType);
+
         case TAG_TYPE_HITAG1:
             return hitag1_blocksize();
 
@@ -213,6 +234,15 @@ unsigned int tag_get_datablocks(BYTE tag)
 {
     switch(tag)
     {
+        // raw tag types return number of blocks needed for emulator tag type
+        case TAG_TYPE_ASK_RAW:
+        case TAG_TYPE_FSK1_RAW:
+        case TAG_TYPE_FSK2_RAW:
+        case TAG_TYPE_PSK1_RAW:
+        case TAG_TYPE_PSK2_RAW:
+        case TAG_TYPE_PSK3_RAW:
+            return RFIDlerConfig.DataBits / tag_get_blocksize(RFIDlerVTag.TagType);
+
        case TAG_TYPE_HITAG1:
             return hitag1_datablocks();
 
@@ -297,6 +327,8 @@ BOOL tag_set(BYTE tag)
     RFIDlerConfig.PotLow= 0;
     RFIDlerConfig.PotHigh= 0;
     RFIDlerConfig.DataRate= 0;
+    RFIDlerConfig.DataRateSub0= 0;
+    RFIDlerConfig.DataRateSub1= 0;
     RFIDlerConfig.DataBits= 0;
     RFIDlerConfig.TagType= tag;
     RFIDlerConfig.Repeat= 0;
@@ -333,7 +365,7 @@ BOOL tag_set(BYTE tag)
 
       case TAG_TYPE_AWID_26:
             RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
-            RFIDlerConfig.Modulation= MOD_MODE_FSK;
+            RFIDlerConfig.Modulation= MOD_MODE_FSK2;
             RFIDlerConfig.PotHigh=  100;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
@@ -371,7 +403,7 @@ BOOL tag_set(BYTE tag)
 
        case TAG_TYPE_FSK1_RAW:
             RFIDlerConfig.FrameClock= 800;
-            RFIDlerConfig.Modulation= MOD_MODE_FSK;
+            RFIDlerConfig.Modulation= MOD_MODE_FSK1;
             RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
@@ -385,7 +417,7 @@ BOOL tag_set(BYTE tag)
 
        case TAG_TYPE_FSK2_RAW:
             RFIDlerConfig.FrameClock= 800;
-            RFIDlerConfig.Modulation= MOD_MODE_FSK;
+            RFIDlerConfig.Modulation= MOD_MODE_FSK2;
             RFIDlerConfig.PotHigh= 90;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
@@ -399,7 +431,7 @@ BOOL tag_set(BYTE tag)
                   
         case TAG_TYPE_HID_26:
             RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
-            RFIDlerConfig.Modulation= MOD_MODE_FSK;
+            RFIDlerConfig.Modulation= MOD_MODE_FSK2;
             RFIDlerConfig.PotHigh=  100;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
@@ -454,7 +486,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10
+            RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10 (4)
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 525; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
             RFIDlerConfig.RWD_Zero_Period= 18; // 18 - 22
@@ -589,7 +621,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.SyncBits= 16;
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 1000; // must be more than 3ms, but play it safe
-            RFIDlerConfig.RWD_Gap_Period= 20; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Gap_Period= 20; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
             RFIDlerConfig.RWD_Zero_Period= 24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
             RFIDlerConfig.RWD_One_Period= 54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 70; // t55x7 will exit downlink mode after 64 but we mustn't read until t55x7 switches damping on
@@ -618,6 +650,15 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
 {
     switch(tagtype)
     {
+       case TAG_TYPE_ASK_RAW:
+       case TAG_TYPE_FSK1_RAW:
+       case TAG_TYPE_FSK2_RAW:
+       case TAG_TYPE_PSK1_RAW:
+       case TAG_TYPE_PSK2_RAW:
+       case TAG_TYPE_PSK3_RAW:
+           memcpy(hex, uid, strlen(uid));
+           return TRUE;
+
        case TAG_TYPE_AWID_26:
             if(!bcd_to_awid26_hex(hex, uid))
                 return FALSE;
@@ -643,7 +684,6 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
             if(!indala64_hex_to_uid(hex, uid))
                 return FALSE;
             return TRUE;
-
 
         case TAG_TYPE_INDALA_224:
             if(!indala224_hex_to_uid(hex, uid))

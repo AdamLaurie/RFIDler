@@ -176,8 +176,8 @@ void write_FSK_HW_clock(unsigned long pulse, BYTE *data, unsigned int tpb, unsig
     EMU_SubCarrier_T0= t0;
     EMU_SubCarrier_T1= t1;
 
-    // set mode
-    EmulationMode= MOD_MODE_FSK;
+    // set mode (any FSK mode will do, as sub-carriers are set seperately)
+    EmulationMode= MOD_MODE_FSK1;
 
     // make sure no clock is running
     stop_HW_clock();

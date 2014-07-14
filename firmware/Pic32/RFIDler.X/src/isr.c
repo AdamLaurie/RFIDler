@@ -364,7 +364,8 @@ void __ISR(_TIMER_3_VECTOR, ipl7auto) emulation_send_bit (void)
         // then T0 is 8 ticks and T1 is 5 ticks.
         // note that we must independantly check for end of bit period for each sub-carrier
         // to cater for cases where there is no common clock multiple (e.g. HID: RF/8 & RF/10)
-        case MOD_MODE_FSK:
+        case MOD_MODE_FSK1:
+        case MOD_MODE_FSK2:
             // output sub-carriers
             // if current bit is a '1'
             if(EMU_ThisBit ^ RFIDlerConfig.Invert)
@@ -394,6 +395,7 @@ void __ISR(_TIMER_3_VECTOR, ipl7auto) emulation_send_bit (void)
             }
             break;
 
+        // TODO: PSK2, PSK3
         // PSK1 - we get called N times per bit
         // create sub-carrier
         // half-bit phase shift if bit changes
@@ -549,7 +551,8 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 
             break;
 
-        case MOD_MODE_FSK:
+        case MOD_MODE_FSK1:
+        case MOD_MODE_FSK2:
             // to read FSK we will measure a pulse width. we must stop before end of bit period so we don't
             // get caught by the next interrupt. accordingly our time period is shortened by 20%, but
             // that should be OK as we only need to see a single pulse.
@@ -604,6 +607,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                 *(EMU_Data++)= GetTimer_us(RESET); // get pulsewidth in uS
             break;
 
+        // TODO: PSK2, PSK3
         case MOD_MODE_PSK1:
             // READER_DATA goes high when a phase change occurs
             // we toggle bit value on phase change

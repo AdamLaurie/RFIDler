@@ -191,7 +191,6 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
             return hitag2_emulate_config_block(config, target_tagtype);
 
         case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
             return q5_emulate_config_block(config, target_tagtype);
 
         default:

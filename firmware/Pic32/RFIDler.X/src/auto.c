@@ -160,7 +160,8 @@ BYTE autopot(void)
         switch(RFIDlerConfig.Modulation)
         {
             case MOD_MODE_ASK_OOK:
-            case MOD_MODE_FSK:
+            case MOD_MODE_FSK1:
+            case MOD_MODE_FSK2:
                 set_mcp414_wiper(WIPER_HIGH, VOLATILE, i, tmp);
                 if(get_interpreted_tag_uid(DataBuff, RFIDlerConfig.TagType))
                 {

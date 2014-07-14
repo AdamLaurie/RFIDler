@@ -360,15 +360,16 @@ BOOL vtag_write_to_tag(BYTE *pass)
     unsigned int block, config_block_no;
     BYTE tmp[MAXBLOCKSIZE + 1], tagtype;
     BOOL auth= FALSE;
+    StoredConfig tmptag;
 
     // preserve tag type
-    tagtype= RFIDlerConfig.TagType;
+    memcpy(&tmptag, &RFIDlerConfig, sizeof(RFIDlerConfig));
 
     // set real tag to vtag type if not already the same
     if(RFIDlerConfig.TagType != RFIDlerVTag.TagType)
         if(!tag_set(RFIDlerVTag.TagType))
         {
-            tag_set(tagtype);
+            memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
             return FALSE;
         }
 
@@ -388,14 +389,14 @@ BOOL vtag_write_to_tag(BYTE *pass)
     tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
     if (!config_block(tmp, RFIDlerConfig.TagType, RFIDlerConfig.TagType))
     {
-        tag_set(tagtype);
+        memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
         return FALSE;
     }
 
     // write default config
     if(!write_tag(config_block_no, tmp, VERIFY))
     {
-        tag_set(tagtype);
+        memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
         return FALSE;
      }
     
@@ -436,11 +437,11 @@ BOOL vtag_write_to_tag(BYTE *pass)
     UserMessage("%s", tmp);
     if(!write_tag(config_block_no, tmp, NO_VERIFY))
     {
-        tag_set(tagtype);
+        memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
         return FALSE;
     }
 
-    tag_set(tagtype);
+    memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
     return TRUE;
 }
 

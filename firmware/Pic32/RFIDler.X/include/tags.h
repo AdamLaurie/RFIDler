@@ -129,7 +129,7 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+#define RAW_TAGS_DATABITS   256
 
 void tag_list(void);
 BYTE auto_detect_tag_type(void);

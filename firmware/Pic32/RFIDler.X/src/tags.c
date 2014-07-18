@@ -262,6 +262,14 @@ unsigned int tag_get_databits(BYTE tag)
 {
     switch(tag)
     {
+        case TAG_TYPE_ASK_RAW:
+        case TAG_TYPE_FSK1_RAW:
+        case TAG_TYPE_FSK2_RAW:
+        case TAG_TYPE_PSK1_RAW:
+        case TAG_TYPE_PSK2_RAW:
+        case TAG_TYPE_PSK3_RAW:
+            return RAW_TAGS_DATABITS;
+
         case TAG_TYPE_EM4X02:
             return EM4X02_DATABITS;
             
@@ -356,7 +364,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
             RFIDlerConfig.PotHigh= 100;
             RFIDlerConfig.DataRate= 32;
-            RFIDlerConfig.DataBits= 256;
+            RFIDlerConfig.DataBits= RAW_TAGS_DATABITS;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
@@ -408,7 +416,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 5;
-            RFIDlerConfig.DataBits= 256;
+            RFIDlerConfig.DataBits= RAW_TAGS_DATABITS;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
@@ -422,7 +430,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 10;
-            RFIDlerConfig.DataBits= 256;
+            RFIDlerConfig.DataBits= RAW_TAGS_DATABITS;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
@@ -592,7 +600,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
             RFIDlerConfig.DataRate= 32;
             RFIDlerConfig.DataRateSub0= 2;
-            RFIDlerConfig.DataBits= 256;
+            RFIDlerConfig.DataBits= RAW_TAGS_DATABITS;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)

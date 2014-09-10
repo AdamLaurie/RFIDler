@@ -162,7 +162,7 @@ if len(sys.argv) < 3:
 	print '  Commands:'
 	print
 	print '    DEBUG <OFF|ON>           Show serial comms'
-	print '    FLASH <IMAGE.HEX>        Set bootloader mode and flash IMAGE.HEX'
+	print '    FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]'
 	print '    PLOT <SAMPLES>           Plot raw coil samples (max 8192)'
 	print '    PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>'
 	print '    QUIET                    Supress confirmation of sent command (show results only)'
@@ -198,11 +198,12 @@ while current < len(sys.argv):
 		current += 1
 		continue
 
-	if command == 'FLASH':
-		result, reason= rfidler.command('BL')
-		if not result:
-			print 'could not set bootloader mode!'
-			exit(True)
+	if command == 'FLASH' or command == 'FLASHP':
+		if not os.path.exists('/dev/hidraw1'):
+			result, reason= rfidler.command('BL')
+			if not result:
+				print 'could not set bootloader mode!'
+				exit(True)
 		rfidler.disconnect()
 		time.sleep(1)
 		if os.path.exists('/dev/hidraw1'):
@@ -211,12 +212,38 @@ while current < len(sys.argv):
 		else:
 			print 'bootloader not detected!'
 			exit(True)
-		print 'waiting for reboot...'
+		print 'Waiting for reboot...'
 		while 42:
-			rfidler.disconnect()
 			result, reason= rfidler.connect(port)
 			if result:
-				break
+				result, data= rfidler.command('PING')
+				if result:
+					break
+		if command == 'FLASHP':
+			time.sleep(1)
+			print 'Load next board'
+			# wait for disconnect
+			while 42:
+				try:
+					time.sleep(.5)
+					result, data= rfidler.command('PING')
+					if not result:
+						break
+				except:
+					break
+			print 'Waiting for board...'
+			# wait for new board in normal or bootloader mode
+			while 42:
+				result, reason= rfidler.connect(port)
+				if result:
+					result, data= rfidler.command('PING')
+					if result:
+						break
+				rfidler.disconnect()
+				if os.path.exists('/dev/hidraw1'):
+					break
+			current -= 1
+			continue
 		current += 1
 		continue
 
@@ -352,8 +379,8 @@ while current < len(sys.argv):
 					os.system('mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
 
 			os.system('clear')
-			print 'Starting test', test
 			test_result= 'Pass'
+			print 'Starting test', test
 			for x in 'PING', \
 				 'DEBUGOFF 0',\
 				 'DEBUGON 4',\

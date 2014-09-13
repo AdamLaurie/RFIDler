@@ -163,7 +163,8 @@ extern unsigned char    Comms_In_Buffer[COMMS_BUFFER_SIZE]; // USB/Serial buffer
 extern BYTE             Interface;                          // user interface - CLI or API
 extern BYTE             CommsChannel;                       // user comms channel - USB or UART
 extern BOOL             FakeRead;                           // flag for analogue sampler to signal it wants access to buffers during read
-
+extern BOOL             PWD_Mode;                           // is this tag password protected?
+extern BYTE             Password[9];                        // 32 bits as HEX string set with LOGIN
 
 // RWD (read/write device) coil state
 extern BYTE             RWD_State;                              // current state of RWD coil

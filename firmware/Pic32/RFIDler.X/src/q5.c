@@ -137,8 +137,6 @@
 #include "comms.h"
 #include "config.h"
 
-BOOL PWD_Mode= FALSE;
-BYTE Password[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0}; // 32 bits as HEX string set with LOGIN
 const BYTE *Q5_Modulation[]= {"Manchester", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "Biphase", "NRZ/Direct"};
 const BYTE PSK_Rates[]= {2, 4, 8, 8};
 

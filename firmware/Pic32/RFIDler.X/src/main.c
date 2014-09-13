@@ -188,7 +188,8 @@ unsigned int     EMU_DataBitRate;               // Number of Frame Clocks per bi
 BYTE             TmpBits[TMP_LARGE_BUFF_LEN];   // Shared scratchpad
 BYTE             ReaderPeriod= FALSE;           // reder period flag for analogue display - toggled by reader ISR
 BOOL             FakeRead= FALSE;               // flag for analogue sampler to signal it wants access to buffers during read
-
+BOOL             PWD_Mode= FALSE;               // is this tag password protected?
+BYTE Password[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0};  // 32 bits as HEX string set with LOGIN
 
 // globals for RWD commands
 BYTE             RWD_State= RWD_STATE_INACTIVE;
@@ -1803,14 +1804,19 @@ BYTE ProcessSerialCommand(char *command)
             commandok= command_nack("Tag type not set!");
         else
         {
-            if (get_config_block(local_tmp, RFIDlerConfig.TagType))
-            {
-                commandok= command_ack(DATA);
-                config_block_show(local_tmp, RFIDlerConfig.TagType);
-                eod();
-            }
+            if(!config_block_number(&tmpint, RFIDlerConfig.TagType))
+                commandok= command_nack("Not supported for this tag type!");
             else
-                commandok= command_nack("Read failed or not supported for this tag type!");
+            {
+                if (get_config_block(local_tmp, RFIDlerConfig.TagType))
+                    {
+                        commandok= command_ack(DATA);
+                        config_block_show(local_tmp, RFIDlerConfig.TagType);
+                        eod();
+                    }
+                else
+                    commandok= command_nack("Read failed!");
+            }
         }
     }
     
@@ -1905,6 +1911,26 @@ BYTE ProcessSerialCommand(char *command)
         }
         else
             commandok= command_nack("Invalid debug pin!");
+    }
+
+    if (strcmp(command, "TRESET") == 0)
+    {
+        if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
+            commandok= command_nack("Tag type not set!");
+        else
+        {
+            if(!config_block_number(&tmpint, RFIDlerConfig.TagType))
+                commandok= command_nack("Not supported for this tag type!");
+            else
+            {
+                // emulation block for own tag type is default config
+                config_block(local_tmp, RFIDlerConfig.TagType, RFIDlerConfig.TagType);
+                if(write_tag(tmpint, local_tmp))
+                    commandok= command_ack(NO_DATA);
+                else
+                    commandok= command_nack("Write failed!");
+            }
+        }
     }
 
     if (strcmp(command, "TRISTATE OFF") == 0)
@@ -2190,6 +2216,7 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    STOP                                                         Stop any running clocks\r\n");
             UserMessage("%s", "    TAGS                                                         Show known TAG TYPES\r\n");
             UserMessage("%s", "    TCONFIG                                                      Show TAG's config block\r\n");
+            UserMessage("%s", "    TRESET                                                       Reset TAG's config block to default (*** data loss may occur!)\r\n");
             UserMessage("%s", "    TRISTATE <ON|OFF>                                            Switch reader circuit tri-state ON/OFF\r\n");
             UserMessage("%s", "    TEST-HITAG                                                   Hitag2 crypto - test correctness & timing\r\n");
             UserMessage("%s", "    TEST-RWD [HEX KEY|PATTERN|PWD]                               Find ideal paramaters for RWD commands\r\n");

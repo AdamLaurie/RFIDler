@@ -148,9 +148,72 @@ void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsig
     RFIDlerConfig.RWD_Wait_Switch_TX_RX= wait_txrx;
     RFIDlerConfig.RWD_Wait_Switch_RX_TX= wait_rxtx;
 }
-
 // this routine accepts either binary arrays or binary strings
 BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait)
+{
+    unsigned int i;
+    RWD_Fc= fc;
+    // convert FCs to system ticks
+    RWD_Sleep_Period= CONVERT_TO_TICKS(sleep * fc);
+    RWD_Gap_Period= CONVERT_TO_TICKS(gap * fc);
+    // convert FCs to OCM ticks
+    RWD_Wake_Period= wake * 2;
+    RWD_Zero_Period= pw0 * 2;
+    RWD_One_Period= pw1 * 2;
+    RWD_Post_Wait= post_wait * 2;
+    if(!RWD_Zero_Period || !RWD_One_Period || !RWD_Gap_Period)
+        return FALSE;
+    // convert ascii string to bin if required
+    if(command[0] == '0' || command[0] == '1')
+    {
+        if(!binstringtobinarray(RWD_Command_Buff, command))
+            return FALSE;
+    }
+    else
+        memcpy(RWD_Command_Buff, command, length);
+    RWD_Command_Buff[length]= '*';
+    RWD_Command_ThisBit= RWD_Command_Buff;
+    // start clock and wait for TAG to wake if not already running
+    // this is needed in case a non-resetting RWD command is issued before any other action has woken tag
+    if(mGetLED_Clock() == mLED_OFF)
+    {
+        RWD_State= RWD_STATE_INACTIVE;
+        InitHWReaderClock(OC_TOGGLE_PULSE, RWD_Fc / 2L, RWD_Fc, RWD_State);
+        if(!reset)
+            Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100);
+    }
+    if(reset)
+        RWD_State= RWD_STATE_GO_TO_SLEEP;
+    else
+        RWD_State= initial_state;
+    // see if ISR has flagged RWD command finished
+    if(block)
+        while(RWD_State != RWD_STATE_ACTIVE)
+            ;
+    return TRUE;
+}
+
+// set default parameters for RWD PWM commands
+void rwd_set_pwm2(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int wait_txrx, unsigned int wait_rxtx, BOOL diff, unsigned int ogap, unsigned int zgap, BOOL barrier, unsigned int ob, unsigned int zb)
+{
+    RFIDlerConfig.FrameClock= fc;
+    RFIDlerConfig.RWD_Sleep_Period= sleep;
+    RFIDlerConfig.RWD_Wake_Period= wake;
+    RFIDlerConfig.RWD_Zero_Period= pw0;
+    RFIDlerConfig.RWD_One_Period= pw1;
+    RFIDlerConfig.RWD_Gap_Period= gap;
+    RFIDlerConfig.RWD_One_Gap_Period= ogap;
+    RFIDlerConfig.RWD_Zero_Gap_Period= zgap;
+    RFIDlerConfig.RWD_Diff= diff;
+    RFIDlerConfig.RWD_Barrier = barrier;
+    RFIDlerConfig.RWD_Barrier_Zero_Period= zb;
+    RFIDlerConfig.RWD_Barrier_One_Period= ob;
+    RFIDlerConfig.RWD_Wait_Switch_TX_RX= wait_txrx;
+    RFIDlerConfig.RWD_Wait_Switch_RX_TX= wait_rxtx;
+}
+
+// this routine accepts either binary arrays or binary strings
+BOOL rwd_send2(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait, BOOL diff, unsigned int ogap, unsigned int zgap, BOOL barrier, unsigned int ob, unsigned int zb)
 {
     unsigned int i;
 
@@ -158,15 +221,28 @@ BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL bloc
 
     // convert FCs to system ticks
     RWD_Sleep_Period= CONVERT_TO_TICKS(sleep * fc);
-    RWD_Gap_Period= CONVERT_TO_TICKS(gap * fc);
+    if (diff){
+        RWD_One_Gap_Period = ogap * 2;
+        RWD_Zero_Gap_Period = zgap * 2;	
+    }else{
+        RWD_One_Gap_Period = gap * 2;
+        RWD_Zero_Gap_Period = gap * 2;
+    }
 
+    if(barrier){
+
+        RWD_One_Barrier_Period = ob * 2;
+        RWD_Zero_Barrier_Period = zb * 2;
+	
+    }
+    RWD_Barrier = barrier;
     // convert FCs to OCM ticks
     RWD_Wake_Period= wake * 2;
     RWD_Zero_Period= pw0 * 2;
     RWD_One_Period= pw1 * 2;
     RWD_Post_Wait= post_wait * 2;
     
-    if(!RWD_Zero_Period || !RWD_One_Period || !RWD_Gap_Period)
+    if(!RWD_Zero_Period || !RWD_One_Period || (!RWD_Gap_Period && !diff))
         return FALSE;
 
     // convert ascii string to bin if required

@@ -194,6 +194,11 @@ BOOL             FakeRead= FALSE;               // flag for analogue sampler to 
 BYTE             RWD_State= RWD_STATE_INACTIVE;
 unsigned long    RWD_Fc= 0;                                     // field clock in uS
 unsigned long    RWD_Gap_Period= 0;                             // length of command gaps in SYSTEM ticks
+unsigned long    RWD_One_Gap_Period = 0;
+unsigned long    RWD_Zero_Gap_Period = 0;
+unsigned long    RWD_Zero_Barrier_Period = 0;
+unsigned long    RWD_One_Barrier_Period = 0;
+BOOL             RWD_Barrier= 0;                                // is there a barrier
 unsigned int     RWD_Zero_Period= 0;                            // length of '0' in OC5 ticks
 unsigned int     RWD_One_Period= 0;                             // length of '1' in OC5 ticks
 unsigned long    RWD_Sleep_Period= 0;                           // length of initial sleep to reset tag in uS
@@ -210,7 +215,6 @@ BYTE             *RWD_Command_ThisBit= RWD_Command_Buff;        // Current comma
 BOOL stringPrinted;
 volatile BOOL buttonPressed;
 volatile BYTE buttonCount;
-
 BYTE TmpBuff[NVM_PAGE_SIZE];  // we use this during page erase
 BYTE DataBuff[ANALOGUE_BUFF_LEN]; // shared data buffer for external readers etc.
 unsigned int DataBuffCount= 0;
@@ -802,7 +806,7 @@ BYTE ProcessSerialCommand(char *command)
     BYTE commandok= FALSE;
     BYTE tmpc;
     double tmpfloat;
-    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3,  tmpint4, tmpint5, tmpint6, tmpint7;
+    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3,  tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11, tmpint12, tmpint13;
     static unsigned long tmplong;
     static char local_tmp[256], local_tmp1[256];
     BYTE *ccprompt= "";
@@ -1482,6 +1486,18 @@ BYTE ProcessSerialCommand(char *command)
             commandok= command_nack("Invalid parameters!");
     }
 
+    if (strncmp(command, "PWM2 ", 4) == 0)
+    {
+        if(sscanf(command + 4,"%u %u %u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5, &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11, &tmpint12, &tmpint13) == 8)
+        {
+            rwd_set_pwm2(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11, tmpint12, tmpint13);
+            commandok= command_ack(NO_DATA);
+        }
+        else
+            commandok= command_nack("Invalid parameters!");
+    }
+
+
     if (strncmp(command, "READ ", 5) == 0)
     {
         if((tmpint2= sscanf(command + 5,"%u %u", &tmpint, &tmpint1)) && tmpint2 == 1 || tmpint2 == 2)
@@ -1558,6 +1574,19 @@ BYTE ProcessSerialCommand(char *command)
         if(sscanf(command + 4,"%s", &local_tmp) == 1)
         {
             if(rwd_send(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, 0))
+                commandok= command_ack(NO_DATA);
+            else
+                commandok= command_nack("Failed! PWM parameters not set or invalid data!");
+        }
+        else
+            commandok= command_nack("Invalid parameters!");
+    }
+
+    if (strncmp(command, "RWD2 ", 4) == 0)
+    {
+        if(sscanf(command + 4,"%s", &local_tmp) == 1)
+        {
+            if(rwd_send2(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Diff, RFIDlerConfig.RWD_One_Gap_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Barrier, RFIDlerConfig.RWD_Barrier_One_Period, RFIDlerConfig.RWD_Barrier_Zero_Period))
                 commandok= command_ack(NO_DATA);
             else
                 commandok= command_nack("Failed! PWM parameters not set or invalid data!");

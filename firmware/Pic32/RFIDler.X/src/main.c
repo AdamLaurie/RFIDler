@@ -1488,13 +1488,13 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "PWM2 ", 4) == 0)
     {
-        if(sscanf(command + 4,"%u %u %u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5, &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11, &tmpint12, &tmpint13) == 8)
+        if(sscanf(command + 4,"%u %u %u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5, &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11, &tmpint12, &tmpint13) == 14)
         {
             rwd_set_pwm2(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11, tmpint12, tmpint13);
             commandok= command_ack(NO_DATA);
         }
         else
-            commandok= command_nack("Invalid parameters!");
+            commandok= command_nack("Invalid parameters 2 !");
     }
 
 

@@ -145,6 +145,8 @@ void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsig
     RFIDlerConfig.RWD_Zero_Period= pw0;
     RFIDlerConfig.RWD_One_Period= pw1;
     RFIDlerConfig.RWD_Gap_Period= gap;
+    RFIDlerConfig.RWD_One_Gap_Period= gap;
+    RFIDlerConfig.RWD_Zero_Gap_Period= gap;
     RFIDlerConfig.RWD_Wait_Switch_TX_RX= wait_txrx;
     RFIDlerConfig.RWD_Wait_Switch_RX_TX= wait_rxtx;
 }
@@ -155,7 +157,9 @@ BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL bloc
     RWD_Fc= fc;
     // convert FCs to system ticks
     RWD_Sleep_Period= CONVERT_TO_TICKS(sleep * fc);
-    RWD_Gap_Period= CONVERT_TO_TICKS(gap * fc);
+    RWD_Gap_Period= gap * 2;
+    RWD_One_Gap_Period= gap * 2;
+    RWD_Zero_Gap_Period= gap * 2;
     // convert FCs to OCM ticks
     RWD_Wake_Period= wake * 2;
     RWD_Zero_Period= pw0 * 2;

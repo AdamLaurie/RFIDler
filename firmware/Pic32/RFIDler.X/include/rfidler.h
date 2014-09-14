@@ -142,7 +142,7 @@
 #define TMP_SMALL_BUFF_LEN  256
 #define ANALOGUE_BUFF_LEN   8192
 
-#define COMMS_BUFFER_SIZE   128
+#define COMMS_BUFFER_SIZE   256
 
 #define SAMPLEMASK          ~(BIT_1 | BIT_0)    // mask to remove two bottom bits from analogue sample - we will then use those for reader & bit period
 

@@ -2193,11 +2193,13 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    PSK1 <HEX UID> <FC> <RATE> <SUB> <REPEAT>                    Emulate PSK1, Field Clock in uS/100, Data Rate in RF/n,\r\n");
             UserMessage("%s", "                                                                 Sub Carrier in RF/n\r\n");
             UserMessage("%s", "    PWM <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX>      Set PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n");
+            UserMessage("%s", "    PWM2 <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX> <DIFF> <GAP1> <GAP0> <BARRIER> <B1> <B0>     Set  advanced PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n");
             UserMessage("%s", "    READ <START BLOCK> [END BLOCK]                               Read and store data block(s) (may require auth/login)\r\n");
             UserMessage("%s", "    READER                                                       Go into READER mode (continuously acquire UID)\r\n");
             UserMessage("%s", "    REBOOT                                                       Perform soft reset\r\n");
             UserMessage("%s", "    RTC                                                          Show Real Time Clock\r\n");
-            UserMessage("%s", "    RWD <BINARY>                                                 Send binary command/data\r\n");
+            UserMessage("%s", "    RWD <BINARY>                                                 Send binary command/data set with PWM\r\n");
+            UserMessage("%s", "    RWD2 <BINARY>                                                Send binary command/data set with PWM 2\r\n");
             UserMessage("%s", "    SAVE                                                         Save current config to NVM\r\n");
             UserMessage("%s", "    SELECT [UID]                                                 Send SELECT command\r\n");
             UserMessage("%s", "    SET BIPHASE <ON|OFF>                                         Set BiPhase encoding\r\n");

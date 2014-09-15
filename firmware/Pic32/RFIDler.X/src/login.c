@@ -141,7 +141,7 @@ BOOL tag_login(unsigned int block, BYTE *response, BYTE *pwd)
     switch (RFIDlerConfig.TagType)
     {
         case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
+        //case TAG_TYPE_T55X7:
             return q5_login(response, pwd);
 
         case TAG_TYPE_HITAG2:

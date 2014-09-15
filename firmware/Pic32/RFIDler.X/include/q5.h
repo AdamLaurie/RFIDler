@@ -146,8 +146,10 @@
 
 #define Q5_BLOCKSIZE            32          // blocksize in bits
 #define Q5_DATABLOCKS           8           // total number of blocks
-#define Q5_CONFIG_BLOCK_NUMBER  0           // config block number
-#define Q5_USER_DATA_BLOCK      1           // 1st user data block
+#define Q5_CONFIG_BLOCK_NUM     0           // config block number
+#define Q5_USER_DATA_BLOCK_NUM  1           // 1st user data block
+#define Q5_PW_BLOCK_NUM         7           // password block number
+#define Q5_BLANK_BLOCK          "FFFFFFFF"
 
 #define Q5_DEFAULT_PWD          "FFFFFFFF"  // default password
 
@@ -204,9 +206,5 @@ BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify);
 BOOL q5_get_config(BYTE *response);
 BOOL q5_login(BYTE *response, BYTE *pass);
 BOOL q5_rwd_test(BYTE *pattern);
-unsigned int q5_blocksize();
-unsigned int q5_datablocks();
-unsigned int q5_config_block_number(void);
 BOOL q5_config_block_show(BYTE *config);
-unsigned int q5_user_block_number(void);
 BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype);

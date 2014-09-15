@@ -130,76 +130,101 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 
-// hitag1 commands
-#define HITAG1_CC                   "00110"         // get UID when in Anti-Collision mode
-#define HITAG1_SELECT               "00000"         // select tag for read/write
-#define HITAG1_WRPPAGE              "1000"          // write page plaintext mode (page is 32 bits, number 0-63)
-#define HITAG1_WRPBLK               "1001"          // write block plaintext mode (block is 4 pages)
-#define HITAG1_WRCPAGE              "1010"          // write page crypto mode
-#define HITAG1_WRCBLK               "1011"          // write block crypto mode
-#define HITAG1_RDPPAGE              "1100"          // read page plaintext mode
-#define HITAG1_RDPBLK               "1101"          // read block plaintext mode
-#define HITAG1_RDCPAGE              "1110"          // read page crypto mode
-#define HITAG1_RDCBLK               "1111"          // read block crypto mode
-#define HITAG1_HALT                 "0111"          // halt selected tag
 
-#define HITAG1_CRC_POLYNOM          0x1D
-#define HITAG1_CRC_PRESET           0xFF
 
-#define HITAG1_BLOCKSIZE            32              // read returns block sizes of 32, 64, 96 or 128 Bit, but we will only use 32
-#define HITAG1_MAX_COMMAND_LEN      46              // longest command as binstring, plus NULL
-#define HITAG1_DATABLOCKS           64              // total blocks
-#define HITAG1_CONFIG_BLOCK_NUM     1               // config block
-#define HITAG1_USER_DATA_BLOCK_NUM  4               // 1st user data block
+#define T55X7_SOFT_RESET           "00"        // reset (test mode)
+#define T55X7_DIRECT_ACCESS        "10"        // direct read in pwd or non-pwd mode
+#define T55X7_STD_WRITE_P0         "10"        // write page 0
+#define T55X7_STD_WRITE_P1         "11"        // write page 1
+#define T55X7_GET_TRACE_DATA       "11"        // get 64 bits tracebility data
+#define T55X7_AOR                  "10"        // Answer On Request (wakeup)
+#define T55X7_READ_CONFIG_BLOCK    "100000"    // direct read, no PWD, address 000
 
-// hitag2 commands
-#define HITAG2_START_AUTH           "11000"         // get UID and/or start the authentication process
-#define HITAG2_READ_PAGE            "11"            // read page after auth
-#define HITAG2_READ_PAGE_INVERTED   "01"            // as read page but all bits inverted
-#define HITAG2_WRITE_PAGE           "10"            // write page after auth
-#define HITAG2_HALT                 "00"            // silence currently authenticated tag
+#define T55X7_START_GAP            48          // start gap in FC - range 10 - 50, must be greater than command gap
+#define T55X7_POR_DELAY            8190        // FCs additional startup delay if POR set
+#define T55X7_WRITE_DELAY          1000        // time needed to complete write operation in FC - 64 + 648 in the docs, so round up a bit
 
-#define HITAG2_PWD_DEFAULT          "4D494B52"      // hitag default PWD ("MIKR")
+#define T55X7_BLOCKSIZE            32          // blocksize in bits
+#define T55X7_DATABLOCKS           8           // total number of blocks
+#define T55X7_CONFIG_BLOCK_NUM     0           // config block number
+#define T55X7_USER_DATA_BLOCK_NUM  1           // 1st user data block
+#define T55X7_PW_BLOCK_NUM         7           // password block number
 
-#define HITAG2_KEY_LOW              "4D494B52"      // hitag default KEY_LOW
-#define HITAG2_KEY_HIGH             "4F4E"          // hitag default KEY_HIGH ("ON")
-#define HITAG2_KEY_DEFAULT          "4F4E4D494B52"  // hitag default key in correct order for AUTH command ("ONMIKR")
-
-#define HITAG2_BLANK_BLOCK          "00000000"
-
-#define HITAG2_CONFIG_BLOCK_NUM     3               // hitag2 config block
-#define HITAG2_USER_DATA_BLOCK_NUM  4               // 1st user data block
-#define HITAG2_PW_BLOCK_NUM         1               // password block number
-#define HITAG2_BLOCKSIZE            32              // block size in bits
-#define HITAG2_DATABLOCKS           8               // total number of blocks
-
-#define HITAG2_WRITE_DELAY          614             // time to complete write in FCs
+#define T55X7_DEFAULT_PWD          "FFFFFFFF"  // default password
 
 // config blocks
-#define HITAG2_DEFAULT_CONFIG_BLOCK "06AA4854"      // hitag2 native, password mode
-#define HITAG2_CRYPTO_CONFIG_BLOCK  "0EAA4854"      // hitag2 native, crypto mode
-#define HITAG2_FDXB_CONFIG_BLOCK    "00AA4854"      // public-mode b
-#define HITAG2_UNIQUE_CONFIG_BLOCK  "02AA4854"      // public-mode a
-#define HITAG2_EM4X02_CONFIG_BLOCK  "02AA4854"      // public-mode a
-#define HITAG2_MODEC_CONFIG_BLOCK   "04AA4854"      // public-mode c - PCF793X
+#define T55X7_DEFAULT_CONFIG_BLOCK      "908280E8"      // extended mode, data rate 64, manchester, 7 data blocks, ST
+//#define Q5_FDXB_CONFIG_BLOCK         "E600F0E8"      // emulate fdx-b
+//#define Q5_HID_26_CONFIG_BLOCK       "E6018056"      // hid 26 bit
+//#define Q5_INDALA_64_CONFIG_BLOCK    "E600F014"      // emulate indala 64 bit
+//#define Q5_INDALA_224_CONFIG_BLOCK   "E600F01E"      // emulate indala 224 bit
 
-BOOL hitag1_get_uid(BYTE *response);
-BOOL hitag1_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length);
-void hitag1_binarray_crc(BYTE *crc, BYTE *bin, BYTE length);
-void hitag1_crc(BYTE *crc, BYTE data, BYTE bits);
-BOOL hitag2_get_uid(BYTE *response);
-BOOL hitag2_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag1_select(BYTE *response, BYTE *uid);
-BOOL hitag1_read_page(BYTE *response, BYTE block);
-BOOL hitag2_pwd_auth(BYTE *response, BYTE *pwd);
-BOOL hitag2_read_page(BYTE *response, BYTE block);
-BOOL hitag2_write_page(BYTE block, BYTE *data);
-void hitag2_test_rwd(unsigned int gapmin, unsigned int gapmax, unsigned int zeromin, unsigned int zeromax, unsigned int onemin, unsigned int onemax, BYTE *pass);
-BOOL hitag2_hex_crypt(BYTE *target, BYTE *source);
-void hitag2_binstring_crypt(BYTE *target, BYTE *source);
-void hitag2_binarray_crypt(BYTE *target, BYTE *source, unsigned int length);
-unsigned long hitag2_crypt(unsigned long source, BYTE length);
-unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
-BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
+// note that T55X7 sends data in LSB order, so everything in the datasheet is effectively reversed
+// what is shown as "bit 32" is actually bit 0
 
+// config block masks - compatibility mode (master key == 0110)
+#define T55X7_COMPAT_MASK_MASTER_KEY             0b11110000000000000000000000000000
+#define T55X7_COMPAT_MASK_DATA_BIT_RATE          0b00000000000111000000000000000000
+#define T55X7_COMPAT_MASK_MODULATION             0b00000000000000011111000000000000
+#define T55X7_COMPAT_MASK_PSK_CARRIER_FREQ       0b00000000000000000000110000000000
+#define T55X7_COMPAT_MASK_AOR                    0b00000000000000000000001000000000
+#define T55X7_COMPAT_MASK_MAX_BLOCK              0b00000000000000000000000011100000
+#define T55X7_COMPAT_MASK_PWD                    0b00000000000000000000000000010000
+#define T55X7_COMPAT_MASK_ST                     0b00000000000000000000000000001000
+#define T55X7_COMPAT_MASK_POR_DELAY              0b00000000000000000000000000000001
+
+// config block masks - xtended mode (master key == 1001)
+#define T55X7_XMODE_MASK_MASTER_KEY              0b11110000000000000000000000000000
+#define T55X7_XMODE_MASK_DATA_BIT_RATE           0b00000000111111000000000000000000
+#define T55X7_XMODE_MASK_XMODE                   0b00000000000000100000000000000000
+#define T55X7_XMODE_MASK_MODULATION              0b00000000000000011111000000000000
+#define T55X7_XMODE_MASK_PSK_CARRIER_FREQ        0b00000000000000000000110000000000
+#define T55X7_XMODE_MASK_AOR                     0b00000000000000000000001000000000
+#define T55X7_XMODE_MASK_OTP                     0b00000000000000000000000100000000
+#define T55X7_XMODE_MASK_MAX_BLOCK               0b00000000000000000000000011100000
+#define T55X7_XMODE_MASK_PWD                     0b00000000000000000000000000010000
+#define T55X7_XMODE_MASK_SST                     0b00000000000000000000000000001000
+#define T55X7_XMODE_MASK_FAST_WRITE              0b00000000000000000000000000000100
+#define T55X7_XMODE_MASK_INVERSE_DATA            0b00000000000000000000000000000010
+#define T55X7_XMODE_MASK_POR_DELAY               0b00000000000000000000000000000001
+
+// config block bit shifts - (same for both modes, but not all apply)
+#define T55X7_MASK_MASTER_KEY                   28
+#define T55X7_SHIFT_DATA_BIT_RATE               18
+#define T55X7_SHIFT_XMODE                       17
+#define T55X7_SHIFT_MODULATION                  12
+#define T55X7_SHIFT_PSK_CARRIER_FREQ            10
+#define T55X7_SHIFT_AOR                         9
+#define T55X7_SHIFT_OTP                         8
+#define T55X7_SHIFT_MAX_BLOCK                   5
+#define T55X7_SHIFT_PWD                         4
+#define T55X7_SHIFT_SST                         3
+#define T55X7_SHIFT_ST                          3
+#define T55X7_SHIFT_FAST_WRITE                  2
+#define T55X7_SHIFT_INVERSE_DATA                1
+#define T55X7_SHIFT_POR_DELAY                   0
+
+// T55X7 modulation settings
+#define T55X7_MOD_BIPHASE_57               24
+#define T55X7_MOD_BIPHASE_50               17
+#define T55X7_MOD_MANCHESTER               8
+#define T55X7_MOD_FSK2_A                   7
+#define T55X7_MOD_FSK1_A                   6
+#define T55X7_MOD_FSK2                     5
+#define T55X7_MOD_FSK1                     4
+#define T55X7_MOD_PSK3                     3
+#define T55X7_MOD_PSK2                     2
+#define T55X7_MOD_PSK1                     1
+#define T55X7_MOD_DIRECT                   0
+
+
+//BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
+//BOOL q5_get_uid(BYTE *response);
+//BOOL q5_hex_to_uid(BYTE *response, BYTE *hex);
+BOOL t55x7_read_block(BYTE *response, BYTE block);
+//BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify);
+//BOOL q5_get_config(BYTE *response);
+//BOOL q5_login(BYTE *response, BYTE *pass);
+//BOOL q5_rwd_test(BYTE *pattern);
+//BOOL q5_config_block_show(BYTE *config);
+BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype);

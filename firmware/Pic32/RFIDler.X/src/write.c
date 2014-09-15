@@ -142,7 +142,7 @@ BOOL write_tag(unsigned int block, BYTE *data, BOOL verify)
     switch(RFIDlerConfig.TagType)
     {
         case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
+        //case TAG_TYPE_T55X7:
             return q5_write_block((BYTE) block, data, NO_LOCK, verify);
             
         case TAG_TYPE_HITAG2:

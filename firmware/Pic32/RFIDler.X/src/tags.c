@@ -136,6 +136,7 @@
 #include "clock.h"
 #include "hitag.h"
 #include "q5.h"
+#include "t55x7.h"
 #include "uid.h"
 #include "fdxb.h"
 #include "comms.h"
@@ -144,6 +145,7 @@
 #include "em.h"
 #include "indala.h"
 #include "unique.h"
+#include "write.h"
 
 // tagtype #defines in rfidler.h
 const BYTE *TagTypes[]= {
@@ -216,14 +218,16 @@ unsigned int tag_get_blocksize(BYTE tag)
             return tag_get_blocksize(RFIDlerVTag.TagType);
 
         case TAG_TYPE_HITAG1:
-            return hitag1_blocksize();
+            return HITAG1_BLOCKSIZE;
 
         case TAG_TYPE_HITAG2:
-            return hitag2_blocksize();
+            return HITAG2_BLOCKSIZE;
 
         case TAG_TYPE_Q5:
+            return Q5_BLOCKSIZE;
+
         case TAG_TYPE_T55X7:
-            return q5_blocksize();
+            return T55X7_BLOCKSIZE;
 
         default:
             return 0;
@@ -244,14 +248,16 @@ unsigned int tag_get_datablocks(BYTE tag)
             return RFIDlerConfig.DataBits / tag_get_blocksize(RFIDlerVTag.TagType);
 
        case TAG_TYPE_HITAG1:
-            return hitag1_datablocks();
+            return HITAG1_DATABLOCKS;
 
         case TAG_TYPE_HITAG2:
-            return hitag2_datablocks();
+            return HITAG2_DATABLOCKS;
 
         case TAG_TYPE_Q5:
+            return Q5_DATABLOCKS;
+
         case TAG_TYPE_T55X7:
-            return q5_datablocks();
+            return T55X7_DATABLOCKS;
 
         default:
             return 0;
@@ -283,10 +289,10 @@ unsigned int tag_get_databits(BYTE tag)
             return FDXB_DATABITS;
 
         case TAG_TYPE_HITAG1:
-            return hitag1_datablocks() * hitag1_blocksize();
+            return HITAG1_DATABLOCKS * HITAG1_BLOCKSIZE;
 
         case TAG_TYPE_HITAG2:
-            return hitag2_datablocks() * hitag2_blocksize();
+            return HITAG2_DATABLOCKS * HITAG2_BLOCKSIZE;
 
         case TAG_TYPE_INDALA_64:
             return INDALA_64_DATABITS;
@@ -295,8 +301,10 @@ unsigned int tag_get_databits(BYTE tag)
             return INDALA_224_DATABITS;
 
         case TAG_TYPE_Q5:
+            return Q5_DATABLOCKS * Q5_BLOCKSIZE;
+
         case TAG_TYPE_T55X7:
-            return q5_datablocks() * q5_blocksize();
+            return T55X7_DATABLOCKS * T55X7_BLOCKSIZE;
 
         case TAG_TYPE_UNIQUE:
             return UNIQUE_DATABITS;
@@ -372,9 +380,10 @@ BOOL tag_set(BYTE tag)
             break;
 
       case TAG_TYPE_AWID_26:
-            RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
+            //RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
+            RFIDlerConfig.FrameClock= 800; // 125 KHz
             RFIDlerConfig.Modulation= MOD_MODE_FSK2;
-            RFIDlerConfig.PotHigh=  100;
+            RFIDlerConfig.PotHigh=  110;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 10;
@@ -438,9 +447,10 @@ BOOL tag_set(BYTE tag)
             break;
                   
         case TAG_TYPE_HID_26:
-            RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
+            //RFIDlerConfig.FrameClock= 765; // 130.7 KHz (134KHz breaks emulation)
+            RFIDlerConfig.FrameClock= 800; // 125 KHz
             RFIDlerConfig.Modulation= MOD_MODE_FSK2;
-            RFIDlerConfig.PotHigh=  100;
+            RFIDlerConfig.PotHigh=  110;
             RFIDlerConfig.DataRate= 50;
             RFIDlerConfig.DataRateSub0= 8;
             RFIDlerConfig.DataRateSub1= 10;
@@ -610,15 +620,14 @@ BOOL tag_set(BYTE tag)
 
 
         case TAG_TYPE_T55X7:
-            // same as Q5 but slightly different timings, sync and no modulation-defeat
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
             RFIDlerConfig.PotHigh= 100;
             RFIDlerConfig.DataRate= 64;
             RFIDlerConfig.DataBits= 64;
-            RFIDlerConfig.DataBlocks= Q5_DATABLOCKS;
-            RFIDlerConfig.BlockSize= Q5_BLOCKSIZE;
+            RFIDlerConfig.DataBlocks= T55X7_DATABLOCKS;
+            RFIDlerConfig.BlockSize= T55X7_BLOCKSIZE;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
@@ -649,6 +658,10 @@ BOOL tag_set(BYTE tag)
 
     // delay to allow things to settle
     Delay_us(500000);
+
+    // reset globals
+    PWD_Mode= FALSE;
+    memset(Password, '\0', sizeof(Password));
     
     return TRUE;
 }
@@ -707,4 +720,56 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
             return FALSE;
     }
     return TRUE;
+}
+
+// reset tag to default by writing config block
+BOOL tag_write_default_config(BYTE tagtype, BYTE *password)
+{
+    unsigned int tmp;
+
+
+    if(!config_block_number(&tmp, tagtype))
+        return FALSE;
+
+    // hitag2 always needs login/auth
+    if(strlen(password) || tagtype == TAG_TYPE_HITAG2)
+        if(!(tag_login(tmp, TmpBuff, password) || tag_auth(tmp, TmpBuff, password)))
+                return FALSE;
+
+    // emulation block for own tag type is default config block
+    if(!config_block(TmpBuff, tagtype, tagtype))
+        return FALSE;
+    return write_tag(tmp, TmpBuff, VERIFY);
+}
+
+// reset tag to default and wipe all data blocks
+BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password)
+{
+    unsigned int i;
+
+    switch(tagtype)
+    {
+        case TAG_TYPE_Q5:
+            // write config first so we can verify data block writes
+            if(!tag_write_default_config(tagtype, ""))
+                return FALSE;
+            for(i= Q5_USER_DATA_BLOCK_NUM ; i < Q5_DATABLOCKS ; ++i)
+                if(!write_tag(i, Q5_BLANK_BLOCK, VERIFY))
+                    return FALSE;
+            return TRUE;
+
+        case TAG_TYPE_HITAG2:
+            if(!tag_write_default_config(tagtype, password))
+                return FALSE;
+            for(i= HITAG2_USER_DATA_BLOCK_NUM ; i < HITAG2_DATABLOCKS ; ++i)
+                if(!write_tag(i, HITAG2_BLANK_BLOCK, VERIFY))
+                    return FALSE;
+            // write default password
+            if(!write_tag(HITAG2_PW_BLOCK_NUM, HITAG2_PWD_DEFAULT, VERIFY))
+                return FALSE;
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
 }

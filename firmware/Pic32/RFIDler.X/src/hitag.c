@@ -310,29 +310,6 @@ void hitag1_crc(BYTE *crc, BYTE data, BYTE bits)
     }
 }
 
-// return blocksize in bits
-unsigned int hitag1_blocksize(void)
-{
-    return HITAG1_BLOCKSIZE;
-}
-
-// return number of datablocks
-unsigned int hitag1_datablocks(void)
-{
-    return HITAG1_DATABLOCKS;
-}
-
-unsigned int hitag1_config_block_number(void)
-{
-    return HITAG1_CONFIG_BLOCK_NUMBER;
-}
-
-// return first usable data block
-unsigned int hitag1_user_block_number(void)
-{
-    return HITAG1_USER_DATA_BLOCK;
-}
-
 BOOL hitag2_get_uid(BYTE *response)
 {
     BYTE tmp[37];
@@ -677,29 +654,6 @@ unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length)
                 return 0;
     }
     return HEXDIGITS(length);
-}
-
-// return blocksize in bits
-unsigned int hitag2_blocksize(void)
-{
-    return HITAG2_BLOCKSIZE;
-}
-
-// return number of datablocks
-unsigned int hitag2_datablocks(void)
-{
-    return HITAG2_DATABLOCKS;
-}
-
-unsigned int hitag2_config_block_number(void)
-{
-    return HITAG2_CONFIG_BLOCK_NUMBER;
-}
-
-// return first usable data block
-unsigned int hitag2_user_block_number(void)
-{
-    return HITAG2_USER_DATA_BLOCK;
 }
 
 // set a config block suitable for emulating

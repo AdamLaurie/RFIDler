@@ -53,6 +53,7 @@
       <itemPath>include/awid.h</itemPath>
       <itemPath>include/analogue.h</itemPath>
       <itemPath>include/iso_7816.h</itemPath>
+      <itemPath>include/t55x7.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -118,6 +119,7 @@
       <itemPath>src/awid.c</itemPath>
       <itemPath>src/analogue.c</itemPath>
       <itemPath>src/iso7816.c</itemPath>
+      <itemPath>src/t55x7.c</itemPath>
     </logicalFolder>
     <logicalFolder name="windows driver"
                    displayName="Windows Driver"

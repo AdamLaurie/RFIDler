@@ -358,7 +358,7 @@ BOOL vtag_convert(BYTE *tagtype)
 BOOL vtag_write_to_tag(BYTE *pass)
 {
     unsigned int block, config_block_no;
-    BYTE tmp[MAXBLOCKSIZE + 1], tagtype;
+    BYTE tmp[MAXBLOCKSIZE + 1];
     BOOL auth= FALSE;
     StoredConfig tmptag;
 
@@ -457,8 +457,8 @@ BOOL vtag_write_blocks(unsigned int startblock, BYTE *data)
         if((((strlen(data) * 4) / RFIDlerVTag.BlockSize) + startblock) - 1 > tag_get_databits(RFIDlerVTag.EmulatedTagType) / RFIDlerVTag.BlockSize)
             return FALSE;
     memcpy(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * startblock)], data, strlen(data));
-    // copy raw hex back to UID
-    if(config_user_block(&user_block_no, RFIDlerVTag.TagType))
+    // copy raw hex back to UID if emulating
+    if(RFIDlerVTag.EmulatedTagType != TAG_TYPE_NONE && config_user_block(&user_block_no, RFIDlerVTag.TagType))
         memcpy(RFIDlerVTag.UID, &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], HEXDIGITS(RFIDlerVTag.BlockSize * (RFIDlerVTag.DataBlocks - user_block_no)));
     return TRUE;
 }

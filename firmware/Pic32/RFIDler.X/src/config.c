@@ -135,18 +135,28 @@
 #include "rfidler.h"
 #include "config.h"
 #include "read.h"
+#include "hitag.h"
+#include "q5.h"
+#include "t55x7.h"
 
+// get the config block number
 BOOL config_block_number(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
+       case TAG_TYPE_HITAG1:
+            *block= HITAG1_CONFIG_BLOCK_NUM;
+            return TRUE;
+
         case TAG_TYPE_HITAG2:
-            *block= hitag2_config_block_number();
+            *block= HITAG2_CONFIG_BLOCK_NUM;
             return TRUE;
 
         case TAG_TYPE_Q5:
+            *block= Q5_CONFIG_BLOCK_NUM;
+
         case TAG_TYPE_T55X7:
-            *block= q5_config_block_number();
+            *block= T55X7_CONFIG_BLOCK_NUM;
             return TRUE;
 
         default:
@@ -154,17 +164,47 @@ BOOL config_block_number(unsigned int *block, BYTE tagtype)
     }
 }
 
+// get the first user-data block number
 BOOL config_user_block(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
+        case TAG_TYPE_HITAG1:
+            *block= HITAG1_USER_DATA_BLOCK_NUM;
+            return TRUE;
+
         case TAG_TYPE_HITAG2:
-            *block= hitag2_user_block_number();
+            *block= HITAG2_USER_DATA_BLOCK_NUM;
             return TRUE;
 
         case TAG_TYPE_Q5:
+            *block= Q5_USER_DATA_BLOCK_NUM;
+            return TRUE;
+
         case TAG_TYPE_T55X7:
-            *block= q5_user_block_number();
+            *block= T55X7_USER_DATA_BLOCK_NUM;
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
+// get the password block number
+BOOL config_pw_block(unsigned int *block, BYTE tagtype)
+{
+    switch (tagtype)
+    {
+        case TAG_TYPE_HITAG2:
+            *block= HITAG2_PW_BLOCK_NUM;
+            return TRUE;
+
+        case TAG_TYPE_Q5:
+            *block= Q5_PW_BLOCK_NUM;
+            return TRUE;
+
+        case TAG_TYPE_T55X7:
+            *block= T55X7_PW_BLOCK_NUM;
             return TRUE;
 
         default:

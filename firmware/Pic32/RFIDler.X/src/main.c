@@ -161,6 +161,7 @@
 #include "wiegand.h"
 #include "analogue.h"
 #include "iso_7816.h"
+#include "write.h"
 
 // low level config
 #pragma config CP       = ON           // Code Protect
@@ -851,7 +852,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "ASK ", 4) == 0)
     {
-        if(sscanf(command + 4,"%s %ld %u %u", &local_tmp, &tmplong, &tmpint, &tmpint1) == 4)
+        if(sscanf(command + 4,"%s %ld %u %u", local_tmp, &tmplong, &tmpint, &tmpint1) == 4)
         {
             if(!send_ask_hex(local_tmp, tmplong, tmpint, tmpint1))
                 commandok= command_nack("Send failed!");
@@ -880,7 +881,9 @@ BYTE ProcessSerialCommand(char *command)
         // allow null key / block
         local_tmp[0]= '\0';
         tmpint= 0;
-        if(sscanf(command + 4, "%s %u", &local_tmp, &tmpint) <= 2)
+        if(sscanf(command + 4, " %s %u", local_tmp, &tmpint) > 2)
+                commandok= command_nack("Invalid parameters!");
+        else
         {
             if(tag_auth(tmpint, DataBuff, local_tmp))
             {
@@ -891,8 +894,6 @@ BYTE ProcessSerialCommand(char *command)
             else
                 commandok= command_nack("Auth failed!");
         }
-        else
-            commandok= command_nack("Invalid parameters!");
     }
 
     if (strcmp(command, "AUTOPOT") == 0)
@@ -999,7 +1000,7 @@ BYTE ProcessSerialCommand(char *command)
     {
         // allow null key/pwd
         local_tmp[0]= '\0';
-        if(sscanf(command + 5, "%s", &local_tmp) <= 1)
+        if(sscanf(command + 5, "%s", local_tmp) <= 1)
         {
             if (!vtag_write_to_tag(local_tmp))
                 commandok= command_nack("Failed!");
@@ -1033,7 +1034,7 @@ BYTE ProcessSerialCommand(char *command)
     {
         if(RFIDlerVTag.TagType)
         {
-            if(sscanf(command + 7, "%s", &local_tmp) == 1)
+            if(sscanf(command + 7, "%s", local_tmp) == 1)
             {
                 if(vtag_convert(local_tmp))
                     commandok= command_ack(NO_DATA);
@@ -1051,7 +1052,7 @@ BYTE ProcessSerialCommand(char *command)
         local_tmp[0]= '\0';
         local_tmp1[0]= '\0';
         tmpint= 0;
-        if(sscanf(command + 4, "%s %s", &local_tmp, &local_tmp1) <= 2)
+        if(sscanf(command + 4, "%s %s", local_tmp, local_tmp1) <= 2)
         {
             if(vtag_copy_from_tag(local_tmp, local_tmp1))
                 commandok= command_ack(NO_DATA);
@@ -1216,8 +1217,8 @@ BYTE ProcessSerialCommand(char *command)
         {
             // allow empty tag type but not uid
             local_tmp[0]= '\0';
-            local_tmp[1]= '\0';
-            if(sscanf(command + 7, "%s %s", &local_tmp, &local_tmp1) <= 2 && strlen(local_tmp) != 0)
+            local_tmp1[0]= '\0';
+            if(sscanf(command + 7, "%s %s", local_tmp, local_tmp1) <= 2 && strlen(local_tmp) != 0)
             {
                 // output hex only
                 if(strlen(local_tmp1) == 0)
@@ -1281,7 +1282,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "FSK ", 4) == 0)
     {
-        if(sscanf(command + 4,"%s %ld %u %u %u %u", &local_tmp, &tmplong, &tmpint, &tmpint1, &tmpint2, &tmpint3) == 6)
+        if(sscanf(command + 4,"%s %ld %u %u %u %u", local_tmp, &tmplong, &tmpint, &tmpint1, &tmpint2, &tmpint3) == 6)
         {
             UserMessage("Sending %s ", local_tmp);
             if(send_fsk_hex(local_tmp, tmplong, tmpint, tmpint1, tmpint2, tmpint3))
@@ -1358,7 +1359,9 @@ BYTE ProcessSerialCommand(char *command)
         // allow empty password / block
         local_tmp[0]= '\0';
         tmpint= 0;
-        if(sscanf(command + 5, "%s %u", &local_tmp, &tmpint) <= 2)
+        if(sscanf(command + 5, " %s %u", local_tmp, &tmpint) > 2)
+            commandok= command_nack("Invalid parameters!");
+        else
         {
             if(tag_login(tmpint, DataBuff, local_tmp))
             {
@@ -1369,8 +1372,6 @@ BYTE ProcessSerialCommand(char *command)
             else
                 commandok= command_nack("Login failed!");
         }
-        else
-            commandok= command_nack("Invalid parameters!");
     }
 
     if (strcmp(command, "PING") == 0)
@@ -1461,7 +1462,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "PSK1 ", 5) == 0)
     {
-        if(sscanf(command + 5,"%s %ld %u %u %u", &local_tmp, &tmplong, &tmpint, &tmpint1, &tmpint2) == 5)
+        if(sscanf(command + 5,"%s %ld %u %u %u", local_tmp, &tmplong, &tmpint, &tmpint1, &tmpint2) == 5)
         {
             if(send_psk1_hex(local_tmp, tmplong, tmpint, tmpint1, tmpint2))
                 commandok= command_ack(NO_DATA);
@@ -1556,7 +1557,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "RWD ", 4) == 0)
     {
-        if(sscanf(command + 4,"%s", &local_tmp) == 1)
+        if(sscanf(command + 4,"%s", local_tmp) == 1)
         {
             if(rwd_send(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, 0))
                 commandok= command_ack(NO_DATA);
@@ -1579,7 +1580,7 @@ BYTE ProcessSerialCommand(char *command)
     {
         // allow empty UID
         local_tmp[0]= '\0';
-        if(sscanf(command + 6, "%s", &local_tmp, &tmpint) <= 1)
+        if(sscanf(command + 6, "%s", local_tmp, &tmpint) <= 1)
         {
             if(select_tag(DataBuff, local_tmp))
             {
@@ -1849,7 +1850,7 @@ BYTE ProcessSerialCommand(char *command)
         commandok= command_ack(DATA);
         // allow null key/pwd
         local_tmp[0]= '\0';
-        sscanf(command + 8, "%s", &local_tmp);
+        sscanf(command + 8, "%s", local_tmp);
         rwd_test(local_tmp);
         eod();
     }
@@ -1913,7 +1914,7 @@ BYTE ProcessSerialCommand(char *command)
             commandok= command_nack("Invalid debug pin!");
     }
 
-    if (strcmp(command, "TRESET") == 0)
+    if (strncmp(command, "TRESET", 6) == 0)
     {
         if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
             commandok= command_nack("Tag type not set!");
@@ -1923,9 +1924,10 @@ BYTE ProcessSerialCommand(char *command)
                 commandok= command_nack("Not supported for this tag type!");
             else
             {
-                // emulation block for own tag type is default config
-                config_block(local_tmp, RFIDlerConfig.TagType, RFIDlerConfig.TagType);
-                if(write_tag(tmpint, local_tmp))
+                // allow empty password / block
+                local_tmp[0]= '\0';
+                sscanf(command + 6, " %s", local_tmp);
+                if (tag_write_default_config(RFIDlerConfig.TagType, local_tmp))
                     commandok= command_ack(NO_DATA);
                 else
                     commandok= command_nack("Write failed!");
@@ -1943,6 +1945,22 @@ BYTE ProcessSerialCommand(char *command)
     {
         commandok= command_ack(NO_DATA);
         READER_CLOCK_ENABLE_ON();
+    }
+
+    if (strncmp(command, "TWIPE", 5) == 0)
+    {
+        if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
+            commandok= command_nack("Tag type not set!");
+        else
+        {
+            // allow empty password / block
+            local_tmp[0]= '\0';
+            sscanf(command + 5, " %s", local_tmp);
+            if (tag_write_default_blocks(RFIDlerConfig.TagType, local_tmp))
+                commandok= command_ack(NO_DATA);
+            else
+                commandok= command_nack("Write failed!");
+         }
     }
 
     if (strcmp(command, "UID") == 0)
@@ -1981,7 +1999,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "VWRITE ", 7) == 0)
     {
-        if(sscanf(command + 7,"%u %s", &tmpint, &local_tmp) == 2)
+        if(sscanf(command + 7,"%u %s", &tmpint, local_tmp) == 2)
         {
             if(vtag_write_blocks(tmpint, local_tmp))
             {
@@ -2102,7 +2120,7 @@ BYTE ProcessSerialCommand(char *command)
         else
         {
             wiegand_out_enable();
-            if(sscanf(command + 14,"%s", &local_tmp) == 1)
+            if(sscanf(command + 14,"%s", local_tmp) == 1)
             {
                 commandok= command_ack(NO_DATA);
                 write_wiegand(local_tmp);
@@ -2120,9 +2138,9 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "WRITE ", 6) == 0)
     {
-        if(sscanf(command + 6,"%u %s", &tmpint, &local_tmp) == 2)
+        if(sscanf(command + 6,"%u %s", &tmpint, local_tmp) == 2)
         {
-            if(write_tag(tmpint, local_tmp))
+            if(write_tag(tmpint, local_tmp, VERIFY))
             {
                 commandok= command_ack(DATA);
                 UserMessage("%s\r\n", local_tmp);
@@ -2216,8 +2234,6 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    STOP                                                         Stop any running clocks\r\n");
             UserMessage("%s", "    TAGS                                                         Show known TAG TYPES\r\n");
             UserMessage("%s", "    TCONFIG                                                      Show TAG's config block\r\n");
-            UserMessage("%s", "    TRESET                                                       Reset TAG's config block to default (*** data loss may occur!)\r\n");
-            UserMessage("%s", "    TRISTATE <ON|OFF>                                            Switch reader circuit tri-state ON/OFF\r\n");
             UserMessage("%s", "    TEST-HITAG                                                   Hitag2 crypto - test correctness & timing\r\n");
             UserMessage("%s", "    TEST-RWD [HEX KEY|PATTERN|PWD]                               Find ideal paramaters for RWD commands\r\n");
             UserMessage("%s", "    TEST-SC                                                      Test ISO-7816 Smartcard (get ATR)\r\n");
@@ -2225,6 +2241,9 @@ BYTE ProcessSerialCommand(char *command)
             UserMessage("%s", "    TEST-TIMER                                                   Timer tests\r\n");
             UserMessage("%s", "    TEST-WIEGAND                                                 Wiegand loopback test\r\n");
             UserMessage("%s", "    TEST-WIEGAND-READ <DEBUG PIN>                                Wiegand reader test (triggers with DEBUG_PIN_X)\r\n");
+            UserMessage("%s", "    TRESET [PWD]                                                 Reset TAG's config block to default\r\n");
+            UserMessage("%s", "    TRISTATE <ON|OFF>                                            Switch reader circuit tri-state ON/OFF\r\n");
+            UserMessage("%s", "    TWIPE [PWD]                                                  Reset TAG contents to default (*** all data will be lost!)\r\n");
             UserMessage("%s", "    UID                                                          Read TAG UID\r\n");
             UserMessage("%s", "    VERSION                                                      Show firmware version\r\n");
             UserMessage("%s", "    VTAG                                                         Show contents of Virtual TAG\r\n");

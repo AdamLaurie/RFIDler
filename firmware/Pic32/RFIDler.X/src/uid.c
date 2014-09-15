@@ -184,7 +184,7 @@ BOOL get_tag_uid(BYTE *response)
             return psk1_raw_get_uid(response);
 
         case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
+        //case TAG_TYPE_T55X7:
             return q5_get_uid(response);
 
         case TAG_TYPE_UNIQUE:
@@ -240,7 +240,7 @@ BOOL interpret_uid(BYTE *response, BYTE *hex, BYTE tagtype)
             return psk1_raw_hex_to_uid(response, hex);
 
         case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
+        //case TAG_TYPE_T55X7:
             return q5_hex_to_uid(response, hex);
 
         case TAG_TYPE_UNIQUE:

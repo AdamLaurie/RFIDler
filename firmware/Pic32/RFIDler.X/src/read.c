@@ -134,6 +134,7 @@
 #include "read.h"
 #include "hitag.h"
 #include "q5.h"
+#include "t55x7.h"
 #include "comms.h"
 
 // read from start to end blocks. data will need to be large enough
@@ -146,12 +147,6 @@ BOOL read_tag(BYTE *data, unsigned int startblock, unsigned int endblock)
     {
         switch(RFIDlerConfig.TagType)
         {
-            case TAG_TYPE_Q5:
-            case TAG_TYPE_T55X7:
-                if(!q5_read_block(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
-                    return FALSE;
-                break;
-
             case TAG_TYPE_HITAG1:
                 if (!hitag1_read_page(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
                     return FALSE;
@@ -159,6 +154,16 @@ BOOL read_tag(BYTE *data, unsigned int startblock, unsigned int endblock)
 
             case TAG_TYPE_HITAG2:
                 if (!hitag2_read_page(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
+                    return FALSE;
+                break;
+
+            case TAG_TYPE_Q5:
+                if(!q5_read_block(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
+                    return FALSE;
+                break;
+
+            case TAG_TYPE_T55X7:
+                if(!t55x7_read_block(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
                     return FALSE;
                 break;
 

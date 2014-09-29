@@ -218,7 +218,6 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
             if (GetTimer_us(NO_RESET) > timeout_us)
                 return 0;
 
-
     if(Manchester_Error)
         return 0;
 

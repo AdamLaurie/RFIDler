@@ -149,47 +149,47 @@
 #define T55X7_CONFIG_BLOCK_NUM     0           // config block number
 #define T55X7_USER_DATA_BLOCK_NUM  1           // 1st user data block
 #define T55X7_PW_BLOCK_NUM         7           // password block number
+#define T55X7_BLANK_BLOCK          "FFFFFFFF"
 
 #define T55X7_DEFAULT_PWD          "FFFFFFFF"  // default password
 
 // config blocks
-#define T55X7_DEFAULT_CONFIG_BLOCK      "908280E8"      // extended mode, data rate 64, manchester, 7 data blocks, ST
+#define T55X7_DEFAULT_CONFIG_BLOCK      "00148000"      // compat mode, data rate 64, manchester, 7 data blocks
+#define T55X7_EM_UNIQUE_CONFIG_BLOCK    "00148040"      // emulate em4x02/unique - data rate 64, manchester, 2 data blocks
 //#define Q5_FDXB_CONFIG_BLOCK         "E600F0E8"      // emulate fdx-b
-//#define Q5_HID_26_CONFIG_BLOCK       "E6018056"      // hid 26 bit
-//#define Q5_INDALA_64_CONFIG_BLOCK    "E600F014"      // emulate indala 64 bit
-//#define Q5_INDALA_224_CONFIG_BLOCK   "E600F01E"      // emulate indala 224 bit
+#define T55X7_HID_26_CONFIG_BLOCK       "00107060"      // hid 26 bit - FSK2a, data rate 50, 3 data blocks
+#define T55X7_INDALA_64_CONFIG_BLOCK    "00081040"      // emulate indala 64 bit - PSK1, psk carrier FC * 2, data rate 32, maxblock 2
+#define T55X7_INDALA_224_CONFIG_BLOCK   "000810E0"      // emulate indala 224 bit - PSK1, psk carrier FC * 2, data rate 32, maxblock 7
 
 // note that T55X7 sends data in LSB order, so everything in the datasheet is effectively reversed
 // what is shown as "bit 32" is actually bit 0
 
+// config block common masks
+#define T55X7_MASK_MASTER_KEY                    0b11110000000000000000000000000000
+#define T55X7_MASK_XMODE                         0b00000000000000100000000000000000
+#define T55X7_MASK_PSK_CARRIER_FREQ              0b00000000000000000000110000000000
+#define T55X7_MASK_AOR                           0b00000000000000000000001000000000
+#define T55X7_MASK_OTP                           0b00000000000000000000000100000000
+#define T55X7_MASK_MAX_BLOCK                     0b00000000000000000000000011100000
+#define T55X7_MASK_PWD                           0b00000000000000000000000000010000
+#define T55X7_MASK_FAST_WRITE                    0b00000000000000000000000000000100
+#define T55X7_MASK_INVERSE_DATA                  0b00000000000000000000000000000010
+#define T55X7_MASK_POR_DELAY                     0b00000000000000000000000000000001
+
+#define T55X7_COMPAT_MODE                        0b0110
 // config block masks - compatibility mode (master key == 0110)
-#define T55X7_COMPAT_MASK_MASTER_KEY             0b11110000000000000000000000000000
 #define T55X7_COMPAT_MASK_DATA_BIT_RATE          0b00000000000111000000000000000000
 #define T55X7_COMPAT_MASK_MODULATION             0b00000000000000011111000000000000
-#define T55X7_COMPAT_MASK_PSK_CARRIER_FREQ       0b00000000000000000000110000000000
-#define T55X7_COMPAT_MASK_AOR                    0b00000000000000000000001000000000
-#define T55X7_COMPAT_MASK_MAX_BLOCK              0b00000000000000000000000011100000
-#define T55X7_COMPAT_MASK_PWD                    0b00000000000000000000000000010000
 #define T55X7_COMPAT_MASK_ST                     0b00000000000000000000000000001000
-#define T55X7_COMPAT_MASK_POR_DELAY              0b00000000000000000000000000000001
 
+#define T55X7_XMODE_MODE                         0b1001
 // config block masks - xtended mode (master key == 1001)
-#define T55X7_XMODE_MASK_MASTER_KEY              0b11110000000000000000000000000000
 #define T55X7_XMODE_MASK_DATA_BIT_RATE           0b00000000111111000000000000000000
-#define T55X7_XMODE_MASK_XMODE                   0b00000000000000100000000000000000
 #define T55X7_XMODE_MASK_MODULATION              0b00000000000000011111000000000000
-#define T55X7_XMODE_MASK_PSK_CARRIER_FREQ        0b00000000000000000000110000000000
-#define T55X7_XMODE_MASK_AOR                     0b00000000000000000000001000000000
-#define T55X7_XMODE_MASK_OTP                     0b00000000000000000000000100000000
-#define T55X7_XMODE_MASK_MAX_BLOCK               0b00000000000000000000000011100000
-#define T55X7_XMODE_MASK_PWD                     0b00000000000000000000000000010000
 #define T55X7_XMODE_MASK_SST                     0b00000000000000000000000000001000
-#define T55X7_XMODE_MASK_FAST_WRITE              0b00000000000000000000000000000100
-#define T55X7_XMODE_MASK_INVERSE_DATA            0b00000000000000000000000000000010
-#define T55X7_XMODE_MASK_POR_DELAY               0b00000000000000000000000000000001
 
 // config block bit shifts - (same for both modes, but not all apply)
-#define T55X7_MASK_MASTER_KEY                   28
+#define T55X7_SHIFT_MASTER_KEY                  28
 #define T55X7_SHIFT_DATA_BIT_RATE               18
 #define T55X7_SHIFT_XMODE                       17
 #define T55X7_SHIFT_MODULATION                  12
@@ -198,8 +198,7 @@
 #define T55X7_SHIFT_OTP                         8
 #define T55X7_SHIFT_MAX_BLOCK                   5
 #define T55X7_SHIFT_PWD                         4
-#define T55X7_SHIFT_SST                         3
-#define T55X7_SHIFT_ST                          3
+#define T55X7_SHIFT_ST_SST                      3
 #define T55X7_SHIFT_FAST_WRITE                  2
 #define T55X7_SHIFT_INVERSE_DATA                1
 #define T55X7_SHIFT_POR_DELAY                   0
@@ -218,13 +217,15 @@
 #define T55X7_MOD_DIRECT                   0
 
 
-//BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
+//
+
+BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
 //BOOL q5_get_uid(BYTE *response);
 //BOOL q5_hex_to_uid(BYTE *response, BYTE *hex);
 BOOL t55x7_read_block(BYTE *response, BYTE block);
 //BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify);
 //BOOL q5_get_config(BYTE *response);
 //BOOL q5_login(BYTE *response, BYTE *pass);
-//BOOL q5_rwd_test(BYTE *pattern);
+BOOL t55x7_rwd_test(BYTE *pattern);
 //BOOL q5_config_block_show(BYTE *config);
 BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype);

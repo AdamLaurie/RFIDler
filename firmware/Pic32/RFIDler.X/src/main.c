@@ -827,7 +827,25 @@ BYTE ProcessSerialCommand(char *command)
             else
             {
                 commandok= command_ack(DATA);
-                analogue_sample(tmpint);
+                analogue_sample(tmpint, TRUE);
+                analogue_xml_out(tmpint);
+                eod();
+            }
+        }
+        else
+            commandok= command_nack("Invalid number of samples!");
+    }
+
+    if (strncmp(command, "ANALOGUEN ", 10) == 0)
+    {
+        if(sscanf(command + 10, "%d", &tmpint) == 1)
+        {
+            if(RFIDlerConfig.TagType == TAG_TYPE_NONE)
+                commandok= command_nack("Set TAG type first!");
+            else
+            {
+                commandok= command_ack(DATA);
+                analogue_sample(tmpint, FALSE);
                 analogue_xml_out(tmpint);
                 eod();
             }
@@ -2159,7 +2177,7 @@ BYTE ProcessSerialCommand(char *command)
         if(strcmp(command, "HELP") == 0 || Interface == INTERFACE_CLI)
         {
             command_ack(DATA);
-            UserMessage("%s", "    ANALOGUE <# OF SAMPLES>                                      Sample raw coil & output in XML (HEX)\r\n");
+            UserMessage("%s", "    ANALOGUE[N] <# OF SAMPLES>                                   Sample raw coil ([N]o local clock) & output in XML (HEX)\r\n");
             UserMessage("%s", "    APDU <CLA+INS+P1+P2[+LC+DATA][+LE]>                          Transmit (HEX) ISO-7816-4 APDU to SmartCard. Return is [DATA]+<SW1>+<SW2>\r\n");
             UserMessage("%s", "    API                                                          Switch to API mode\r\n");
             UserMessage("%s", "    ASK <HEX UID> <FC> <RATE> <REPEAT>                           Emulate ASK, Field Clock in uS/100, Data Rate in RF/n\r\n");

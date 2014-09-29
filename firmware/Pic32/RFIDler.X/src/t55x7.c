@@ -133,13 +133,16 @@
 #include "rfidler.h"
 #include "t55x7.h"
 #include "rwd.h"
+#include "psk.h"
 #include "util.h"
 #include "comms.h"
 #include "config.h"
 
-//const BYTE *T55x7_Modulation[]= {"Manchester", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "Biphase", "NRZ/Direct"};
+const BYTE *T55x7_Compat_Modulation[]= {"NRZ/Direct", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "FSK1a", "FSK2a", "Manchester"};
+const BYTE *T55x7_XMode_Modulation[]= {"NRZ/Direct", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "Invalid", "Invalid", "Manchester"};
 
-// q5 needs special timings etc., so have a master send command routine to keep things simple
+const BYTE T55x7_Compat_Data_Rates[]= {8, 16, 32, 40, 50, 64, 100, 128};
+
 // response length in bits
 BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length)
 {
@@ -150,7 +153,7 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
     if(!response_length)
         return TRUE;
 
-    // wait for Q5 damping to kick in: q5 may create a false pulse during RWD receipt, so wait for it to recognise
+    // wait for T55x7 damping to kick in: t55x7 may create a false pulse during RWD receipt, so wait for it to recognise
     // command and shut down before trying to read response.
     GetTimer_us(RESET);
     while(READER_DATA)
@@ -159,6 +162,7 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
 
     // read response as raw data with manchester auto-correct as first bit may be a '0'
     Manchester_Auto_Correct= TRUE;
+
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, response, response_length, RFIDlerConfig.Sync, sync ? RFIDlerConfig.SyncBits : 0, RFIDlerConfig.Timeout, ONESHOT_READ, HEX) == response_length)
@@ -167,39 +171,31 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
         Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wait_Switch_RX_TX) / 100);
         return TRUE;
     }
-
     return FALSE;
 }
 
-//// get raw UID
-//BOOL q5_get_uid(BYTE *response)
-//{
-//    BYTE tmp[17]; // 16 hex digits
-//
-//    // q5 will be stuck if last command was a read or write, so always hard reset
-//    stop_HW_clock();
-//
-//    // delay for sleep period
-//    Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Sleep_Period) / 100);
-//
-//    // delay for startup time
-//    //Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100);
-//
-//    // q5 has fixed em4x02 style data in page 1
-//    if(q5_send_command(tmp, Q5_GET_TRACE_DATA, strlen(Q5_GET_TRACE_DATA), NO_RESET, SYNC, 64))
-//    {
-//        strcpy(response, tmp);
-//        return TRUE;
-//    }
-//    return FALSE;
-//}
+// get raw UID
+BOOL t55x7_get_uid(BYTE *response)
+{
+    BYTE tmp[33]; // 16 hex digits + 2 lock bits
 
-//// convert raw 64 bit HEX UID to 10 digit human readable hex
-//BOOL q5_hex_to_uid(BYTE *response, BYTE *hex)
-//{
-//    // q5 is the same as em4x02
-//    return em4x02_hex_to_uid(response, hex);
-//}
+    // t55x7 will be stuck if last command was a read or write, so always hard reset
+    stop_HW_clock();
+
+    // delay for sleep period
+    Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Sleep_Period) / 100);
+
+    // delay for startup time
+    Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100);
+
+    // t55x7 has fixed tracebility data - 2 x 33 bit blocks (including lock bit)
+    if(t55x7_send_command(tmp, T55X7_GET_TRACE_DATA, strlen(T55X7_GET_TRACE_DATA), NO_RESET, SYNC, 64))
+    {
+        strcpy(response, tmp);
+        return TRUE;
+    }
+    return FALSE;
+}
 
 BOOL t55x7_read_block(BYTE *response, BYTE block)
 {
@@ -228,7 +224,7 @@ BOOL t55x7_read_block(BYTE *response, BYTE block)
     {
         //DEBUG_PIN_4= !DEBUG_PIN_4;
         //DEBUG_PIN_4= !DEBUG_PIN_4;
-        if(q5_send_command(response, tmp, strlen(tmp), reset, NO_SYNC, 32))
+        if(t55x7_send_command(response, tmp, strlen(tmp), reset, NO_SYNC, 32))
             return TRUE;
         // try resetting tag
         reset= TRUE;
@@ -237,58 +233,58 @@ BOOL t55x7_read_block(BYTE *response, BYTE block)
     return FALSE;
 }
 
-//// optional verify as writing config block may casue next read to fail
-//BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify)
-//{
-//    BYTE tmp[71], p;
-//
-//    if(block > Q5_DATABLOCKS - 1)
-//        return FALSE;
-//
-//    // create 38 or 70 bit command block: Q5_STD_WRITE_P0 + [PWD] + Lock Bit + 32 bits Data + 3 bits address
-//    memset(tmp, '\0', sizeof(tmp));
-//
-//    // command
-//    memcpy(tmp, Q5_STD_WRITE_P0, 2);
-//    p= 2;
-//
-//    // password
-//    if(PWD_Mode)
-//    {
-//        hextobinstring(tmp + p, Password);
-//        p += 32;
-//    }
-//
-//    // lockbit
-//    inttobinstring(tmp + p, (unsigned int) lock, 1);
-//    ++p;
-//
-//    // data
-//    hextobinstring(tmp + p, data);
-//    p += Q5_BLOCKSIZE;
-//
-//    // address
-//    inttobinstring(tmp + p, (unsigned int) block, 3);
-//    p += 3;
-//
-//    // send
-//    if(!q5_send_command(NULL, tmp, strlen(tmp), NO_RESET, NO_SYNC, 0))
-//         return FALSE;
-//
-//    // no ack, so read back and verify
-//    // delay for long enough to allow write plus TX->RX period
-//    Delay_us((Q5_WRITE_DELAY * RFIDlerConfig.FrameClock + RFIDlerConfig.RWD_Wait_Switch_TX_RX * RFIDlerConfig.FrameClock) / 100L);
-//
-//    if(!verify)
-//        return TRUE;
-//
-//    if(!q5_read_block(tmp, block))
-//        return FALSE;
-//    if(memcmp(tmp, data, HEXDIGITS(Q5_BLOCKSIZE)) != 0)
-//        return FALSE;
-//
-//    return TRUE;
-//}
+// optional verify as writing config block may casue next read to fail
+BOOL t55x7_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify)
+{
+    BYTE tmp[71], p;
+
+    if(block > T55X7_DATABLOCKS - 1)
+        return FALSE;
+
+    // create 38 or 70 bit command block: T55X7_STD_WRITE_P0 + [PWD] + Lock Bit + 32 bits Data + 3 bits address
+    memset(tmp, '\0', sizeof(tmp));
+
+    // command
+    memcpy(tmp, T55X7_STD_WRITE_P0, 2);
+    p= 2;
+
+    // password
+    if(PWD_Mode)
+    {
+        hextobinstring(tmp + p, Password);
+        p += 32;
+    }
+
+    // lockbit
+    inttobinstring(tmp + p, (unsigned int) lock, 1);
+    ++p;
+
+    // data
+    hextobinstring(tmp + p, data);
+    p += T55X7_BLOCKSIZE;
+
+    // address
+    inttobinstring(tmp + p, (unsigned int) block, 3);
+    p += 3;
+
+    // send
+    if(!t55x7_send_command(NULL, tmp, strlen(tmp), NO_RESET, NO_SYNC, 0))
+         return FALSE;
+
+    // no ack, so read back and verify
+    // delay for long enough to allow write plus TX->RX period
+    Delay_us((T55X7_WRITE_DELAY * RFIDlerConfig.FrameClock + RFIDlerConfig.RWD_Wait_Switch_TX_RX * RFIDlerConfig.FrameClock) / 100L);
+
+    if(!verify)
+        return TRUE;
+
+    if(!t55x7_read_block(tmp, block))
+        return FALSE;
+    if(memcmp(tmp, data, HEXDIGITS(T55X7_BLOCKSIZE)) != 0)
+        return FALSE;
+
+    return TRUE;
+}
 //
 //// set password and mode, and return UID
 //BOOL q5_login(BYTE *response, BYTE *pass)
@@ -320,77 +316,103 @@ BOOL t55x7_read_block(BYTE *response, BYTE block)
 //    return TRUE;
 //}
 //
-//// try to find values that correctly transmit all commands to q5
-//// to test this properly, q5 should have invalid data in it's data blocks
-//// so that only a GET_TRACE_DATA command will return a true value
-//BOOL q5_rwd_test(BYTE *pattern)
-//{
-//    BYTE start_gap, gap, one, zero, i, tmp[Q5_BLOCKSIZE + 1];
-//    BOOL found= FALSE, blank;
-//
-//    // min/max from datasheets
-//    for(one= 48 ; one <= 63 ; ++one)
-//        for(zero= 16; zero <= 31 ; ++zero)
-//            for(gap=  10 ; gap <= 50 ; ++gap)
-//                for(start_gap= 11 ; start_gap <= 50 ; ++start_gap)
-//                {
-//                    RFIDlerConfig.Manchester= TRUE;
-//                    blank= TRUE;
-//                    if(get_user_abort())
-//                        return found;
-//                    RFIDlerConfig.RWD_Gap_Period= gap;
-//                    RFIDlerConfig.RWD_One_Period= one;
-//                    RFIDlerConfig.RWD_Zero_Period= zero;
-//                    // reset tag
-//                    get_tag_uid(tmp);
-//                    // try to switch off modulation
-//                    // send command with start gap: reset with sleep time set to start gap, and wake time set to 0 as we transmit the 1st bit immediately
-//                    // note that we must also subtract standard gap period as it will be added to the front of the first bit by default.
-//                    rwd_send(Q5_MODULATION_DEFEAT, strlen(Q5_MODULATION_DEFEAT), NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, start_gap - RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
-//                    // read a block with no sync & no manchester - will be all '0' if not modulating
-//                    RFIDlerConfig.Manchester= FALSE;
-//                    if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, 0, RFIDlerConfig.Timeout, NO_ONESHOT_READ, HEX) == RFIDlerConfig.DataBits)
-//                    {
-//                        for(i= 0 ; i < HEXDIGITS(RFIDlerConfig.DataBits) ; ++i)
-//                            if(tmp[i] != '0')
-//                                blank= FALSE;
-//                        RFIDlerConfig.Manchester= TRUE;
-//                        if(blank && get_tag_uid(tmp) && q5_read_block(tmp, 0))
-//                        {
-//                            UserMessageNum("\r\nFound tag with start_gap %d", start_gap);
-//                            UserMessageNum(" gap %d", gap);
-//                            UserMessageNum(" one %d", one);
-//                            UserMessageNum(" zero %d", zero);
-//                            found= TRUE;
-//                        }
-//                    }
-//                }
-//    UserMessage("%s", "\r\n");
-//    return found;
-//}
+// try to find values that correctly transmit all commands to t55x7
+// so that a GET_UID command will return a true value
+BOOL t55x7_rwd_test(BYTE *pattern)
+{
+    BYTE gap, one, zero, i, tmp[T55X7_BLOCKSIZE * 2 + 1];
+    BOOL found= FALSE;
+
+    // min/max from datasheets
+    for(one= 48 ; one <= 63 ; ++one)
+        for(zero= 16; zero <= 31 ; ++zero)
+            for(gap=  8 ; gap <= 30 ; ++gap)
+            {
+                if(get_user_abort())
+                    return found;
+                RFIDlerConfig.RWD_Gap_Period= gap;
+                RFIDlerConfig.RWD_One_Period= one;
+                RFIDlerConfig.RWD_Zero_Period= zero;
+                if(get_tag_uid(tmp))
+                {
+                    UserMessageNum(" gap: %d", gap);
+                    UserMessageNum(" one: %d", one);
+                    UserMessageNum(" zero: %d", zero);
+                    UserMessage("%s", "\r\n");
+                    found= TRUE;
+                }
+            }
+    UserMessage("%s", "\r\n");
+    return found;
+}
 
 BOOL t55x7_config_block_show(BYTE *config)
 {
     uint32_t    value= hextoulong(config);
+    BOOL        xmode;
 
-//    UserMessage("  Config Block: %.8s\r\n", config);
-//    UserMessageNum("   Page Select: %d  = ", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT));
-//    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_PAGE_SELECT, Q5_SHIFT_PAGE_SELECT) ? "True" : "False");
-//    UserMessageNum("    Fast Write: %d  = ", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE));
-//    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_FAST_WRITE, Q5_SHIFT_FAST_WRITE) ? "True" : "False");
-//    UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE));
-//    UserMessageNum("%d * FC\r\n", GET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE) * 2 + 2);
-//    UserMessageNum("       Use AOR: %d  = ", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR));
-//    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_AOR, Q5_SHIFT_USE_AOR) ? "True" : "False");
-//    UserMessageNum("       Use PWD: %d  = ", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD));
-//    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_USE_PWD, Q5_SHIFT_USE_PWD) ? "True" : "False");
-//    UserMessageNum("   PSK Carrier: %d  = ", GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ));
-//    UserMessageNum("%d * FC\r\n", PSK_Rates[GET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ)]);
-//    UserMessageNum("    Modulation: %d  = ", GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION));
-//    UserMessage("%s\r\n", (BYTE *) Q5_Modulation[GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION)]);
-//    UserMessageNum("     Max Block: %d\r\n", GET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK));
-//    UserMessageNum("            ST: %d  = ", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST));
-//    UserMessage("%s\r\n", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST) ? "True" : "False");
+    UserMessage("  Config Block: %.8s\r\n", config);
+    UserMessageNum("    Master Key: %d  = ", GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY));
+    if(GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY) == T55X7_COMPAT_MODE)
+        UserMessage("%s\r\n", "Compatibility Mode");
+    else
+        if(GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY) == T55X7_XMODE_MODE)
+            UserMessage("%s\r\n", "Extended Mode");
+        else
+            UserMessage("%s\r\n", "Undefined Mode");
+    xmode= GET_CONFIG(value, T55X7_MASK_XMODE, T55X7_SHIFT_XMODE);
+    UserMessage("        X-Mode: %s\r\n", xmode ? "True" : "False");
+
+    // display additional/alternate fields if in xmode
+    if(xmode)
+    {
+        UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
+        UserMessageNum("%d * FC\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE) * 2 + 2);
+        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        if(GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
+        {
+            if(GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 17)
+                UserMessage("%s\r\n", "BiPhase ('50)");
+            else
+                if (GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 24)
+                    UserMessage("%s\r\n", "BiPhase ('57)");
+                else
+                    UserMessage("%s\r\n", "Invalid");
+        }
+        else
+            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
+       UserMessage("          SST: %s\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_SST, T55X7_SHIFT_ST_SST) ? "True" : "False");
+    }
+    else
+    {
+        UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
+        UserMessageNum("%d * FC\r\n", T55x7_Compat_Data_Rates[GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE)]);
+        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        if(GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
+        {
+            if(GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 16)
+                UserMessage("%s\r\n", "BiPhase ('50)");
+            else
+                UserMessage("%s\r\n", "Reserved/Invalid");
+        }
+        else
+            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
+        UserMessage("            ST: %s\r\n", GET_CONFIG(value, T55X7_COMPAT_MASK_ST, T55X7_SHIFT_ST_SST) ? "True" : "False");
+    }
+    // display common fields
+    UserMessageNum("   PSK Carrier: %d = ", GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ));
+    if(GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ) > 2)
+        UserMessage("%s\r\n", "Reserved");
+    else
+        UserMessageNum("%d * FC\r\n", GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ) * 2 + 2);
+    UserMessageNum("      Maxblock: %d\r\n", GET_CONFIG(value, T55X7_MASK_MAX_BLOCK, T55X7_SHIFT_MAX_BLOCK));
+    UserMessage("           AOR: %s\r\n", GET_CONFIG(value, T55X7_MASK_AOR, T55X7_SHIFT_AOR) ? "True" : "False");
+    UserMessage("           OTP: %s\r\n", GET_CONFIG(value, T55X7_MASK_OTP, T55X7_SHIFT_OTP) ? "True" : "False");
+    UserMessage("           PWD: %s\r\n", GET_CONFIG(value, T55X7_MASK_PWD, T55X7_SHIFT_PWD) ? "True" : "False");
+    UserMessage("    Fast Write: %s\r\n", GET_CONFIG(value, T55X7_MASK_FAST_WRITE, T55X7_SHIFT_FAST_WRITE) ? "True" : "False");
+    UserMessage("  Inverse Data: %s\r\n", GET_CONFIG(value, T55X7_MASK_INVERSE_DATA, T55X7_SHIFT_INVERSE_DATA) ? "True" : "False");
+    UserMessage("     POR Delay: %s\r\n", GET_CONFIG(value, T55X7_MASK_POR_DELAY, T55X7_SHIFT_POR_DELAY) ? "True" : "False");
+
     return TRUE;
 }
 
@@ -473,28 +495,27 @@ BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype)
 //           t55x7_create_config_block(config);
 //           return TRUE;
 //
-//       case TAG_TYPE_AWID_26:
-//       case TAG_TYPE_HID_26:
-//            memcpy(config, Q5_HID_26_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//            return TRUE;
+       case TAG_TYPE_AWID_26:
+       case TAG_TYPE_HID_26:
+            memcpy(config, T55X7_HID_26_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+            return TRUE;
 //
 //        case TAG_TYPE_FDXB:
 //            memcpy(config, Q5_FDXB_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
 //            return TRUE;
 //
-//        case TAG_TYPE_INDALA_64:
-//            memcpy(config, Q5_INDALA_64_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//            return TRUE;
-//
-//        case TAG_TYPE_INDALA_224:
-//            memcpy(config, Q5_INDALA_224_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//            return TRUE;
-//
-//        case TAG_TYPE_EM4X02:
-//        case TAG_TYPE_Q5:
-//        case TAG_TYPE_UNIQUE:
-//            memcpy(config, Q5_DEFAULT_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//            return TRUE;
+        case TAG_TYPE_INDALA_64:
+            memcpy(config, T55X7_INDALA_64_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+            return TRUE;
+
+        case TAG_TYPE_INDALA_224:
+            memcpy(config, T55X7_INDALA_224_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+            return TRUE;
+
+        case TAG_TYPE_EM4X02:
+        case TAG_TYPE_UNIQUE:
+            memcpy(config, T55X7_EM_UNIQUE_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+            return TRUE;
 
         case TAG_TYPE_T55X7:
             memcpy(config, T55X7_DEFAULT_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));

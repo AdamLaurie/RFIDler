@@ -216,6 +216,10 @@ void rwd_test(BYTE *pass)
             hitag2_test_rwd(4, 10, 18, 22, 26, 32, pass);
             break;
 
+        case TAG_TYPE_T55X7:
+            t55x7_rwd_test(pass);
+            break;
+
         default:
             break;
     }

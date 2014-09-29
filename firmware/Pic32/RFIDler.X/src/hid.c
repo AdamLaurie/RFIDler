@@ -135,6 +135,7 @@
 #include "rfidler.h"
 #include "hid.h"
 #include "wiegand.h"
+#include "fsk.h"
 
 // convert null-terminated BCD UID (8 digits) to hid26 encoded hex
 // UID is SSSIIIII where S is site-code and I is ID

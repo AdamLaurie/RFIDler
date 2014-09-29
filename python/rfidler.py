@@ -163,7 +163,7 @@ if len(sys.argv) < 3:
 	print
 	print '    DEBUG <OFF|ON>           Show serial comms'
 	print '    FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]'
-	print '    PLOT <SAMPLES>           Plot raw coil samples (max 8192)'
+	print '    PLOT[N] <SAMPLES>        Plot raw coil samples ([N]o local clock)'
 	print '    PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>'
 	print '    QUIET                    Supress confirmation of sent command (show results only)'
 	print '    SLEEP <SECONDS>          Pause for SECONDS'
@@ -247,8 +247,11 @@ while current < len(sys.argv):
 		current += 1
 		continue
 
-	if command == 'PLOT':
-		result, data= rfidler.command('ANALOGUE %s' % sys.argv[current])
+	if command == 'PLOT' or command == 'PLOTN':
+		if command == 'PLOT':
+			result, data= rfidler.command('ANALOGUE %s' % sys.argv[current])
+		else:
+			result, data= rfidler.command('ANALOGUEN %s' % sys.argv[current])
 		current += 1
 		if result:
 			# create graphic objects

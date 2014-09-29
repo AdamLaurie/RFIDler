@@ -149,7 +149,8 @@ void init_adc(BOOL slow)
         ;
 }
 
-void analogue_sample(unsigned int length)
+// switch off local_read to sniff transaction with external clock
+void analogue_sample(unsigned int length, BOOL local_read)
 {
     unsigned int i, scale;
 
@@ -159,12 +160,15 @@ void analogue_sample(unsigned int length)
     init_adc(FAST);
     FakeRead= TRUE;
     // start read
+    if(!local_read)
+        SnifferMode= TRUE;
     get_tag_uid(TmpBuff);
     // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
     // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
         DataBuff[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
     FakeRead= FALSE;
+    SnifferMode= FALSE;
     stop_HW_clock();
 }
 

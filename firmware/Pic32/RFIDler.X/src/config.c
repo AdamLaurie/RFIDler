@@ -233,6 +233,9 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
         case TAG_TYPE_Q5:
             return q5_emulate_config_block(config, target_tagtype);
 
+        case TAG_TYPE_T55X7:
+            return t55x7_emulate_config_block(config, target_tagtype);
+
         default:
             return FALSE;
     }
@@ -245,6 +248,8 @@ BOOL config_block_show(BYTE *config, BYTE tagtype)
     {
         case TAG_TYPE_Q5:
             return q5_config_block_show(config);
+        case TAG_TYPE_T55X7:
+            return t55x7_config_block_show(config);
         default:
             return FALSE;
     }

@@ -618,31 +618,31 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_Wake_Period= 1000;
             break;
 
-
         case TAG_TYPE_T55X7:
             RFIDlerConfig.FrameClock= 800;
-            RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= 100;
+            RFIDlerConfig.PotHigh= POTHIGH_DEFAULT;
+            RFIDlerConfig.Manchester= TRUE;
+            //RFIDlerConfig.DataRate= 32;
             RFIDlerConfig.DataRate= 64;
             RFIDlerConfig.DataBits= 64;
-            RFIDlerConfig.DataBlocks= T55X7_DATABLOCKS;
-            RFIDlerConfig.BlockSize= T55X7_BLOCKSIZE;
-            RFIDlerConfig.TagType= tag;
-            RFIDlerConfig.Repeat= 20;
-            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
             RFIDlerConfig.Sync[0]= 0xE0;
             RFIDlerConfig.Sync[1]= 0x15;
             RFIDlerConfig.Sync[2]= 0x00;
             RFIDlerConfig.Sync[3]= 0x00;
             RFIDlerConfig.SyncBits= 16;
+            RFIDlerConfig.DataBlocks= T55X7_DATABLOCKS;
+            RFIDlerConfig.BlockSize= T55X7_BLOCKSIZE;
+            RFIDlerConfig.TagType= tag;
+            RFIDlerConfig.Repeat= 20;
+            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 1000; // must be more than 3ms, but play it safe
-            RFIDlerConfig.RWD_Gap_Period= 20; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Gap_Period= 14; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
             RFIDlerConfig.RWD_Zero_Period= 24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
             RFIDlerConfig.RWD_One_Period= 54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
-            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 70; // t55x7 will exit downlink mode after 64 but we mustn't read until t55x7 switches damping on
-            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 70;
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 64; // t55x7 will exit downlink mode after 64 but we mustn't read until t55x7 switches damping on
+            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192;
             break;
 
         default:
@@ -768,6 +768,16 @@ BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password)
             if(!write_tag(HITAG2_PW_BLOCK_NUM, HITAG2_PWD_DEFAULT, VERIFY))
                 return FALSE;
             return TRUE;
+            
+        case TAG_TYPE_T55X7:
+            // write config first so we can verify data block writes
+            if(!tag_write_default_config(tagtype, ""))
+                return FALSE;
+            for(i= T55X7_USER_DATA_BLOCK_NUM ; i < T55X7_DATABLOCKS ; ++i)
+                if(!write_tag(i, T55X7_BLANK_BLOCK, VERIFY))
+                    return FALSE;
+            return TRUE;
+
 
         default:
             return FALSE;

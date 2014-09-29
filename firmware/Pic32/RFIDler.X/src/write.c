@@ -136,17 +136,20 @@
 #include "write.h"
 #include "hitag.h"
 #include "q5.h"
+#include "t55x7.h"
 
 BOOL write_tag(unsigned int block, BYTE *data, BOOL verify)
 {
     switch(RFIDlerConfig.TagType)
     {
         case TAG_TYPE_Q5:
-        //case TAG_TYPE_T55X7:
             return q5_write_block((BYTE) block, data, NO_LOCK, verify);
             
         case TAG_TYPE_HITAG2:
             return hitag2_write_page((BYTE) block, data);
+
+        case TAG_TYPE_T55X7:
+            return t55x7_write_block((BYTE) block, data, NO_LOCK, verify);
 
         default:
             break;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="62">
   <projectmakefile>Makefile</projectmakefile>
-  <defaultConf>1</defaultConf>
+  <defaultConf>0</defaultConf>
   <confs>
     <conf name="default" type="2">
       <platformToolSN></platformToolSN>
-      <languageToolchainDir>/opt/microchip/xc32/v1.32/bin</languageToolchainDir>
+      <languageToolchainDir>/opt/microchip/xc32/v1.33/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
         <placeholder2>place holder 2</placeholder2>
@@ -22,8 +22,8 @@
       </runprofile>
     </conf>
     <conf name="debug" type="2">
-      <platformToolSN>:=MPLABCommUSB:=04D8:=900A:=0002:=Microchip Technology Inc.:=PICkit 3:=BUR112841002:=x:=en</platformToolSN>
-      <languageToolchainDir>/opt/microchip/xc32/v1.32/bin</languageToolchainDir>
+      <platformToolSN></platformToolSN>
+      <languageToolchainDir>/opt/microchip/xc32/v1.33/bin</languageToolchainDir>
       <mdbdebugger version="1">
         <placeholder1>place holder 1</placeholder1>
         <placeholder2>place holder 2</placeholder2>

@@ -21,11 +21,11 @@ Hardware
 Software Build environment
 ==========================
 
-	The project was developed in Mplab-X IDE V1.41 under Linux, but can also be built under Windows & Mac:
+	The project was developed in Mplab-X IDE V2.20 under Linux, but can also be built under Windows & Mac:
 
 	  http://www.microchip.com/pagehandler/en-us/family/mplabx/
 
-	The compiler used was the free version of Microchip's XC32 V1.21:
+	The compiler used was the free version of Microchip's XC32 V1.33:
 
 	  http://www.microchip.com/pagehandler/en-us/devtools/mplabxc/home.html
 
@@ -91,13 +91,13 @@ Software Build
 
         In the 'Projects' window, expand RFIDler/Libraries
 
-            Highlight the only entry (/opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and right-click
+            Highlight the only entry (/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and right-click
 
                Select 'Remove'
 
             Copy the libmchp_peripheral_32MX795F512L.a file:
 
-                from your local XC32 installation (normally 'Program Files (x86)/Microchip/xc32') and drill down to v1.21/pic32mx/lib/
+                from your local XC32 installation (normally 'Program Files (x86)/Microchip/xc32') and drill down to v1.33/pic32mx/lib/
 
                 to your RFIDler.X project directory.
 
@@ -116,7 +116,7 @@ Software Build
 
        In the 'Projects' window, expand RFIDler/Libraries
 
-          Highlight the only entry (/opt/microchip/xc32/v1.21/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and ctrl-click
+          Highlight the only entry (/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and ctrl-click
 
             Select 'Remove'
 
@@ -124,7 +124,7 @@ Software Build
 
             Select 'Add Library/Object file'
 
-               Browse to your xc32 installation directory (default is /Applications/microchip/xc32) and drill down to v1.21/pic32mx/lib/
+               Browse to your xc32 installation directory (default is /Applications/microchip/xc32) and drill down to v1.33/pic32mx/lib/
 
                   select libmchp_peripheral_32MX795F512L.a
 

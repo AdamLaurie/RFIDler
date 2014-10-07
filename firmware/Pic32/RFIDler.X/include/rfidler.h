@@ -248,7 +248,6 @@ extern BYTE HW_Skip_Bits;
 extern unsigned int PSK_Min_Pulse;
 extern BOOL PSK_Read_Error;
 extern BOOL Manchester_Error;
-extern BOOL Manchester_Auto_Correct;
 extern BOOL SnifferMode;
 
 // smart card lib

@@ -142,7 +142,6 @@ BYTE HW_Skip_Bits;                   // skip arbitrary number of leading bits (e
 unsigned int PSK_Min_Pulse;
 BOOL PSK_Read_Error= FALSE;
 BOOL Manchester_Error= FALSE;
-BOOL Manchester_Auto_Correct= FALSE;  // special case for tags that may start with (undetectable) 0 bit. will be reset by reader ISR if set.
 
 // Interrupt Service Routines
 //
@@ -492,7 +491,6 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                         // 2 strikes and we fail!
                         count= 0L;
                         previous= -1;
-                        Manchester_Auto_Correct= FALSE;
                         stop_HW_reader_ISR();
                         return;
                     }
@@ -502,25 +500,11 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                         // 1st error - reset data and start again, now offset by a half bit.
                         Manchester_Error= TRUE;
                         //DEBUG_PIN_2= LOW;
-
-                        // special case - if tag can start with a '0' (i.e. there is no initial '1' as a sync
-                        // bit, it will look like a 1/2 bit error, but we may only detect the error later on,
-                        // so we must correct all the previous mis-reads, offset the count by 1/2 a bit and
-                        // complete this read
-                        if(Manchester_Auto_Correct && count != 1)
-                        {
-                            for(i= 0, p= EMU_Data ; i <= count / 2L ; ++i, --p)
-                                *p= !*(p);
-                            --count;
-                        }
-                        else
-                        {
-                            EMU_Data -= (count / 2L);
-                            count= 1L;
-                            // successful read resets timeout
-                            WriteTimer5(0);
-                            return;
-                        }
+                        EMU_Data -= (count / 2L);
+                        count= 1L;
+                        // successful read resets timeout
+                        WriteTimer5(0);
+                        return;
                     }
                 }
             }
@@ -672,8 +656,6 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
         previous= -1;
         // if only 1 manchester error caught, that's OK
         Manchester_Error= FALSE;
-        // caller must reset this to use again
-        Manchester_Auto_Correct= FALSE;
         mLED_Error_Off();
         // stop reading, but leave clock running to preserve tag state - higher level will shut down when done
         stop_HW_reader_ISR();

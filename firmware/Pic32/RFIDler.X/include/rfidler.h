@@ -244,6 +244,7 @@ extern const BYTE *TagTypes[];
 // globals for ISRs
 extern BYTE EmulationMode;
 extern unsigned long HW_Bits;
+extern BYTE HW_Skip_Bits;
 extern unsigned int PSK_Min_Pulse;
 extern BOOL PSK_Read_Error;
 extern BOOL Manchester_Error;

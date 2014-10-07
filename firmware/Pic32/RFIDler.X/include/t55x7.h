@@ -149,17 +149,22 @@
 #define T55X7_CONFIG_BLOCK_NUM     0           // config block number
 #define T55X7_USER_DATA_BLOCK_NUM  1           // 1st user data block
 #define T55X7_PW_BLOCK_NUM         7           // password block number
-#define T55X7_BLANK_BLOCK          "FFFFFFFF"
+#define T55X7_BLANK_BLOCK          "00000000"
 
-#define T55X7_DEFAULT_PWD          "FFFFFFFF"  // default password
+#define T55X7_DEFAULT_PWD          "00000000"  // default password
 
 // config blocks
-#define T55X7_DEFAULT_CONFIG_BLOCK      "00148000"      // compat mode, data rate 64, manchester, 7 data blocks
-#define T55X7_EM_UNIQUE_CONFIG_BLOCK    "00148040"      // emulate em4x02/unique - data rate 64, manchester, 2 data blocks
-//#define Q5_FDXB_CONFIG_BLOCK         "E600F0E8"      // emulate fdx-b
-#define T55X7_HID_26_CONFIG_BLOCK       "00107060"      // hid 26 bit - FSK2a, data rate 50, 3 data blocks
-#define T55X7_INDALA_64_CONFIG_BLOCK    "00081040"      // emulate indala 64 bit - PSK1, psk carrier FC * 2, data rate 32, maxblock 2
-#define T55X7_INDALA_224_CONFIG_BLOCK   "000810E0"      // emulate indala 224 bit - PSK1, psk carrier FC * 2, data rate 32, maxblock 7
+#define T55X7_DEFAULT_CONFIG_BLOCK      "000880E8"      // compat mode, data rate 32, manchester, ST, 7 data blocks
+#define T55X7_RAW_CONFIG_BLOCK          "000880E0"      // compat mode, data rate 32, manchester, 7 data blocks
+#define T55X7_EM_UNIQUE_CONFIG_BLOCK    "00148040"      // emulate em4x02/unique - compat mode, manchester, data rate 64, 2 data blocks
+// FDXB requires data inversion and BiPhase 57 is simply BipHase 50 inverted, so we can either do it using the modulation scheme or the inversion flag
+// we've done both below to prove that it works either way, and the modulation value for BiPhase 50 in the Atmel data sheet of binary "10001" (17) is a typo,
+// and it should actually be "10000" (16)
+// #define T55X7_FDXB_CONFIG_BLOCK         "903F8080"      // emulate fdx-b - xtended mode, BiPhase ('57), data rate 32, 4 data blocks
+#define T55X7_FDXB_CONFIG_BLOCK         "903F0082"      // emulate fdx-b - xtended mode, BiPhase ('50), invert data, data rate 32, 4 data blocks
+#define T55X7_HID_26_CONFIG_BLOCK       "00107060"      // hid 26 bit - compat mode, FSK2a, data rate 50, 3 data blocks
+#define T55X7_INDALA_64_CONFIG_BLOCK    "00081040"      // emulate indala 64 bit - compat mode, PSK1, psk carrier FC * 2, data rate 32, maxblock 2
+#define T55X7_INDALA_224_CONFIG_BLOCK   "000810E0"      // emulate indala 224 bit - compat mode, PSK1, psk carrier FC * 2, data rate 32, maxblock 7
 
 // note that T55X7 sends data in LSB order, so everything in the datasheet is effectively reversed
 // what is shown as "bit 32" is actually bit 0
@@ -167,6 +172,7 @@
 // config block common masks
 #define T55X7_MASK_MASTER_KEY                    0b11110000000000000000000000000000
 #define T55X7_MASK_XMODE                         0b00000000000000100000000000000000
+#define T55X7_MASK_MODULATION                    0b00000000000000011111000000000000
 #define T55X7_MASK_PSK_CARRIER_FREQ              0b00000000000000000000110000000000
 #define T55X7_MASK_AOR                           0b00000000000000000000001000000000
 #define T55X7_MASK_OTP                           0b00000000000000000000000100000000
@@ -179,13 +185,11 @@
 #define T55X7_COMPAT_MODE                        0b0110
 // config block masks - compatibility mode (master key == 0110)
 #define T55X7_COMPAT_MASK_DATA_BIT_RATE          0b00000000000111000000000000000000
-#define T55X7_COMPAT_MASK_MODULATION             0b00000000000000011111000000000000
 #define T55X7_COMPAT_MASK_ST                     0b00000000000000000000000000001000
 
 #define T55X7_XMODE_MODE                         0b1001
 // config block masks - xtended mode (master key == 1001)
 #define T55X7_XMODE_MASK_DATA_BIT_RATE           0b00000000111111000000000000000000
-#define T55X7_XMODE_MASK_MODULATION              0b00000000000000011111000000000000
 #define T55X7_XMODE_MASK_SST                     0b00000000000000000000000000001000
 
 // config block bit shifts - (same for both modes, but not all apply)
@@ -205,7 +209,7 @@
 
 // T55X7 modulation settings
 #define T55X7_MOD_BIPHASE_57               24
-#define T55X7_MOD_BIPHASE_50               17
+#define T55X7_MOD_BIPHASE_50               16
 #define T55X7_MOD_MANCHESTER               8
 #define T55X7_MOD_FSK2_A                   7
 #define T55X7_MOD_FSK1_A                   6

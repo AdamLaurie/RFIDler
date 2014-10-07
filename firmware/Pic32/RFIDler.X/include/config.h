@@ -132,7 +132,7 @@
 #include <stdint.h>
 
 #define GET_CONFIG(config, mask, shift)         ((config & mask) >> shift)
-#define SET_CONFIG(config, mask, shift, setting)  ((config & ~mask) | (setting << shift))
+#define SET_CONFIG(config, mask, shift, setting)  ((config & ~mask) | ((setting << shift) & mask))
 
 BOOL config_block_number(unsigned int *block, BYTE tagtype);
 BOOL config_user_block(unsigned int *block, BYTE tagtype);

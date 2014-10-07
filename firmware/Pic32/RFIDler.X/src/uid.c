@@ -245,6 +245,10 @@ BOOL interpret_uid(BYTE *response, BYTE *hex, BYTE tagtype)
         case TAG_TYPE_Q5:
             return q5_hex_to_uid(response, hex);
 
+        case TAG_TYPE_T55X7:
+            strcpy(response, hex);
+            return TRUE;
+
         case TAG_TYPE_UNIQUE:
             return unique_hex_to_uid(response, hex);
 

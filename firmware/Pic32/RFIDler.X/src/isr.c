@@ -138,11 +138,11 @@
 #include "comms.h"
 
 unsigned long HW_Bits;
+BYTE HW_Skip_Bits;                   // skip arbitrary number of leading bits (externally adjusted for manchester/biphase)
 unsigned int PSK_Min_Pulse;
 BOOL PSK_Read_Error= FALSE;
 BOOL Manchester_Error= FALSE;
-// special case for tags that may start with (undetectable) 0 bit.
-BOOL Manchester_Auto_Correct= FALSE; // this will be reset by reader ISR if set.
+BOOL Manchester_Auto_Correct= FALSE;  // special case for tags that may start with (undetectable) 0 bit. will be reset by reader ISR if set.
 
 // Interrupt Service Routines
 //
@@ -434,7 +434,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
     BOOL fskread= FALSE;
 
     // show trigger moment (you must also set end of routine debugger statement)
-    //DEBUG_PIN_2= HIGH;
+    DEBUG_PIN_1= HIGH;
 
     // reset interrupt
     mT4ClearIntFlag();
@@ -453,7 +453,18 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
         return;
     }
 
+    // some tags lead a read with a fixed bit pattern that do not form part of the data, so skip if required (e.g. T5567)
+    if(HW_Skip_Bits)
+    {
+        --HW_Skip_Bits;
+        return;
+    }
+    DEBUG_PIN_1= LOW;
+
     // debugging - monitor with a logic analyser
+    // show read period
+    DEBUG_PIN_2= HIGH;
+
     // show data value
     //DEBUG_PIN_3= READER_DATA;
 
@@ -652,7 +663,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
     ++count;
 
     // debugging - reset output line
-    //DEBUG_PIN_2= LOW;
+    DEBUG_PIN_2= LOW;
 
     // finished?
     if(count == HW_Bits)

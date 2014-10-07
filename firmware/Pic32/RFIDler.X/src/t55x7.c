@@ -139,7 +139,6 @@
 #include "config.h"
 
 const BYTE *T55x7_Compat_Modulation[]= {"NRZ/Direct", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "FSK1a", "FSK2a", "Manchester"};
-const BYTE *T55x7_XMode_Modulation[]= {"NRZ/Direct", "PSK1", "PSK2", "PSK3", "FSK1", "FSK2", "Invalid", "Invalid", "Manchester"};
 
 const BYTE T55x7_Compat_Data_Rates[]= {8, 16, 32, 40, 50, 64, 100, 128};
 
@@ -160,8 +159,8 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
         if(GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
             return FALSE;
 
-    // read response as raw data with manchester auto-correct as first bit may be a '0'
-    Manchester_Auto_Correct= TRUE;
+    // skip 4 bit Sequence Terminator pattern and leading '0'
+    HW_Skip_Bits= 9; // manchester encoded, so ISR will be called twice per bit, but we lose 1/2 a bit due to ASK startup delay
 
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
@@ -177,7 +176,7 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
 // get raw UID
 BOOL t55x7_get_uid(BYTE *response)
 {
-    BYTE tmp[33]; // 16 hex digits + 2 lock bits
+    BYTE tmp[33]; // 16 hex digits
 
     // t55x7 will be stuck if last command was a read or write, so always hard reset
     stop_HW_clock();
@@ -188,7 +187,7 @@ BOOL t55x7_get_uid(BYTE *response)
     // delay for startup time
     Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100);
 
-    // t55x7 has fixed tracebility data - 2 x 33 bit blocks (including lock bit)
+    // t55x7 has fixed tracebility data - 2 x 32 bit blocks
     if(t55x7_send_command(tmp, T55X7_GET_TRACE_DATA, strlen(T55X7_GET_TRACE_DATA), NO_RESET, SYNC, 64))
     {
         strcpy(response, tmp);
@@ -368,35 +367,35 @@ BOOL t55x7_config_block_show(BYTE *config)
     {
         UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
         UserMessageNum("%d * FC\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE) * 2 + 2);
-        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION));
-        if(GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
+        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
         {
-            if(GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 17)
+            if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)== T55X7_MOD_BIPHASE_50)
                 UserMessage("%s\r\n", "BiPhase ('50)");
             else
-                if (GET_CONFIG(value, T55X7_XMODE_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 24)
+                if (GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)== T55X7_MOD_BIPHASE_57)
                     UserMessage("%s\r\n", "BiPhase ('57)");
                 else
                     UserMessage("%s\r\n", "Invalid");
         }
         else
-            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
+            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
        UserMessage("          SST: %s\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_SST, T55X7_SHIFT_ST_SST) ? "True" : "False");
     }
     else
     {
         UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
         UserMessageNum("%d * FC\r\n", T55x7_Compat_Data_Rates[GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE)]);
-        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION));
-        if(GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
+        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
         {
-            if(GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 16)
+            if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 16)
                 UserMessage("%s\r\n", "BiPhase ('50)");
             else
                 UserMessage("%s\r\n", "Reserved/Invalid");
         }
         else
-            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_COMPAT_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
+            UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
         UserMessage("            ST: %s\r\n", GET_CONFIG(value, T55X7_COMPAT_MASK_ST, T55X7_SHIFT_ST_SST) ? "True" : "False");
     }
     // display common fields
@@ -417,93 +416,108 @@ BOOL t55x7_config_block_show(BYTE *config)
 }
 
 //// create a config block based on current tag settings
-//BOOL q5_create_config_block(BYTE *config)
-//{
-//    uint32_t    value= hextoulong(config);
-//    BYTE        tmp;
-//
-//    // data rate
-//    value= SET_CONFIG(value, Q5_MASK_DATA_BIT_RATE, Q5_SHIFT_DATA_BIT_RATE, (RFIDlerConfig.DataRate - 2) / 2);
-//
-//    // psk sub-carrier
-//    if((tmp= RFIDlerConfig.DataRateSub0))
-//    {
-//        if(tmp == 2)
-//            tmp= 0;
-//        else
-//            if (tmp == 4)
-//                tmp= 1;
-//            else
-//                tmp= 2;
-//        value= SET_CONFIG(value, Q5_MASK_PSK_CARRIER_FREQ, Q5_SHIFT_PSK_CARRIER_FREQ, tmp);
-//    }
-//
-//    // modulation
-//    if(RFIDlerConfig.Manchester && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
-//        tmp= Q5_MOD_MANCHESTER;
-//    else
-//    {
-//        if(RFIDlerConfig.BiPhase && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
-//            tmp= Q5_MOD_BIPHASE;
-//        else
-//            switch(RFIDlerConfig.Modulation)
-//            {
-//                case MOD_MODE_ASK_OOK:
-//                    tmp= Q5_MOD_DIRECT;
-//                    break;
-//                case MOD_MODE_FSK1:
-//                    tmp= Q5_MOD_FSK1;
-//                    break;
-//                case MOD_MODE_FSK2:
-//                    tmp= Q5_MOD_FSK2;
-//                    break;
-//                case MOD_MODE_PSK1:
-//                    tmp= Q5_MOD_PSK1;
-//                    break;
-//                case MOD_MODE_PSK2:
-//                    tmp= Q5_MOD_PSK2;
-//                    break;
-//                case MOD_MODE_PSK3:
-//                    tmp= Q5_MOD_PSK3;
-//                    break;
-//                default:
-//                    return FALSE;
-//            }
-//    }
-//    value= SET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION, tmp);
-//
-//    // data blocks
-//    value= SET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK, RFIDlerConfig.DataBits / Q5_BLOCKSIZE);
-//
-//    ulongtohex(config, value);
-//
-//    return TRUE;
-//}
-//
+BOOL t55x7_create_config_block(BYTE *config)
+{
+    uint32_t    value= hextoulong(config);
+    BYTE        i, tmp, xmode= FALSE;
+
+    // first decide if we need to be in extended mode or not
+
+    // invert is only supported in x-mode
+    if(RFIDlerConfig.Invert)
+        xmode= TRUE;
+
+    // is data rate supported by compat mode?
+    for(i= 0, tmp= FALSE ; i < sizeof(T55x7_Compat_Data_Rates) ; ++i)
+        if(RFIDlerConfig.DataRate == T55x7_Compat_Data_Rates[i])
+        {
+            tmp= TRUE;
+            break;
+        }
+    if(!tmp)
+        xmode= TRUE;
+
+    // data rate
+    if(xmode)
+    {
+       value= SET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY, T55X7_XMODE_MODE);
+       value= SET_CONFIG(value, T55X7_MASK_XMODE, T55X7_SHIFT_XMODE, TRUE);
+       value= SET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE, (RFIDlerConfig.DataRate - 2) / 2);
+    }
+    else
+       value= SET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE, i);
+
+    // psk sub-carrier
+    if(RFIDlerConfig.DataRateSub0)
+        value= SET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ, RFIDlerConfig.DataRateSub0 / 4);
+
+    // modulation
+    if(RFIDlerConfig.Manchester && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+        tmp= T55X7_MOD_MANCHESTER;
+    else
+    {
+        // todo - add general support for biphase 57 (but this is just biphase 50 with inversion)
+        if(RFIDlerConfig.BiPhase && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+            tmp= T55X7_MOD_BIPHASE_50;
+        else
+            switch(RFIDlerConfig.Modulation)
+            {
+                case MOD_MODE_ASK_OOK:
+                    tmp= T55X7_MOD_DIRECT;
+                    break;
+                case MOD_MODE_FSK1:
+                    tmp= T55X7_MOD_FSK1;
+                    break;
+                case MOD_MODE_FSK2:
+                    tmp= T55X7_MOD_FSK2;
+                    break;
+                case MOD_MODE_PSK1:
+                    tmp= T55X7_MOD_PSK1;
+                    break;
+                case MOD_MODE_PSK2:
+                    tmp= T55X7_MOD_PSK2;
+                    break;
+                case MOD_MODE_PSK3:
+                    tmp= T55X7_MOD_PSK3;
+                    break;
+                default:
+                    return FALSE;
+            }
+    }
+    value= SET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION, tmp);
+
+    // data blocks
+    value= SET_CONFIG(value, T55X7_MASK_MAX_BLOCK, T55X7_SHIFT_MAX_BLOCK, RFIDlerConfig.DataBits / T55X7_BLOCKSIZE);
+
+    ulongtohex(config, value);
+
+    return TRUE;
+}
+
 // set a config block suitable for emulating
 BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype)
 {
     switch (target_tagtype)
     {
-//       case TAG_TYPE_ASK_RAW:
-//       case TAG_TYPE_FSK1_RAW:
-//       case TAG_TYPE_FSK2_RAW:
-//       case TAG_TYPE_PSK1_RAW:
-//       case TAG_TYPE_PSK2_RAW:
-//       case TAG_TYPE_PSK3_RAW:
-//           memcpy(config, T55X7_DEFAULT_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//           t55x7_create_config_block(config);
-//           return TRUE;
-//
+       case TAG_TYPE_ASK_RAW:
+       case TAG_TYPE_FSK1_RAW:
+       case TAG_TYPE_FSK2_RAW:
+       case TAG_TYPE_PSK1_RAW:
+       case TAG_TYPE_PSK2_RAW:
+       case TAG_TYPE_PSK3_RAW:
+           memcpy(config, T55X7_RAW_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+           t55x7_create_config_block(config);
+           return TRUE;
+
        case TAG_TYPE_AWID_26:
        case TAG_TYPE_HID_26:
             memcpy(config, T55X7_HID_26_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
             return TRUE;
-//
-//        case TAG_TYPE_FDXB:
-//            memcpy(config, Q5_FDXB_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
-//            return TRUE;
-//
+
+        case TAG_TYPE_FDXB:
+            memcpy(config, T55X7_FDXB_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
+            return TRUE;
+
         case TAG_TYPE_INDALA_64:
             memcpy(config, T55X7_INDALA_64_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
             return TRUE;

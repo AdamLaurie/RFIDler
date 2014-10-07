@@ -149,9 +149,9 @@
 #define Q5_CONFIG_BLOCK_NUM     0           // config block number
 #define Q5_USER_DATA_BLOCK_NUM  1           // 1st user data block
 #define Q5_PW_BLOCK_NUM         7           // password block number
-#define Q5_BLANK_BLOCK          "FFFFFFFF"
+#define Q5_BLANK_BLOCK          "00000000"
 
-#define Q5_DEFAULT_PWD          "FFFFFFFF"  // default password
+#define Q5_DEFAULT_PWD          "00000000"  // default password
 
 // config blocks
 #define Q5_DEFAULT_CONFIG_BLOCK      "E601F004"      // q5 native mode (also em4x02/unique)

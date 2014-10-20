@@ -140,20 +140,31 @@
 
 BOOL write_tag(unsigned int block, BYTE *data, BOOL verify)
 {
-    switch(RFIDlerConfig.TagType)
+    BYTE ret= FALSE, i;
+
+    for(i= 0 ; i < TAG_WRITE_RETRY ; ++i)
     {
-        case TAG_TYPE_Q5:
-            return q5_write_block((BYTE) block, data, NO_LOCK, verify);
-            
-        case TAG_TYPE_HITAG2:
-            return hitag2_write_page((BYTE) block, data);
+        switch(RFIDlerConfig.TagType)
+        {
+            case TAG_TYPE_Q5:
+                ret= q5_write_block((BYTE) block, data, NO_LOCK, verify);
+                break;
 
-        case TAG_TYPE_T55X7:
-            return t55x7_write_block((BYTE) block, data, NO_LOCK, verify);
+            case TAG_TYPE_HITAG2:
+                ret= hitag2_write_page((BYTE) block, data);
+                break;
 
-        default:
-            break;
+            case TAG_TYPE_T55X7:
+                ret= t55x7_write_block((BYTE) block, data, NO_LOCK, verify);
+                break;
+
+            default:
+                break;
+        }
+        if (ret)
+            return TRUE;
     }
+
     return FALSE;
 }
 

@@ -337,7 +337,7 @@ BOOL t55x7_rwd_test(BYTE *pattern)
                     UserMessageNum(" gap: %d", gap);
                     UserMessageNum(" one: %d", one);
                     UserMessageNum(" zero: %d", zero);
-                    UserMessage("%s", "\r\n");
+                    UserMessage(" UID: %s\r\n", tmp);
                     found= TRUE;
                 }
             }

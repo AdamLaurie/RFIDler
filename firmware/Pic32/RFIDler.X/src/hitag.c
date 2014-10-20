@@ -570,7 +570,7 @@ void hitag2_test_rwd(unsigned int gapmin, unsigned int gapmax, unsigned int zero
                             }
                         }
                     }
-                    if(countu | counta | countr)
+                    if(countu == imax && counta == imax && countr == imax)
                     {
                         UserMessageNum(" - got %d", countu);
                         UserMessageNum(" uids, %d", counta);

@@ -507,8 +507,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10 (4)
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 525; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
-            RFIDlerConfig.RWD_Zero_Period= 20; //18; // 18 - 22
-            RFIDlerConfig.RWD_One_Period= 28; //26; // 26 - 32
+            RFIDlerConfig.RWD_Zero_Period= 19; //18; // 18 - 22
+            RFIDlerConfig.RWD_One_Period= 27; //26; // 26 - 32
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 199;
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 90;
             RFIDlerConfig.Sync[0]= 0xF8;

@@ -640,8 +640,8 @@ unsigned long hitag2_crypt(unsigned long source, BYTE length)
 unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length)
 {
     unsigned int i;
-    BYTE zero[]= {0,0,1,1};
-    BYTE one[]= {0,1,0,1};
+    BYTE zero[]= {1,1,0,0};
+    BYTE one[]= {1,0,1,0};
 
     for(i= 0 ; i < length ; i += 4, source, ++target)
     {

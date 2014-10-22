@@ -164,7 +164,7 @@
 // specify oneshot if data is not repeated (i.e. in response to a command rather than a cycling UID)
 unsigned int read_psk1_data(unsigned int period_us, unsigned int ticks, BYTE *data, unsigned int bits, unsigned char *sync, unsigned char syncbits, unsigned int timeout_us, unsigned int min_pulse_us, BOOL oneshot, BYTE format)
 {
-    unsigned int i, j;
+    unsigned int i= 0, j;
     BYTE found= 0, inverted= 0, repeat;
 
    if(oneshot)
@@ -210,6 +210,10 @@ unsigned int read_psk1_data(unsigned int period_us, unsigned int ticks, BYTE *da
                 break;
             }
         }
+
+        // point at start of sync
+        i -= syncbits - 1;
+
         if(found)
             break;
         if(inverted)
@@ -219,12 +223,6 @@ unsigned int read_psk1_data(unsigned int period_us, unsigned int ticks, BYTE *da
         for(i= 0 ; i < bits * repeat ; ++i)
             TmpBits[i] ^= 1;
     }
-
-    // point at start of sync
-    if(syncbits)
-        i -= syncbits - 1;
-    else
-        i= 0;
 
     // copy to output buffer
     switch(format)

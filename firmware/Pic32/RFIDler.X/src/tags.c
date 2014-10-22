@@ -485,7 +485,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_One_Period= 32; // 26 - 32
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 180; // docs say 204, so stop a little earlier so we catch leading edge
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 120; // docs say 96, so give it a bit longer t0 be safe!
-            RFIDlerConfig.SyncBits= 1;
+            RFIDlerConfig.SyncBits= 0;
             RFIDlerConfig.Sync[0]= 0x00;
             RFIDlerConfig.Sync[0]= 0x00;
             RFIDlerConfig.Sync[0]= 0x00;

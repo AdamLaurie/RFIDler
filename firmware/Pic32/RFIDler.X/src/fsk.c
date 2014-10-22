@@ -229,7 +229,7 @@ BOOL fsk_raw_get_uid(BYTE *response)
 // specify oneshot if data is not repeated (i.e. in response to a command rather than a cycling UID)
 unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned int t0_ticks, unsigned int t1_ticks, BYTE *data, unsigned int bits, BOOL invert, unsigned char *sync, unsigned char syncbits, unsigned int timeout_us, BOOL oneshot, BYTE format)
 {
-    unsigned int i, j;
+    unsigned int i= 0, j;
     BYTE found= 0, repeat;
 
     if(oneshot)
@@ -279,13 +279,10 @@ unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned 
         }
         if(!found)
             return 0;
-    }
 
-    // point at start of sync
-    if(syncbits)
+        // point at start of sync
         i -= syncbits - 1;
-    else
-        i= 0;
+    }
 
     // copy to output buffer
     switch(format)

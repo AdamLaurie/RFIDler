@@ -328,46 +328,41 @@ BOOL q5_login(BYTE *response, BYTE *pass)
 // so that only a GET_TRACE_DATA command will return a true value
 BOOL q5_rwd_test(BYTE *pattern)
 {
-    BYTE start_gap, gap, one, zero, i, tmp[Q5_BLOCKSIZE + 1];
+    BYTE gap, one, zero, tmp[Q5_BLOCKSIZE + 1];
     BOOL found= FALSE, blank;
 
     // min/max from datasheets
     for(one= 48 ; one <= 63 ; ++one)
         for(zero= 16; zero <= 31 ; ++zero)
             for(gap=  10 ; gap <= 50 ; ++gap)
-                for(start_gap= 11 ; start_gap <= 50 ; ++start_gap)
+            {
+                RFIDlerConfig.Manchester= TRUE;
+                blank= TRUE;
+                if(get_user_abort())
+                    return found;
+                RFIDlerConfig.RWD_Gap_Period= gap;
+                RFIDlerConfig.RWD_One_Period= one;
+                RFIDlerConfig.RWD_Zero_Period= zero;
+                // reset tag
+                get_tag_uid(tmp);
+                // try to switch off modulation
+                rwd_send(Q5_MODULATION_DEFEAT, strlen(Q5_MODULATION_DEFEAT), NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+                // read a block with no sync & no manchester - will be all '0' if not modulating
+                RFIDlerConfig.Manchester= FALSE;
+                if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, 0, RFIDlerConfig.Timeout, NO_ONESHOT_READ, HEX) == RFIDlerConfig.DataBits)
                 {
+                    if(strcmp(tmp, "0000000000000000") != 0)
+                            blank= FALSE;
                     RFIDlerConfig.Manchester= TRUE;
-                    blank= TRUE;
-                    if(get_user_abort())
-                        return found;
-                    RFIDlerConfig.RWD_Gap_Period= gap;
-                    RFIDlerConfig.RWD_One_Period= one;
-                    RFIDlerConfig.RWD_Zero_Period= zero;
-                    // reset tag
-                    get_tag_uid(tmp);
-                    // try to switch off modulation
-                    // send command with start gap: reset with sleep time set to start gap, and wake time set to 0 as we transmit the 1st bit immediately
-                    // note that we must also subtract standard gap period as it will be added to the front of the first bit by default.
-                    rwd_send(Q5_MODULATION_DEFEAT, strlen(Q5_MODULATION_DEFEAT), NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, start_gap - RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
-                    // read a block with no sync & no manchester - will be all '0' if not modulating
-                    RFIDlerConfig.Manchester= FALSE;
-                    if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, 0, RFIDlerConfig.Timeout, NO_ONESHOT_READ, HEX) == RFIDlerConfig.DataBits)
+                    if(blank && get_tag_uid(tmp) && q5_read_block(tmp, 0))
                     {
-                        for(i= 0 ; i < HEXDIGITS(RFIDlerConfig.DataBits) ; ++i)
-                            if(tmp[i] != '0')
-                                blank= FALSE;
-                        RFIDlerConfig.Manchester= TRUE;
-                        if(blank && get_tag_uid(tmp) && q5_read_block(tmp, 0))
-                        {
-                            UserMessageNum("\r\nFound tag with start_gap %d", start_gap);
-                            UserMessageNum(" gap %d", gap);
-                            UserMessageNum(" one %d", one);
-                            UserMessageNum(" zero %d", zero);
-                            found= TRUE;
-                        }
+                        UserMessageNum("\r\nFound tag with gap %d", gap);
+                        UserMessageNum(" one %d", one);
+                        UserMessageNum(" zero %d", zero);
+                        found= TRUE;
                     }
                 }
+            }
     UserMessage("%s", "\r\n");
     return found;
 }

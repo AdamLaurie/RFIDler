@@ -522,7 +522,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= 130;
+            RFIDlerConfig.PotHigh= 160;
             RFIDlerConfig.DataRate= 64;
             RFIDlerConfig.DataBits= 64;
             RFIDlerConfig.DataBlocks= Q5_DATABLOCKS;
@@ -535,12 +535,12 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Sync[2]= 0x00;
             RFIDlerConfig.Sync[3]= 0x00;
             RFIDlerConfig.SyncBits= 9;
-            RFIDlerConfig.RWD_Sleep_Period= 2000;
-            RFIDlerConfig.RWD_Wake_Period= 1000; // must be more than 3ms, but play it safe
-            RFIDlerConfig.RWD_Gap_Period= 20; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
-            RFIDlerConfig.RWD_Zero_Period= 24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
-            RFIDlerConfig.RWD_One_Period= 54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
-            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 64; // q5 will exit downlink mode after 64 but may not yet be damped!
+            RFIDlerConfig.RWD_Sleep_Period= 13000;
+            RFIDlerConfig.RWD_Wake_Period= 4000; // must be more than 3ms, but play it safe
+            RFIDlerConfig.RWD_Gap_Period= 50; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Zero_Period= 16; //24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
+            RFIDlerConfig.RWD_One_Period= 48; //54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 48; //64; // q5 will exit downlink mode after 64 but may not yet be damped!
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192; // the longer the better!
             break;
 

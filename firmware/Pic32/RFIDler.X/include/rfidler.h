@@ -328,6 +328,9 @@ extern rtccDate	RTC_date;			// date structure
 #define BINARY                          0
 #define HEX                             1
 
+#define ACK                             TRUE
+#define NO_ACK                          FALSE
+
 #define BLOCK                           TRUE
 #define NO_BLOCK                        FALSE
 

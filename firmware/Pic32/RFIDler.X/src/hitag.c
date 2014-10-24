@@ -142,8 +142,9 @@
 #include "hitagcrypto.h"
 #include "comms.h"
 
-// sync checking
+// sync/ack checking
 BYTE Hitag2Sync[5]= {0x01, 0x01, 0x01, 0x01, 0x01};
+BYTE Hitag1ACK[3]= {0x01, 0x00, 0x01};
 
 // crypto globals
 Hitag_State Hitag_Crypto_State;
@@ -203,7 +204,7 @@ BOOL hitag1_select(BYTE *response, BYTE *uid)
         return FALSE;
 
     // send command and get back 1 sync bit + 32 bit configpage
-    if(!hitag1_send_command(tmp1, command, NO_RESET, NO_SYNC, 33))
+    if(!hitag1_send_command(tmp1, command, NO_RESET, NO_SYNC, 33, NO_ACK))
         return FALSE;
 
     // check sync bit
@@ -237,7 +238,7 @@ BOOL hitag1_read_page(BYTE *response, BYTE block)
     tmp[12]= '\0';
 
     // ??? docs say 6 sync bits!
-    if(!hitag1_send_command(tmp, tmp, NO_RESET, NO_SYNC, HITAG1_BLOCKSIZE + 1))
+    if(!hitag1_send_command(tmp, tmp, NO_RESET, NO_SYNC, HITAG1_BLOCKSIZE + 1, NO_ACK))
         return FALSE;
 
     // check sync
@@ -249,8 +250,53 @@ BOOL hitag1_read_page(BYTE *response, BYTE block)
     return TRUE;
 }
 
+
+BOOL hitag1_write_page(BYTE block, BYTE *data)
+{
+    BYTE crc, command[21], tmp[33], tmp1[4];
+
+    if(block > HITAG1_DATABLOCKS - 1)
+        return FALSE;
+
+    // get tag's UID for select command
+    if(!hitag1_get_uid(tmp))
+        return FALSE;
+
+    // select for read/write
+    hitag1_select(tmp, tmp);
+
+    // convert data to binstring for send
+    if(hextobinstring(tmp, data) != 32)
+        return FALSE;
+
+    // create and send 12 bit command block: HITAG1_WRPPAGE (4 bits) + 8 bit address
+    memcpy(command, HITAG1_WRPPAGE, 4);
+    inttobinstring(command + 4, (unsigned int) block, 8);
+    command[12]= '\0';
+    if(!hitag1_send_command(tmp1, command, NO_RESET, NO_SYNC, 0, ACK))
+        return FALSE;
+
+    // delay to switch back to write mode
+    Delay_us((RFIDlerConfig.RWD_Wait_Switch_RX_TX * RFIDlerConfig.FrameClock) / 100);
+
+    // now send data
+    if(!hitag1_send_command(tmp1, tmp, NO_RESET, NO_SYNC, 0, ACK))
+        return FALSE;
+
+    // read back and verify
+    // delay for long enough to allow write plus RX->TX period
+    Delay_us((HITAG1_WRITE_DELAY * RFIDlerConfig.FrameClock + RFIDlerConfig.RWD_Wait_Switch_RX_TX * RFIDlerConfig.FrameClock) / 100);
+    if(!hitag1_read_page(tmp, block))
+        return FALSE;
+
+    if(memcmp(tmp, data, 8) != 0)
+        return FALSE;
+
+    return TRUE;
+}
+
 // calcuate CRC & send command - response in binarray
-BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length)
+BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack)
 {
     BYTE crc= HITAG1_CRC_PRESET, tmp[HITAG1_MAX_COMMAND_LEN], length; // supplied command is 4 bits + 8 bit address. we add 8 bit CRC
     
@@ -266,11 +312,20 @@ BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, B
     if(!rwd_send(tmp, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
+    // get/check 3 bit ACK if required
+    if(ack)
+        if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, 3, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == 3)
+        {
+            if (memcmp(tmp, Hitag1ACK , 3) != 0)
+                return FALSE;
+        }
+        else
+            return FALSE;
+
     if(!response_length)
         return TRUE;
 
     // read response as binary data
-    //Manchester_Auto_Correct= TRUE;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, response, response_length, RFIDlerConfig.Sync, sync ? RFIDlerConfig.SyncBits : 0, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == response_length)
     {
         // delay for RX->TX time
@@ -471,7 +526,7 @@ BOOL hitag2_read_page(BYTE *response, BYTE block)
 
 BOOL hitag2_write_page(BYTE block, BYTE *data)
 {
-    BYTE command[10], tmp[37], tmp1[37], tmp2[37], tmphex[9];
+    BYTE command[11], tmp[37], tmp1[37], tmp2[37], tmphex[9];
 
     if(block > HITAG2_DATABLOCKS - 1)
         return FALSE;

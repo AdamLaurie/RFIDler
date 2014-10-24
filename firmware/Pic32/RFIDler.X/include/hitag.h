@@ -152,6 +152,8 @@
 #define HITAG1_CONFIG_BLOCK_NUM     1               // config block
 #define HITAG1_USER_DATA_BLOCK_NUM  4               // 1st user data block
 
+#define HITAG1_WRITE_DELAY          726             // time to complete write in FCs
+
 // hitag2 commands
 #define HITAG2_START_AUTH           "11000"         // get UID and/or start the authentication process
 #define HITAG2_READ_PAGE            "11"            // read page after auth
@@ -185,7 +187,7 @@
 
 BOOL hitag1_get_uid(BYTE *response);
 BOOL hitag1_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length);
+BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack);
 void hitag1_binarray_crc(BYTE *crc, BYTE *bin, BYTE length);
 void hitag1_crc(BYTE *crc, BYTE data, BYTE bits);
 BOOL hitag2_get_uid(BYTE *response);

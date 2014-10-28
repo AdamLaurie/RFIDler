@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 /***************************************************************************
  * A copy of the GNU GPL is appended to this file.                         *
@@ -138,108 +136,109 @@
 
 import serial
 
-class RFIDler():
-	# globals
-	Connection= None
-	Debug= False
 
-	def send_command(self, tosend):
-		"""
-		low level send a command
-		internal use only - external code should call 'command()'
-		args: command line to send
-		return: True/False, data
-		possible data values:
-			'.' - OK, command complete, no data to follow
-			'+' - OK, command complete, data/result to follow
-			'!' - command failed, reason to follow
-			'?' - command not recognised
-		"""
-		try:
-			if self.Debug:
-				print '\r\n>>>', tosend,
-			self.Connection.write(tosend + "\r\n")
-		except:
-			if self.Debug:
-				print '(fail!)'
-			return False, "Serial communications failure (send)!"
+class RFIDler(object):
+    # globals
+    Connection = None
+    Debug = False
 
-		if self.Debug:
-			print
-		try:
-			result= self.Connection.read(1)
-			if self.Debug:
-				print '\r\n<<<',
-			if not result in '.+!?':
-				if self.Debug:
-					print result, '(fail!)'
-				return False, result
-			if self.Debug:
-				print result
-			return True, result
-		except:
-			if self.Debug:
-				print '(fail!)'
-			return False, "Serial communications failure (receive)!"
+    def send_command(self, tosend):
+        """
+        low level send a command
+        internal use only - external code should call 'command()'
+        args: command line to send
+        return: True/False, data
+        possible data values:
+            '.' - OK, command complete, no data to follow
+            '+' - OK, command complete, data/result to follow
+            '!' - command failed, reason to follow
+            '?' - command not recognised
+        """
+        try:
+            if self.Debug:
+                print '\r\n>>>', tosend,
+            self.Connection.write(tosend + "\r\n")
+        except:
+            if self.Debug:
+                print '(fail!)'
+            return False, "Serial communications failure (send)!"
 
-	def command(self, tosend):
-		"""
-		send command
-		args: command line to send
-		return: True/False, [data line(s) or reason for failure]
-		note that CR/LF is stripped from each data item but all other whitespace is left intact (including blank lines)
-		"""
-		result, data= self.send_command(tosend)
-		if not result:
-			return False, data
-		# check type of result
-		# if '?', command wasn't recognised
-		if data == '?':
-			return False, "Command not recognised!"
-		# if '!', command failed
-		if data == '!':
-			data= self.Connection.readline().replace('\r','').replace('\n','')
-			return False, data
-		# if '.', we're done
-		if data == '.':
-			return True, ''
-		# if '+', we need to get results. '*' terminates.
-		if data == '+':
-			data= []
-			while 42:
-				item= self.Connection.readline().replace('\r','').replace('\n','')
-				if self.Debug:
-					print '<<<', item
-				if item == '*':
-					return True, data
-				data.append(item)
-				
-	def connect(self, port="/dev/RFIDler", baud= 115200, timeout= 1):
-		"""
-		open a serial connection to RFIDler and switch to API mode
-		args: port="/dev/RFIDler", baud= 115200, timeout= 1
-		return: True/False, reason for failure
-		"""
-		try:
-			self.Connection= serial.Serial(port, baud, timeout=timeout)
-			self.Connection.flushInput()
-			self.Connection.flushOutput()
-		except:
-			return False, "Can't open serial port"
-		# make sure we're in API mode - send it twice as RFIDler's serial buffer may already have some crap in it
-		self.command("API")
-		while self.Connection.readline():
-			continue
-		if not self.command("API"):
-			return False, "Can't switch to API mode"
-		return True, ""
+        if self.Debug:
+            print
+        try:
+            result = self.Connection.read(1)
+            if self.Debug:
+                print '\r\n<<<',
+            if not result in '.+!?':
+                if self.Debug:
+                    print result, '(fail!)'
+                return False, result
+            if self.Debug:
+                print result
+            return True, result
+        except:
+            if self.Debug:
+                print '(fail!)'
+            return False, "Serial communications failure (receive)!"
 
-	def disconnect(self):
-		"""
-		close serial connection to RFIDler
-		"""
-		try:
-			self.Connection.close()
-		except:
-			pass
-		return True
+    def command(self, tosend):
+        """
+        send command
+        args: command line to send
+        return: True/False, [data line(s) or reason for failure]
+        note that CR/LF is stripped from each data item but all other whitespace is left intact (including blank lines)
+        """
+        result, data = self.send_command(tosend)
+        if not result:
+            return False, data
+        # check type of result
+        # if '?', command wasn't recognised
+        if data == '?':
+            return False, "Command not recognised!"
+        # if '!', command failed
+        if data == '!':
+            data = self.Connection.readline().replace('\r', '').replace('\n', '')
+            return False, data
+        # if '.', we're done
+        if data == '.':
+            return True, ''
+        # if '+', we need to get results. '*' terminates.
+        if data == '+':
+            data = []
+            while 42:
+                item = self.Connection.readline().replace('\r', '').replace('\n', '')
+                if self.Debug:
+                    print '<<<', item
+                if item == '*':
+                    return True, data
+                data.append(item)
+
+    def connect(self, port="/dev/RFIDler", baud=115200, timeout=1):
+        """
+        open a serial connection to RFIDler and switch to API mode
+        args: port="/dev/RFIDler", baud= 115200, timeout= 1
+        return: True/False, reason for failure
+        """
+        try:
+            self.Connection = serial.Serial(port, baud, timeout=timeout)
+            self.Connection.flushInput()
+            self.Connection.flushOutput()
+        except:
+            return False, "Can't open serial port"
+        # make sure we're in API mode - send it twice as RFIDler's serial buffer may already have some crap in it
+        self.command("API")
+        while self.Connection.readline():
+            continue
+        if not self.command("API"):
+            return False, "Can't switch to API mode"
+        return True, ""
+
+    def disconnect(self):
+        """
+        close serial connection to RFIDler
+        """
+        try:
+            self.Connection.close()
+        except:
+            pass
+        return True

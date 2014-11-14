@@ -151,6 +151,7 @@ typedef struct {
 } InstallInfo;
 
 
+static void MoveMainWindow(HWND hWnd, HINSTANCE hInst);
 static INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK AboutDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam);
@@ -280,6 +281,31 @@ void PrintDebugStatus(const TCHAR *format, ...)
 #endif
 
 
+void MoveMainWindow(HWND hWnd, HINSTANCE hInst)
+{
+    RECT rc;
+
+    // find out where CW_USEDEFAULT would place new window (not available for dialogs)
+    if (GetWindowRect(hWnd, &rc)) {
+        // make invisible window the same size as this, positioned with CW_USEDEFAULT
+        // NB need to reference a valid Window class
+        HWND hW = CreateWindow(_T("RFIDinstall"), _T("Invisible Window"), WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
+            NULL, NULL, hInst, NULL);
+        if (hW) {
+            RECT rc2;
+
+            if (GetWindowRect(hW, &rc2)) {
+                // move program window to this location
+                SetWindowPos(hWnd, HWND_TOP, rc2.left, rc2.top, 0, 0, SWP_NOSIZE);
+            }
+            // cleanup
+            DestroyWindow(hW);
+        }
+    }
+}
+
+
 INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     /* statics to keep state between Windows messages */
@@ -325,6 +351,9 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
             SetTimer(hWnd, KWow64TimerMagicNumber, 500, NULL);
         }
 #endif
+        // restore window position & size, or use CW_USEDEFAULT positioning
+        MoveMainWindow(hWnd, hInst);
+
         // return TRUE  unless you set the focus to a control
         return TRUE;
 
@@ -409,7 +438,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                                 CloseHandle(hThread);
                                 // enable/show progress bar
                                 ShowWindow(hWndProg, SW_NORMAL);
-                                // TODO check for comctrl32 v6 first?
+                                // comctrl32 v6 required
                                 SendMessage(hWndProg, PBM_SETMARQUEE, TRUE, 0);
                                 EnableWindow (GetDlgItem(hWnd, IDC_INSTALL), FALSE);
                                 EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALL), FALSE);
@@ -594,7 +623,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
 
 
 
-// TODO decide copyright licensing, and add info here
+// program description and decide copyright licensing info
 static const TCHAR *helpTitle = _T("Help About RFIDLer LF Driver Installer");
 static const TCHAR *helpText =
     _T("RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n")

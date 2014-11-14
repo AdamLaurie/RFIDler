@@ -174,7 +174,8 @@ public:
     int GetViewStyleButton() const { return optViewStyleButton; }
     BOOL ShowNonConfig() const { return optShowNonConfig; }
     BOOL ShowNotPresent() const { return optShowNotPresent; }
-    BOOL ShowDevBoards() const { return optShowDevBoards | optShowAnySerial; }
+    BOOL ShowDevBoards() const { return optShowDevBoards; }
+    BOOL ShowDevBoardsOrAnySerial() const { return optShowDevBoards || optShowAnySerial; }
     BOOL ShowRecentDisc() const { return optShowRecentDisc; }
     BOOL ShowAnySerial() const { return optShowAnySerial; }
     void SetShowNonConfig(BOOL value) { optShowNonConfig = value; }
@@ -316,6 +317,8 @@ private:
         }
     void SetDeviceIcon();
     void Destroy();
+    void DecDeviceTypeCount();
+    void IncDeviceTypeCount();
 
 private:
     static DeviceTracker *gdevTracker;
@@ -532,6 +535,7 @@ private:
 
 
 static BOOL CALLBACK MonitorDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+static void ReleaseString(TCHAR *&string);
 static BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
         DLGPROC lpDialogFunc, LPARAM dwInitParam);
@@ -849,15 +853,19 @@ BOOL CALLBACK MonitorDlgProc (
         // Create Status Bar with sizing grip at bottom of window
         hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP, 
             _T(""), hWnd, IDC_STATUSBAR);
-        if (hWndStatusBar) {
-            SetStatusBarPartitions(hWndStatusBar, 2);
-        }
         GetInitialControlPositions(hWnd, &MainWnd);
         // create device tracking stuff
         DevTracker = new DeviceTracker(hWnd, hWndLV, hWndStatusBar, hInst);
         if (DevTracker) {
+            // Setting are restored in DeviceTracker constructor, so we can test them now
+            if (hWndStatusBar) {
+                if (DevTracker->GetOptions().ShowDevBoardsOrAnySerial()) {
+                    SetStatusBarPartitions(hWndStatusBar, 3);
+                } else {
+                    SetStatusBarPartitions(hWndStatusBar, 2);
+                }
+            }
             DevTracker->Initialize();
-
             // restore window position & size, or use CW_USEDEFAULT positioning
             MoveMainWindow(hWnd, hInst, DevTracker);
         } else {
@@ -1687,10 +1695,7 @@ BOOL CALLBACK InstallConfigDlgProc (
         break;
 
     case WM_DESTROY: // dialog closing
-        if (fname) {
-            free(fname);
-            fname = NULL;
-        }
+        ReleaseString(fname);
         handled++;
         break;
     }
@@ -1699,6 +1704,14 @@ BOOL CALLBACK InstallConfigDlgProc (
     return handled;
 }   /* InatallConfigDlgProc() */
 
+
+void ReleaseString(TCHAR *&string)
+{
+    if (string) {
+        free(string);
+        string = NULL;
+    }
+}
 
 // program description and copyright licensing info
 static const TCHAR *helpTitle = _T("Help About RFIDLer Monitor");
@@ -1774,9 +1787,10 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam
 
 void SetStatusBarPartitions(HWND hWndStatusBar, int parts)
 {
-    int sbWidths[4] = { 150, 320, 470, 0 };
+    int sbWidths[4] = { 150, 350, 510, 0 };
     SendMessage(hWndStatusBar, SB_SETPARTS, parts, (LPARAM) sbWidths);
 }
+
 
 void LVColumnClickAndSort(DeviceTracker *DevTracker, NM_LISTVIEW *pNm)
 {
@@ -1836,8 +1850,8 @@ void LVRightClickContextMenu(HINSTANCE hInst, LPNMITEMACTIVATE lpnmitem)
         lpnmitem->ptAction.x, lpnmitem->ptAction.y);
 #endif
     /* 
-        lpnmitem->lParam points to something, but doesn't appear to be usful.
-        Need to map mouse coordinates to Device Info..
+        lpnmitem->lParam points to something, but doesn't appear to be useful.
+        Need to map mouse coordinates to our Device Info.
     */
     DeviceInfo *dev = DevInfoFromListPoint(lpnmitem->hdr.hwndFrom,
         lpnmitem->iItem, lpnmitem->ptAction);
@@ -2098,16 +2112,7 @@ DeviceInfo *DeviceInfo::NewDevice(int itemPos, enum DevType aDevType,
         } else {
             if ((aDevState == DevArrived) || (aDevState == DevPresent)) {
                 // update count
-                newDev->devPresent = TRUE;
-                switch (aDevType) {
-                case DevRfidler:        iCountRfidlers++; break;
-                case DevMicroDevBoard:  iCountDevBoards++; break;
-                case DevMicroBoot:      iCountBootloaders++; break;
-                case DevRfidUnconfig:   iCountUnconRfidlers++; break;
-                case DevMicroUnconfig:  iCountUnconDevBoards++; break;
-                case DevOtherSerial:    iCountOtherSerial++; break;
-                default:                break;
-                }
+                newDev->IncDeviceTypeCount();
             }
 
             // update DeviceTracker counts, decide on notifications 
@@ -2119,22 +2124,43 @@ DeviceInfo *DeviceInfo::NewDevice(int itemPos, enum DevType aDevType,
 }
 
 
+void DeviceInfo::DecDeviceTypeCount()
+{
+    devPresent = FALSE;
+    switch (devType) {
+    case DevRfidler:        iCountRfidlers--; break;
+    case DevMicroDevBoard:  iCountDevBoards--; break;
+    case DevMicroBoot:      iCountBootloaders--; break;
+    case DevRfidUnconfig:   iCountUnconRfidlers--; break;
+    case DevMicroUnconfig:  iCountUnconDevBoards--; break;
+    case DevOtherSerial:    iCountOtherSerial--; break;
+    default:                break;
+    }
+}
+
+
+void DeviceInfo::IncDeviceTypeCount()
+{
+    devPresent = TRUE;
+    switch (devType) {
+    case DevRfidler:        iCountRfidlers++; break;
+    case DevMicroDevBoard:  iCountDevBoards++; break;
+    case DevMicroBoot:      iCountBootloaders++; break;
+    case DevRfidUnconfig:   iCountUnconRfidlers++; break;
+    case DevMicroUnconfig:  iCountUnconDevBoards++; break;
+    case DevOtherSerial:    iCountOtherSerial++; break;
+    default:                break;
+    }
+}
+
+
 DeviceInfo *DeviceInfo::DeleteDevice()
 {
     DeviceInfo *next = devNext;
 
     if (devPresent) {
         // update count
-        switch (devType) {
-        case DevRfidler:        iCountRfidlers--; break;
-        case DevMicroDevBoard:  iCountDevBoards--; break;
-        case DevMicroBoot:      iCountBootloaders--; break;
-        case DevRfidUnconfig:   iCountUnconRfidlers--; break;
-        case DevMicroUnconfig:  iCountUnconDevBoards--; break;
-        case DevOtherSerial:    iCountOtherSerial--; break;
-        default:                break;
-        }
-        devPresent = FALSE;
+        DecDeviceTypeCount();
     }
 
     // update DeviceTracker counts, decide on notifications
@@ -2173,21 +2199,12 @@ void DeviceInfo::Destroy()
         devDeleteOnUnlock = TRUE;
     } else {
         // release all strings here
-        if (devSerialNumber) {
-            free(devSerialNumber);
-        }
-        if (devPortName) {
-            free(devPortName);
-        }
-        if (devContainerId) {
-            free(devContainerId);
-        }
-        if (devFriendlyName) {
-            free(devFriendlyName);
-        }
-        if (devHardwareId) {
-            free(devHardwareId);
-        }
+        ReleaseString(devSerialNumber);
+        ReleaseString(devPortName);
+        ReleaseString(devContainerId);
+        ReleaseString(devFriendlyName);
+        ReleaseString(devHardwareId);
+
         // unlink
         if (devNext) {
             devNext->devPrev = devPrev;
@@ -2338,11 +2355,11 @@ const TCHAR *DeviceInfo::InfoTip()
             _T("Microchip HID bootloader\nRFIDler or other development board"));
         break;
     case DevRfidUnconfig:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("RFIDler, but COM port\ndrivers not installed"));
+        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("RFIDler, COM port drivers not installed"));
         break;
     case DevMicroUnconfig:
         wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), 
-            _T("Microchip USB COM port,\nbut COM port drivers not installed"));
+            _T("Microchip USB COM port, COM port drivers not installed"));
         break;
     case DevOtherSerial:
         wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), devFriendlyName);
@@ -2471,16 +2488,7 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
                 devTimestamp = aNow;
                 chgState = TRUE;
                 // update counts
-                devPresent = FALSE;
-                switch (devType) {
-                case DevRfidler:        iCountRfidlers--; break;
-                case DevMicroDevBoard:  iCountDevBoards--; break;
-                case DevMicroBoot:      iCountBootloaders--; break;
-                case DevRfidUnconfig:   iCountUnconRfidlers--; break;
-                case DevMicroUnconfig:  iCountUnconDevBoards--; break;
-                case DevOtherSerial:    iCountOtherSerial--; break;
-                default:                break;
-                }
+                DecDeviceTypeCount();
             }
         } else if (aDevState == DevPresent) {
             if ((devState == DevAbsent) || (devState == DevRemoved)) {
@@ -2495,16 +2503,7 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
                 devElapsed = 0;
                 chgState = TRUE;
                 // update counts
-                devPresent = TRUE;
-                switch (devType) {
-                case DevRfidler:        iCountRfidlers++; break;
-                case DevMicroDevBoard:  iCountDevBoards++; break;
-                case DevMicroBoot:      iCountBootloaders++; break;
-                case DevRfidUnconfig:   iCountUnconRfidlers++; break;
-                case DevMicroUnconfig:  iCountUnconDevBoards++; break;
-                case DevOtherSerial:    iCountOtherSerial++; break;
-                default:                break;
-                }
+                IncDeviceTypeCount();
             }
         }
 
@@ -2537,24 +2536,11 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
 
         if (devPresent) {
             // update counts
-            switch (devType) {
-            case DevRfidler:        iCountRfidlers--; break;
-            case DevMicroDevBoard:  iCountDevBoards--; break;
-            case DevMicroBoot:      iCountBootloaders--; break;
-            case DevRfidUnconfig:   iCountUnconRfidlers--; break;
-            case DevMicroUnconfig:  iCountUnconDevBoards--; break;
-            case DevOtherSerial:    iCountOtherSerial--; break;
-            default:                break;
-            }
-            switch (aDevType) {
-            case DevRfidler:        iCountRfidlers++; break;
-            case DevMicroDevBoard:  iCountDevBoards++; break;
-            case DevMicroBoot:      iCountBootloaders++; break;
-            case DevRfidUnconfig:   iCountUnconRfidlers++; break;
-            case DevMicroUnconfig:  iCountUnconDevBoards++; break;
-            case DevOtherSerial:    iCountOtherSerial++; break;
-            default:                break;
-            }
+            DecDeviceTypeCount();
+            devType = aDevType;
+            IncDeviceTypeCount();
+        } else {
+            devType = aDevType;
         }
 
         // update DeviceTracker counts, decide on notifications 
@@ -2562,7 +2548,6 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
         gdevTracker->DetermineArrivalNotifications(aDevType, devState);
 
         // rely on FindDevMatchBySernum() to enforce type change restrictions
-        devType = aDevType;
         SetDeviceIcon();
 
         // update port status & icon on display
@@ -2573,9 +2558,8 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
 #ifdef _DEBUG
             PrintDebugStatus(_T("Adding PortName (%s)\n"), aPortName);
 #endif
-            if (devPortName) {
-                free(devPortName);
-            }
+            ReleaseString(devPortName);
+
             devPortName = _wcsdup(aPortName);
             if (devPortName) {
                 devPortNumber = aPortNumber;
@@ -2586,8 +2570,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
             PrintDebugStatus(_T("Release portname (%s)\n"), devPortName);
 #endif
             // driver uninstalled, portname removed
-            free(devPortName);
-            devPortName = NULL;
+            ReleaseString(devPortName);
             nameChanged = TRUE;
         }
 
@@ -2603,9 +2586,8 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
     if ((devState == DevArrived) || (devState == DevPresent)) {
         // portname has changed? eg by user in Device Manager
         if ((aPortName) && (!devPortName || wcscmp(devPortName, aPortName))) {
-            if (devPortName) {
-                free(devPortName);
-            }
+            ReleaseString(devPortName);
+
             devPortName = _wcsdup(aPortName);
             if (devPortName) {
                 devPortNumber = aPortNumber;
@@ -3373,7 +3355,7 @@ void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
         // examine serial device
         if ((aSerialType == SerialPort) && CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
             dType = DevRfidler;
-        } else if ((aSerialType == SerialPort) && mOptions.ShowDevBoards() &&
+        } else if ((aSerialType == SerialPort) && mOptions.ShowDevBoardsOrAnySerial() &&
                 CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
             dType = DevMicroDevBoard;
         } else if (mOptions.ShowAnySerial()) {
@@ -3427,7 +3409,8 @@ void DeviceTracker::CheckClassNoneDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA
         if (CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
             // Get RFIDler dev details
             dType = DevRfidUnconfig;
-        } else if (mOptions.ShowDevBoards() && CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
+        } else if (mOptions.ShowDevBoardsOrAnySerial() &&
+                CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
             // Get Microchip USB Serial device details
             dType = DevMicroUnconfig;
         }
@@ -3968,21 +3951,11 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
     }
 
     if (!added) {
-        if (portname) {
-            free(portname);
-        }
-        if (serialNumber) {
-            free(serialNumber);
-        }
-        if (containerId) {
-            free(containerId);
-        }
-        if (friendlyname) {
-            free(friendlyname);
-        }
-        if (hardwareId) {
-            free(hardwareId);
-        }
+        ReleaseString(portname);
+        ReleaseString(serialNumber);
+        ReleaseString(containerId);
+        ReleaseString(friendlyname);
+        ReleaseString(hardwareId);
     }
 }
 
@@ -4031,7 +4004,7 @@ void DeviceTracker::CleanupOrphanedDevices(FILETIME &aNow, unsigned aScanId)
                 enum DevType dType = item->DeviceType();
 
                 if ( ((dType == DevMicroDevBoard) || (dType == DevMicroUnconfig))
-                        && !mOptions.ShowDevBoards() ) {
+                        && !mOptions.ShowDevBoardsOrAnySerial() ) {
                     unlink = TRUE;
                 } else if ( ((dType == DevRfidUnconfig) || (dType == DevMicroUnconfig))
                         && !mOptions.ShowNonConfig() ) {
@@ -4065,7 +4038,7 @@ void DeviceTracker::CleanupDevicesAfterOptionsChange()
         enum DevState dState = item->DeviceState();
 
         if ( ((dType == DevMicroDevBoard) || (dType == DevMicroUnconfig))
-                && !mOptions.ShowDevBoards() ) {
+                && !mOptions.ShowDevBoardsOrAnySerial()) {
             unlink = TRUE;
         } else if ( (dType == DevOtherSerial) && !mOptions.ShowAnySerial() ) {
             unlink = TRUE;
@@ -4102,11 +4075,11 @@ void DeviceTracker::SetOptions(const MonOptions& aOptions, SetMode setmode)
         if (mOptions.ShowNonConfig() != aOptions.ShowNonConfig()) {
             mInitialiseUnconfig = TRUE; // next scan should handle Unconfig as per initial scan
         }
-        if (mOptions.ShowDevBoards() != aOptions.ShowDevBoards()) {
+        if (mOptions.ShowDevBoardsOrAnySerial() != aOptions.ShowDevBoardsOrAnySerial()) {
             mInitialiseMicroSer = TRUE; // next scan should handle Microchip USB serial as per initial scan
 
             // ensure status bar is updated
-            if (aOptions.ShowDevBoards()) {
+            if (aOptions.ShowDevBoardsOrAnySerial()) {
                 SetStatusBarPartitions(mHWndStatusBar, 3);
                 KickIconRefreshTimer();
             } else {
@@ -4114,7 +4087,7 @@ void DeviceTracker::SetOptions(const MonOptions& aOptions, SetMode setmode)
             }
         }
         if (mOptions.ShowAnySerial() != aOptions.ShowAnySerial()) {
-            mInitialiseAnySerial = TRUE; // next scan should handle Microchip USB serial as per initial scan
+            mInitialiseAnySerial = TRUE; // next scan should handle other serial ports as per initial scan
         }
 
         // copy new values, and setup saving changes to the registry 
@@ -4237,7 +4210,7 @@ void DeviceTracker::AppIconRefresh()
         }
         SendMessage(mHWndStatusBar, SB_SETTEXT, 1, (LPARAM) statusBuffer);
 
-        if (mOptions.ShowDevBoards()) {
+        if (mOptions.ShowDevBoardsOrAnySerial()) {
             count = DeviceInfo::GetCountDevBoards();
 
             if (count) {

@@ -125,6 +125,10 @@ To connect, any serial terminal emulator should work, but we recommend:
 * Windows: [PuTTY](http://www.chiark.greenend.org.uk/~sgtatham/putty/)
 * Mac OS X: SerialTools (free from the App Store)
 
+Example linux connection:
+
+	minicom -D /dev/ttyACM1 -b 115200 
+
 Once connected, hit `<ENTER>` to see the HELP screen and switch to CLI mode, or send commands to remain in API mode.
 
 In API mode, all commands are as per CLI mode, and will be ACK'd by a single '.' or NACK'd by '!' if command fails

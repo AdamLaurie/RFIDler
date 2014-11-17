@@ -112,7 +112,7 @@ When you connect with USB for the first time, you may need to perform some confi
 #### Linux
 
 Create a rule file for UDEV to allow non-root access to the file, and also disable modem manager access. An appropriate file can be found in the MPLAB project
-under the "Linux Support" tab. Copy this file to /etc/udev/rules.d and run 'sudo udevadm control --reload-rules'
+under the "Linux Support" tab. Copy this file to `/etc/udev/rules.d` and run `sudo udevadm control --reload-rules`
 
 ####  Windows
 
@@ -121,7 +121,7 @@ Windows drivers can be found in the 'Windows Driver' tab of the MPLAB project
 
 To connect, any serial terminal emulator should work, but we recommend:
 
-* Linux: minicom (`sudo apt-get install minicom')
+* Linux: minicom (`sudo apt-get install minicom`)
 * Windows: [PuTTY](http://www.chiark.greenend.org.uk/~sgtatham/putty/)
 * Mac OS X: SerialTools (free from the App Store)
 
@@ -133,26 +133,28 @@ or '?' if it is not recognised. Other output is command dependant.
 
 Enter bootloader mode either from the menu ('BL'), or by holding down button 'PROG' while simultaneously plugging in the USB cable or pressing the 'RESET' button.
 LED1 will blink to confirm bootloader mode has been entered.
+
 ### Linux:
+
 `dmesg` should show the following:
 
-  generic-usb 0003:04D8:003C.0003: hiddev0,hidraw1: USB HID v1.11 Device [Microchip Technology Inc. USB HID Bootloader] on usb-0000:00:1d.0-1.1.2.1/input0
-     
+		generic-usb 0003:04D8:003C.0003: hiddev0,hidraw1: USB HID v1.11 Device [Microchip Technology Inc. USB HID Bootloader] on usb-0000:00:1d.0-1.1.2.1/input0
+
 To flash the code, `cd` to the top of the repo and run:
 
-  mphidflash -r -w firmware/Pic32/RFIDler.X/dist/default/production/RFIDler.X.production.hex
+		mphidflash -r -w firmware/Pic32/RFIDler.X/dist/default/production/RFIDler.X.production.hex
 
- The device will be programmed and will then reboot. `dmesg` should show:
+The device will be programmed and will then reboot. `dmesg` should show:
 
-  usb 2-1.1.2.1: USB disconnect, device number 19
-  usb 2-1.1.2.1: new full speed USB device number 20 using ehci_hcd
-  cdc_acm 2-1.1.2.1:1.0: This device cannot do calls on its own. It is not a modem.
-  cdc_acm 2-1.1.2.1:1.0: ttyACM3: USB ACM device
+		usb 2-1.1.2.1: USB disconnect, device number 19
+		usb 2-1.1.2.1: new full speed USB device number 20 using ehci_hcd
+		cdc_acm 2-1.1.2.1:1.0: This device cannot do calls on its own. It is not a modem.
+		cdc_acm 2-1.1.2.1:1.0: ttyACM3: USB ACM device
 
-Windows:
+### Windows
 
      ???
 
- Mac OS X:
+### Mac OS X
 
       ???

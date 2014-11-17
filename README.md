@@ -136,10 +136,32 @@ or '?' if it is not recognised. Other output is command dependant.
 
 ## Loading new Firmware
 
-* Enter bootloader mode either from the menu (`BL`), or by holding down button `PROG` 
-* while simultaneously plugging in the USB cable or pressing the 'RESET' button.
+Enter bootloader mode 
 
-LED1 will blink to confirm bootloader mode has been entered.
+* either from the menu (`BL`)
+* or by holding down button `BOOTLOADER` 
+
+while simultaneously 
+
+* plugging in the USB cable 
+* or pressing the 'RESET' button.
+
+LED6 and LED5 will show stable orange light to confirm bootloader mode has been entered.
+
+	#~/tools/mphidflash-1.6/binaries/mphidflash-1.6-linux-64 -r -w firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex 
+	USB HID device found: 503808 bytes free
+	Device family: PIC32
+
+	Erasing...
+	Writing hex file 'RFIDler.X.production.hex':......[...removed for brevity...]
+	Verifying:.... [...removed for brevity...]
+	Resetting device...
+
+You can verify the flashing via `version`
+
+	*RFIDler> version
+	0071-beta
+	
 
 ### Linux:
 

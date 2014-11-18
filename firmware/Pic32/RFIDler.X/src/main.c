@@ -799,6 +799,166 @@ unsigned int read_adc(void)
     return ReadADC10(offset);
 }
 
+int starts_with(const BYTE *str,const BYTE *pre)
+{
+
+    size_t lenpre = strlen(pre),
+           lenstr = strlen(str);
+    if(lenpre == 0) return 1;
+    
+    return lenstr < lenpre ? 0 : strncmp(pre, str, lenpre) == 0;
+}
+
+/******************************************************************
+ * Function:        void show_usage(char *command)
+ *
+ * PreCondition:    None
+ *
+ * Input:           char *command - input command
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        This function displays usage info.
+ *                  If the input command is blank, help about
+ *                  all available commands is shown. If the input
+ *                  command is e.g. TA, help about all commands
+ *                  starting with TA is shown.
+ *                  Similar case for "HELP TA".
+ * Note:            None
+ *******************************************************************/
+void show_usage(char *command)
+{
+    static BYTE* commands[] = {
+        "ANALOGUE[N] <# OF SAMPLES>                                   Sample raw coil ([N]o local clock) & output in XML (HEX)\r\n",
+        "APDU <CLA+INS+P1+P2[+LC+DATA][+LE]>                          Transmit (HEX) ISO-7816-4 APDU to SmartCard. Return is [DATA]+<SW1>+<SW2>\r\n",
+        "API                                                          Switch to API mode\r\n",
+        "ASK <HEX UID> <FC> <RATE> <REPEAT>                           Emulate ASK, Field Clock in uS/100, Data Rate in RF/n\r\n",
+        "ATR                                                          Get Answer To Reset from SmartCard\r\n",
+        "AUTH [HEX KEY] [BLOCK]                                       Authenticate in CRYPTO mode\r\n",
+        "AUTOPOT                                                      Auto-Detect ideal POT setting(s)\r\n",
+        "AUTORATE                                                     Auto-Detect data rate\r\n",
+        "AUTORUN [OFF | COMMAND [ARGS]]                               Set/Show startup command\r\n",
+        "AUTOTAG                                                      Auto-Detect TAG type\r\n",
+        "BINTOHEX <BIN>                                               Show BINARY as HEX string\r\n",
+        "BL                                                           Reboot in BOOTLOADER mode\r\n",
+        "CLI                                                          Switch to CLI mode\r\n",
+        "COIL <HIGH|LOW>                                              Set emulator coil output HIGH/LOW\r\n",
+        "CONFIG                                                       Show current NVM config\r\n",
+        "CONVERT <TAGTYPE>                                            Convert VTAG to TAGTYPE\r\n",
+        "CLOCKH <HZ>                                                  Enable H/W TOGGLE CLOCK (timings in Hz, max 250,000)\r\n",
+        "CLOCKP <PW> <PERIOD>                                         Enable H/W PWM CLOCK (timings in uS/100, max 53,687,091)\r\n",
+        "CLOCKT <PERIOD>                                              Enable H/W TOGGLE CLOCK (timings in uS/100, max 53,687,091)\r\n",
+        "CLONE [HEX KEY|PWD]                                          Copy Virtual TAG to TAG (may require auth/login)\r\n",
+        "COPY [TAGTYPE] [HEX KEY|PWD]                                 Copy TAG (and optionally convert) to Virtual TAG (may require auth/login)\r\n",
+        "DEBUG [1-4]                                                  Toggle DEBUG line state (no argument to SHOW current states)\r\n",
+        "DEBUGOFF <0-4>                                               DEBUG off (LOW) (0 for ALL)\r\n",
+        "DEBUGON <0-4>                                                DEBUG on (HIGH) (0 for ALL)\r\n",
+        "DETECT                                                       Detect external clock with READER coil\r\n",
+        "DOOR <CLOSE|OPEN>                                            Close or Open DOOR RELAY\r\n",
+        "DUMP <START BLOCK> [END BLOCK]                               Read and view data block(s) (may require auth/login)\r\n",
+        "EMU <UID>                                                    One-shot emulate UID with current TAG config\r\n",
+        "EMULATOR [BG]                                                Continuously emulate VTAG [optionally in the BackGround]\r\n",
+        "ENCODE <UID> [TAGTYPE]                                       Show raw HEX UID or create VTAG for encoded UID\r\n",
+        "EXAMPLES                                                     Show some emulation examples\r\n",
+        "FSK <HEX UID> <FC> <RATE> <SUB0> <SUB1> <REPEAT>             Emulate FSK, Field Clock in uS/100, Data Rate in RF/n,\r\n\
+                                                                      Sub Carriers 0/1 in RF/n\r\n",
+        "FREQUENCY                                                    Show resonant frequency of coil\r\n",
+        "HELP                                                         Show this help\r\n",
+        "HEXTOBIN <HEX>                                               Show HEX as BINARY string\r\n",
+        "LOAD                                                         Load config from NVM\r\n",
+        "LED <1-6>                                                    Toggle LED\r\n",
+        "LEDOFF <0-6>                                                 LED off (0 for ALL)\r\n",
+        "LEDON <0-6>                                                  LED on (0 for ALL)\r\n",
+        "LOGIN [PWD] [BLOCK]                                          Authenticate in PASSWORD mode\r\n",
+        "PING                                                         Keepalive - prints 'RFIDler'\r\n",
+        "POTS                                                         Show POT wiper settings\r\n",
+        "POTINC <H|L> <1-255>                                         Increment POT\r\n",
+        "POTDEC <H|L> <1-255>                                         Decrement POT\r\n",
+        "POTSET[V][NV] <H|L> <0-255>                                  Set [Volts][Non Volatile] POT wiper\r\n",
+        "PSK1 <HEX UID> <FC> <RATE> <SUB> <REPEAT>                    Emulate PSK1, Field Clock in uS/100, Data Rate in RF/n,\r\n\
+                                                                      Sub Carrier in RF/n\r\n",
+        "PWM <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX>      Set PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n",
+        "READ <START BLOCK> [END BLOCK]                               Read and store data block(s) (may require auth/login)\r\n",
+        "READER                                                       Go into READER mode (continuously acquire UID)\r\n",
+        "REBOOT                                                       Perform soft reset\r\n",
+        "RTC                                                          Show Real Time Clock\r\n",
+        "RWD <BINARY>                                                 Send binary command/data\r\n",
+        "SAVE                                                         Save current config to NVM\r\n",
+        "SELECT [UID]                                                 Send SELECT command\r\n",
+        "SET BIPHASE <ON|OFF>                                         Set BiPhase encoding\r\n",
+        "SET BITS <BITS>                                              Set number of data bits\r\n",
+        "SET FC <PERIOD>                                              Set Field Clock in uS/100\r\n",
+        "SET INVERT <ON|OFF>                                          Set data inversion\r\n",
+        "SET MANCHESTER <ON|OFF>                                      Set Manchester encoding\r\n",
+        "SET MOD <ASK|FSK|PSK1>                                       Set modulation scheme\r\n",
+        "SET PSK <QUALITY>                                            Set minimum PSK pulse width in uS\r\n",
+        "SET RATE <RATE>                                              Set Data Rate in RF/n (FC/bit)\r\n",
+        "SET REPEAT <REPEAT>                                          Set emulation transmission repetitions\r\n",
+        "SET SUB0 <RATE>                                              Set Sub Carrier 0 data rate in RF/n (FC/bit)\r\n",
+        "SET SUB1 <RATE>                                              Set Sub Carrier 1 data rate in RF/n (FC/bit)\r\n",
+        "SET SYNCBITS <BITS>                                          Set number of SYNC bits\r\n",
+        "SET SYNC[0-3] <HEX>                                          Set SYNC byte 0-3\r\n",
+        "SET TAG <TYPE>                                               Set parameters appropriate for TAG TYPE\r\n",
+        "SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n",
+        "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
+        "STOP                                                         Stop any running clocks\r\n",
+        "TAGS                                                         Show known TAG TYPES\r\n",
+        "TCONFIG                                                      Show TAG's config block\r\n",
+        "TEST-HITAG                                                   Hitag2 crypto - test correctness & timing\r\n",
+        "TEST-RWD [HEX KEY|PATTERN|PWD]                               Find ideal paramaters for RWD commands\r\n",
+        "TEST-SC                                                      Test ISO-7816 Smartcard (get ATR)\r\n",
+        "TEST-SD                                                      Test SD card (directory listing)\r\n",
+        "TEST-TIMER                                                   Timer tests\r\n",
+        "TEST-WIEGAND                                                 Wiegand loopback test\r\n",
+        "TEST-WIEGAND-READ <DEBUG PIN>                                Wiegand reader test (triggers with DEBUG_PIN_X)\r\n",
+        "TRESET [PWD]                                                 Reset TAG's config block to default\r\n",
+        "TRISTATE <ON|OFF>                                            Switch reader circuit tri-state ON/OFF\r\n",
+        "TWIPE [PWD]                                                  Reset TAG contents to default (*** all data will be lost!)\r\n",
+        "UID                                                          Read TAG UID\r\n",
+        "VERSION                                                      Show firmware version\r\n",
+        "VTAG                                                         Show contents of Virtual TAG\r\n",
+        "VWRITE <BLOCK> <HEX DATA>                                    Write VTAG data block(s)\r\n",
+        "WIEGAND-LEARN                                                Learn Wiegand input timings\r\n",
+        "WIEGAND-OUT <OFF|ON>                                         Set Wiegand output OFF or ON\r\n",
+        "WIEGAND-READ                                                 Read Wiegand input\r\n",
+        "WIEGAND-WRITE <BINARY>                                       Send Wiegand output\r\n",
+        "WIPE                                                         Wipe NVM\r\n",
+        "WRITE <BLOCK> <HEX DATA>                                     Write data block (may require login/auth)\r\n",
+        "WIRING                                                       Show wiring diagram (alias: WIRES PINS)\r\n",
+        NULL,
+    };
+    /**
+     * If the command is "HELP X", we can remove "HELP ".
+     * This way, someone can type "HELP WIPE", whereas "WIPE" would
+     * actually perform the operation. 
+     */
+    char used_command[100] = { 0 };
+    size_t len = strlen(command) < sizeof(used_command) ? strlen(command) : sizeof(used_command);
+    if(len > 0)
+    {
+        if(starts_with(command,"HELP ")){
+            //Remove "help "
+            strncpy(used_command, command+5,len-5 );
+        }else
+        {
+            //just copy
+            strncpy(used_command, command,len);
+        }
+    }
+    size_t i = 0;
+    int displayAll = strcmp(used_command, "HELP") == 0;
+    for(i; commands[i] != NULL ; i++)
+    {
+        if( displayAll||starts_with( commands[i],used_command ))
+        {
+            UserMessage("    %s", commands[i]);
+        }
+    }
+    UserMessage("%s","Note: '*' prepended to main prompt indicates unsaved config changes\r\n");
+
+}
+
 BYTE ProcessSerialCommand(char *command)
 {
     BYTE commandok= FALSE;
@@ -2177,103 +2337,7 @@ BYTE ProcessSerialCommand(char *command)
         if(strcmp(command, "HELP") == 0 || Interface == INTERFACE_CLI)
         {
             command_ack(DATA);
-            UserMessage("%s", "    ANALOGUE[N] <# OF SAMPLES>                                   Sample raw coil ([N]o local clock) & output in XML (HEX)\r\n");
-            UserMessage("%s", "    APDU <CLA+INS+P1+P2[+LC+DATA][+LE]>                          Transmit (HEX) ISO-7816-4 APDU to SmartCard. Return is [DATA]+<SW1>+<SW2>\r\n");
-            UserMessage("%s", "    API                                                          Switch to API mode\r\n");
-            UserMessage("%s", "    ASK <HEX UID> <FC> <RATE> <REPEAT>                           Emulate ASK, Field Clock in uS/100, Data Rate in RF/n\r\n");
-            UserMessage("%s", "    ATR                                                          Get Answer To Reset from SmartCard\r\n");
-            UserMessage("%s", "    AUTH [HEX KEY] [BLOCK]                                       Authenticate in CRYPTO mode\r\n");
-            UserMessage("%s", "    AUTOPOT                                                      Auto-Detect ideal POT setting(s)\r\n");
-            UserMessage("%s", "    AUTORATE                                                     Auto-Detect data rate\r\n");
-            UserMessage("%s", "    AUTORUN [OFF | COMMAND [ARGS]]                               Set/Show startup command\r\n");
-            UserMessage("%s", "    AUTOTAG                                                      Auto-Detect TAG type\r\n");
-            UserMessage("%s", "    BINTOHEX <BIN>                                               Show BINARY as HEX string\r\n");
-            UserMessage("%s", "    BL                                                           Reboot in BOOTLOADER mode\r\n");
-            UserMessage("%s", "    CLI                                                          Switch to CLI mode\r\n");
-            UserMessage("%s", "    COIL <HIGH|LOW>                                              Set emulator coil output HIGH/LOW\r\n");
-            UserMessage("%s", "    CONFIG                                                       Show current NVM config\r\n");
-            UserMessage("%s", "    CONVERT <TAGTYPE>                                            Convert VTAG to TAGTYPE\r\n");
-            UserMessage("%s", "    CLOCKH <HZ>                                                  Enable H/W TOGGLE CLOCK (timings in Hz, max 250,000)\r\n");
-            UserMessage("%s", "    CLOCKP <PW> <PERIOD>                                         Enable H/W PWM CLOCK (timings in uS/100, max 53,687,091)\r\n");
-            UserMessage("%s", "    CLOCKT <PERIOD>                                              Enable H/W TOGGLE CLOCK (timings in uS/100, max 53,687,091)\r\n");
-            UserMessage("%s", "    CLONE [HEX KEY|PWD]                                          Copy Virtual TAG to TAG (may require auth/login)\r\n");
-            UserMessage("%s", "    COPY [TAGTYPE] [HEX KEY|PWD]                                 Copy TAG (and optionally convert) to Virtual TAG (may require auth/login)\r\n");
-            UserMessage("%s", "    DEBUG [1-4]                                                  Toggle DEBUG line state (no argument to SHOW current states)\r\n");
-            UserMessage("%s", "    DEBUGOFF <0-4>                                               DEBUG off (LOW) (0 for ALL)\r\n");
-            UserMessage("%s", "    DEBUGON <0-4>                                                DEBUG on (HIGH) (0 for ALL)\r\n");
-            UserMessage("%s", "    DETECT                                                       Detect external clock with READER coil\r\n");
-            UserMessage("%s", "    DOOR <CLOSE|OPEN>                                            Close or Open DOOR RELAY\r\n");
-            UserMessage("%s", "    DUMP <START BLOCK> [END BLOCK]                               Read and view data block(s) (may require auth/login)\r\n");
-            UserMessage("%s", "    EMU <UID>                                                    One-shot emulate UID with current TAG config\r\n");
-            UserMessage("%s", "    EMULATOR [BG]                                                Continuously emulate VTAG [optionally in the BackGround]\r\n");
-            UserMessage("%s", "    ENCODE <UID> [TAGTYPE]                                       Show raw HEX UID or create VTAG for encoded UID\r\n");
-            UserMessage("%s", "    EXAMPLES                                                     Show some emulation examples\r\n");
-            UserMessage("%s", "    FSK <HEX UID> <FC> <RATE> <SUB0> <SUB1> <REPEAT>             Emulate FSK, Field Clock in uS/100, Data Rate in RF/n,\r\n");
-            UserMessage("%s", "                                                                   Sub Carriers 0/1 in RF/n\r\n");
-            UserMessage("%s", "    FREQUENCY                                                    Show resonant frequency of coil\r\n");
-            UserMessage("%s", "    HELP                                                         Show this help\r\n");
-            UserMessage("%s", "    HEXTOBIN <HEX>                                               Show HEX as BINARY string\r\n");
-            UserMessage("%s", "    LOAD                                                         Load config from NVM\r\n");
-            UserMessage("%s", "    LED <1-6>                                                    Toggle LED\r\n");
-            UserMessage("%s", "    LEDOFF <0-6>                                                 LED off (0 for ALL)\r\n");
-            UserMessage("%s", "    LEDON <0-6>                                                  LED on (0 for ALL)\r\n");
-            UserMessage("%s", "    LOGIN [PWD] [BLOCK]                                          Authenticate in PASSWORD mode\r\n");
-            UserMessage("%s", "    PING                                                         Keepalive - prints 'RFIDler'\r\n");
-            UserMessage("%s", "    POTS                                                         Show POT wiper settings\r\n");
-            UserMessage("%s", "    POTINC <H|L> <1-255>                                         Increment POT\r\n");
-            UserMessage("%s", "    POTDEC <H|L> <1-255>                                         Decrement POT\r\n");
-            UserMessage("%s", "    POTSET[V][NV] <H|L> <0-255>                                  Set [Volts][Non Volatile] POT wiper\r\n");
-            UserMessage("%s", "    PSK1 <HEX UID> <FC> <RATE> <SUB> <REPEAT>                    Emulate PSK1, Field Clock in uS/100, Data Rate in RF/n,\r\n");
-            UserMessage("%s", "                                                                 Sub Carrier in RF/n\r\n");
-            UserMessage("%s", "    PWM <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX>      Set PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n");
-            UserMessage("%s", "    READ <START BLOCK> [END BLOCK]                               Read and store data block(s) (may require auth/login)\r\n");
-            UserMessage("%s", "    READER                                                       Go into READER mode (continuously acquire UID)\r\n");
-            UserMessage("%s", "    REBOOT                                                       Perform soft reset\r\n");
-            UserMessage("%s", "    RTC                                                          Show Real Time Clock\r\n");
-            UserMessage("%s", "    RWD <BINARY>                                                 Send binary command/data\r\n");
-            UserMessage("%s", "    SAVE                                                         Save current config to NVM\r\n");
-            UserMessage("%s", "    SELECT [UID]                                                 Send SELECT command\r\n");
-            UserMessage("%s", "    SET BIPHASE <ON|OFF>                                         Set BiPhase encoding\r\n");
-            UserMessage("%s", "    SET BITS <BITS>                                              Set number of data bits\r\n");
-            UserMessage("%s", "    SET FC <PERIOD>                                              Set Field Clock in uS/100\r\n");
-            UserMessage("%s", "    SET INVERT <ON|OFF>                                          Set data inversion\r\n");
-            UserMessage("%s", "    SET MANCHESTER <ON|OFF>                                      Set Manchester encoding\r\n");
-            UserMessage("%s", "    SET MOD <ASK|FSK|PSK1>                                       Set modulation scheme\r\n");
-            UserMessage("%s", "    SET PSK <QUALITY>                                            Set minimum PSK pulse width in uS\r\n");
-            UserMessage("%s", "    SET RATE <RATE>                                              Set Data Rate in RF/n (FC/bit)\r\n");
-            UserMessage("%s", "    SET REPEAT <REPEAT>                                          Set emulation transmission repetitions\r\n");
-            UserMessage("%s", "    SET SUB0 <RATE>                                              Set Sub Carrier 0 data rate in RF/n (FC/bit)\r\n");
-            UserMessage("%s", "    SET SUB1 <RATE>                                              Set Sub Carrier 1 data rate in RF/n (FC/bit)\r\n");
-            UserMessage("%s", "    SET SYNCBITS <BITS>                                          Set number of SYNC bits\r\n");
-            UserMessage("%s", "    SET SYNC[0-3] <HEX>                                          Set SYNC byte 0-3\r\n");
-            UserMessage("%s", "    SET TAG <TYPE>                                               Set parameters appropriate for TAG TYPE\r\n");
-            UserMessage("%s", "    SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n");
-            UserMessage("%s", "    SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n");
-            UserMessage("%s", "    STOP                                                         Stop any running clocks\r\n");
-            UserMessage("%s", "    TAGS                                                         Show known TAG TYPES\r\n");
-            UserMessage("%s", "    TCONFIG                                                      Show TAG's config block\r\n");
-            UserMessage("%s", "    TEST-HITAG                                                   Hitag2 crypto - test correctness & timing\r\n");
-            UserMessage("%s", "    TEST-RWD [HEX KEY|PATTERN|PWD]                               Find ideal paramaters for RWD commands\r\n");
-            UserMessage("%s", "    TEST-SC                                                      Test ISO-7816 Smartcard (get ATR)\r\n");
-            UserMessage("%s", "    TEST-SD                                                      Test SD card (directory listing)\r\n");
-            UserMessage("%s", "    TEST-TIMER                                                   Timer tests\r\n");
-            UserMessage("%s", "    TEST-WIEGAND                                                 Wiegand loopback test\r\n");
-            UserMessage("%s", "    TEST-WIEGAND-READ <DEBUG PIN>                                Wiegand reader test (triggers with DEBUG_PIN_X)\r\n");
-            UserMessage("%s", "    TRESET [PWD]                                                 Reset TAG's config block to default\r\n");
-            UserMessage("%s", "    TRISTATE <ON|OFF>                                            Switch reader circuit tri-state ON/OFF\r\n");
-            UserMessage("%s", "    TWIPE [PWD]                                                  Reset TAG contents to default (*** all data will be lost!)\r\n");
-            UserMessage("%s", "    UID                                                          Read TAG UID\r\n");
-            UserMessage("%s", "    VERSION                                                      Show firmware version\r\n");
-            UserMessage("%s", "    VTAG                                                         Show contents of Virtual TAG\r\n");
-            UserMessage("%s", "    VWRITE <BLOCK> <HEX DATA>                                    Write VTAG data block(s)\r\n");
-            UserMessage("%s", "    WIEGAND-LEARN                                                Learn Wiegand input timings\r\n");
-            UserMessage("%s", "    WIEGAND-OUT <OFF|ON>                                         Set Wiegand output OFF or ON\r\n");
-            UserMessage("%s", "    WIEGAND-READ                                                 Read Wiegand input\r\n");
-            UserMessage("%s", "    WIEGAND-WRITE <BINARY>                                       Send Wiegand output\r\n");
-            UserMessage("%s", "    WIPE                                                         Wipe NVM\r\n");
-            UserMessage("%s", "    WRITE <BLOCK> <HEX DATA>                                     Write data block (may require login/auth)\r\n");
-            UserMessage("%s", "    WIRING                                                       Show wiring diagram (alias: WIRES PINS)\r\n");
-            UserMessage("%s", "    Note: '*' prepended to main prompt indicates unsaved config changes\r\n");
+            show_usage(command);
             eod();
         }
         else

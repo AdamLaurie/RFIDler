@@ -41,11 +41,15 @@ Example setup Linux x64:
 	# Get USB support
 	wget http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run
 	# Install IDE
+	chmod +x MPLABX-v2.26-linux-installer.sh 
 	sudo ./MPLABX-v2.26-linux-installer.sh 
 	64 Bit, check libraries
 	Check for 32 Bit libraries
 	Verifying archive integrity... All good.
-
+	chmod +x xc32-v1.33-full-install-linux-installer.run 
+	sudo ./xc32-v1.33-full-install-linux-installer.run
+	chmod +x microchip-libraries-for-applications-v2013-06-15-linux-installer.run
+	sudo ./microchip-libraries-for-applications-v2013-06-15-linux-installer.run
 
 ### Bootloader
 

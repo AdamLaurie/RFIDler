@@ -142,7 +142,7 @@
 #define TMP_SMALL_BUFF_LEN  256
 #define ANALOGUE_BUFF_LEN   8192
 
-#define COMMS_BUFFER_SIZE   128
+#define COMMS_BUFFER_SIZE   256
 
 #define SAMPLEMASK          ~(BIT_1 | BIT_0)    // mask to remove two bottom bits from analogue sample - we will then use those for reader & bit period
 
@@ -170,6 +170,12 @@ extern BYTE             Password[9];                        // 32 bits as HEX st
 extern BYTE             RWD_State;                              // current state of RWD coil
 extern unsigned long    RWD_Fc;                                 // field clock in uS
 extern unsigned long    RWD_Gap_Period;                         // length of command gaps in SYSTEM ticks
+extern unsigned long    RWD_Zero_Gap_Period;			// alternately, one and zero gap lengths 
+extern unsigned long    RWD_One_Gap_Period; 
+extern unsigned long    RWD_Zero_Barrier_Period;		// periods for a byte barrier if needed	
+extern unsigned long    RWD_One_Barrier_Period; 
+extern BOOL		RWD_Barrier;				// is there a barrier
+extern BOOL		RWD_Diff;				// does gap vary for a 0 versus a 0
 extern unsigned int     RWD_Zero_Period;                        // length of '0' in OC5 ticks
 extern unsigned int     RWD_One_Period;                         // length of '1' in OC5 ticks
 extern unsigned long    RWD_Sleep_Period;                       // length of initial sleep to reset tag in system ticks
@@ -216,6 +222,12 @@ typedef struct {
     unsigned int    RWD_One_Period;
     unsigned int    RWD_Sleep_Period;
     unsigned int    RWD_Wake_Period;
+    unsigned long   RWD_Zero_Gap_Period;			// alternately, one and zero gap lengths 
+    unsigned long   RWD_One_Gap_Period; 
+    unsigned long   RWD_Barrier_Zero_Period;		// periods for a byte barrier if needed	
+    unsigned long   RWD_Barrier_One_Period; 
+    BOOL	    RWD_Barrier;				// is there a barrier
+    BOOL	    RWD_Diff;				// does gap vary for a 0 versus a 0
     unsigned int    RWD_Wait_Switch_TX_RX;
     unsigned int    RWD_Wait_Switch_RX_TX;
 } StoredConfig;
@@ -270,9 +282,12 @@ extern rtccDate	RTC_date;			// date structure
 #define                 RWD_STATE_GO_TO_SLEEP           1       // RWD coil shutdown request
 #define                 RWD_STATE_WAKING                2       // RWD active for pre-determined period after reset
 #define                 RWD_STATE_START_SEND            3       // RWD start send of data
-#define                 RWD_STATE_SENDING_BIT           4       // RWD sending a data bit & gap
+#define                 RWD_STATE_SENDING_BIT_HIGH      4       // RWD sending a data bit & gap
+#define                 RWD_STATE_SENDING_BIT_LOW       7       // RWD sending a data bit & gap
 #define                 RWD_STATE_POST_WAIT             5       // RWD finished sending data, now in forced wait period
 #define                 RWD_STATE_ACTIVE                6       // RWD finished, now just clocking a carrier
+#define                 RWD_STATE_SENDING_BARRIER_HIGH  8       // RWD barrier high
+#define                 RWD_STATE_SENDING_BARRIER_LOW   9       // RWD barrier low
 
 // reader ISR states
 #define                 READER_STOPPED                  0       // reader not in use

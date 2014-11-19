@@ -150,7 +150,7 @@ void UserMessage(BYTE *format, BYTE *message)
 {
     BYTE tmp[TMP_SMALL_BUFF_LEN];
 
-    sprintf(tmp, format, message);
+    snprintf(tmp, TMP_SMALL_BUFF_LEN, format, message);
     if(CommsChannel == COMMS_USB)
         SendUSBMessage(tmp, strlen(tmp));
     if(CommsChannel == COMMS_UART)

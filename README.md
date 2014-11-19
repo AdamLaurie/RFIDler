@@ -31,6 +31,26 @@ USB stack and peripheral support is provided by Microchip Application Library v2
 * [Mac](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-osx-installer.dmg)
   - Install to default location, which will normally be your home directory.
 
+Example setup Linux x64:
+
+	mkdir tmp; cd tmp;
+	#Get Mplab-X
+	wget http://ww1.microchip.com/downloads/en/DeviceDoc/MPLABX-v2.26-linux-installer.sh
+	# Get compiler
+	wget http://ww1.microchip.com/downloads/en/DeviceDoc/xc32-v1.33-full-install-linux-installer.run
+	# Get USB support
+	wget http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run
+	# Install IDE
+	chmod +x MPLABX-v2.26-linux-installer.sh 
+	sudo ./MPLABX-v2.26-linux-installer.sh 
+	64 Bit, check libraries
+	Check for 32 Bit libraries
+	Verifying archive integrity... All good.
+	chmod +x xc32-v1.33-full-install-linux-installer.run 
+	sudo ./xc32-v1.33-full-install-linux-installer.run
+	chmod +x microchip-libraries-for-applications-v2013-06-15-linux-installer.run
+	sudo ./microchip-libraries-for-applications-v2013-06-15-linux-installer.run
+
 ### Bootloader
 
 When the Bootloader is running the RFIDler appears on the USB as a HID, and waits for new RFIDler firmware to install in Flash memory.
@@ -139,12 +159,9 @@ or '?' if it is not recognised. Other output is command dependant.
 Enter bootloader mode 
 
 * either from the menu (`BL`)
-* or by holding down button `BOOTLOADER` 
-
-while simultaneously 
-
-* plugging in the USB cable 
-* or pressing the 'RESET' button.
+* _or_ by holding down button `BOOTLOADER` while simultaneously 
+	* plugging in the USB cable 
+	* _or_ pressing the 'RESET' button.
 
 LED6 and LED5 will show stable orange light to confirm bootloader mode has been entered.
 

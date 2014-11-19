@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 /***************************************************************************
@@ -136,315 +136,323 @@
 
 """
 
-import RFIDler
 import sys
 import select
 import os
 import time
 import xml.etree.ElementTree as ET
+
 from matplotlib import pyplot
 
+import RFIDler
+
+
 # global flags
-Quiet= False
+Quiet = False
 
 # global constants
-ADC_To_Volts= 0.012890625 # 3.3 / 256
-POT_To_Volts= 0.019607843 # 5 / 255
+ADC_To_Volts = 0.012890625  # 3.3 / 256
+POT_To_Volts = 0.019607843  # 5 / 255
+
 
 def output(message):
-	if not Quiet:
-		print message
+    if not Quiet:
+        print message
+
 
 if len(sys.argv) < 3:
-	print
-	print 'usage:', sys.argv[0], '<PORT> <COMMAND> [ARGS] [COMMAND [ARGS] ...]'
-	print
-	print '  Commands:'
-	print
-	print '    DEBUG <OFF|ON>           Show serial comms'
-	print '    FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]'
-	print '    PLOT[N] <SAMPLES>        Plot raw coil samples ([N]o local clock)'
-	print '    PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>'
-	print '    QUIET                    Supress confirmation of sent command (show results only)'
-	print '    SLEEP <SECONDS>          Pause for SECONDS'
-	print '    TEST                     Run hardware manufacting test suite'
-	print
-	print '  Commands will be executed sequentially.'
-	print '  Unrecognised commands will be passed directly to RFIDler.'
-	print '  Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"'
-	print
-	exit(True)
+    print """
+ usage: {0} <PORT> <COMMAND> [ARGS] [COMMAND [ARGS] ...]
 
-port= sys.argv[1]
-rfidler= RFIDler.RFIDler()
-result, reason= rfidler.connect(port)
+   Commands:
+
+     DEBUG <OFF|ON>           Show serial comms
+     FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]
+     PLOT[N] <SAMPLES>        Plot raw coil samples ([N]o local clock)
+     PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>
+     QUIET                    Supress confirmation of sent command (show results only)
+     SLEEP <SECONDS>          Pause for SECONDS
+     TEST                     Run hardware manufacting test suite
+
+   Commands will be executed sequentially.
+   Unrecognised commands will be passed directly to RFIDler.
+   Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
+""".format(*sys.argv)
+    exit(True)
+
+port = sys.argv[1]
+rfidler = RFIDler.RFIDler()
+result, reason = rfidler.connect(port)
 if not result:
-	print 'Warning - could not open serial port:', reason
+    print 'Warning - could not open serial port:', reason
 
-current= 2
+current = 2
 # process each command
 while current < len(sys.argv):
-	command= sys.argv[current].upper()
-	current += 1
-	if command == 'DEBUG':
-		if sys.argv[current].upper() == 'ON':
-			rfidler.Debug= True
-		else:
-			if sys.argv[current].upper() == 'OFF':
-				rfidler.Debug= False
-			else:
-				print 'Unknown option:', sys.argv[current]
-				exit(True)
-		current += 1
-		continue
+    command = sys.argv[current].upper()
+    current += 1
+    if command == 'DEBUG':
+        if sys.argv[current].upper() == 'ON':
+            rfidler.Debug = True
+        else:
+            if sys.argv[current].upper() == 'OFF':
+                rfidler.Debug = False
+            else:
+                print 'Unknown option:', sys.argv[current]
+                exit(True)
+        current += 1
+        continue
 
-	if command == 'FLASH' or command == 'FLASHP':
-		if not os.path.exists('/dev/hidraw1'):
-			result, reason= rfidler.command('BL')
-			if not result:
-				print 'could not set bootloader mode!'
-				exit(True)
-		rfidler.disconnect()
-		time.sleep(1)
-		if os.path.exists('/dev/hidraw1'):
-			print 'bootloader mode - flashing...'
-			os.system('mphidflash -r -w %s' % sys.argv[current])
-		else:
-			print 'bootloader not detected!'
-			exit(True)
-		print 'Waiting for reboot...'
-		while 42:
-			result, reason= rfidler.connect(port)
-			if result:
-				result, data= rfidler.command('PING')
-				if result:
-					break
-		if command == 'FLASHP':
-			time.sleep(1)
-			print 'Load next board'
-			# wait for disconnect
-			while 42:
-				try:
-					time.sleep(.5)
-					result, data= rfidler.command('PING')
-					if not result:
-						break
-				except:
-					break
-			print 'Waiting for board...'
-			# wait for new board in normal or bootloader mode
-			while 42:
-				result, reason= rfidler.connect(port)
-				if result:
-					result, data= rfidler.command('PING')
-					if result:
-						break
-				rfidler.disconnect()
-				if os.path.exists('/dev/hidraw1'):
-					break
-			current -= 1
-			continue
-		current += 1
-		continue
+    if command == 'FLASH' or command == 'FLASHP':
+        if not os.path.exists('/dev/hidraw1'):
+            result, reason = rfidler.command('BL')
+            if not result:
+                print 'could not set bootloader mode!'
+                exit(True)
+        rfidler.disconnect()
+        time.sleep(1)
+        if os.path.exists('/dev/hidraw1'):
+            print 'bootloader mode - flashing...'
+            os.system('mphidflash -r -w %s' % sys.argv[current])
+        else:
+            print 'bootloader not detected!'
+            exit(True)
+        print 'Waiting for reboot...'
+        while 42:
+            result, reason = rfidler.connect(port)
+            if result:
+                result, data = rfidler.command('PING')
+                if result:
+                    break
+        if command == 'FLASHP':
+            time.sleep(1)
+            print 'Load next board'
+            # wait for disconnect
+            while 42:
+                try:
+                    time.sleep(.5)
+                    result, data = rfidler.command('PING')
+                    if not result:
+                        break
+                except:
+                    break
+            print 'Waiting for board...'
+            # wait for new board in normal or bootloader mode
+            while 42:
+                result, reason = rfidler.connect(port)
+                if result:
+                    result, data = rfidler.command('PING')
+                    if result:
+                        break
+                rfidler.disconnect()
+                if os.path.exists('/dev/hidraw1'):
+                    break
+            current -= 1
+            continue
+        current += 1
+        continue
 
-	if command == 'PLOT' or command == 'PLOTN':
-		if command == 'PLOT':
-			result, data= rfidler.command('ANALOGUE %s' % sys.argv[current])
-		else:
-			result, data= rfidler.command('ANALOGUEN %s' % sys.argv[current])
-		current += 1
-		if result:
-			# create graphic objects
-			fig, ax1= pyplot.subplots()
-			# we need second subplot for voltage scale
-			ax2= ax1.twinx()
+    if command == 'PLOT' or command == 'PLOTN':
+        if command == 'PLOT':
+            result, data = rfidler.command('ANALOGUE %s' % sys.argv[current])
+        else:
+            result, data = rfidler.command('ANALOGUEN %s' % sys.argv[current])
+        current += 1
+        if result:
+            # create graphic objects
+            fig, ax1 = pyplot.subplots()
+            # we need second subplot for voltage scale
+            ax2 = ax1.twinx()
 
-			# get xml sections
-			xml= ET.fromstring(''.join(data))
-			samples= xml.find('Samples')
-			tag= xml.find('Tag')
-			pots= xml.find('Pots')
+            # get xml sections
+            xml = ET.fromstring(''.join(data))
+            samples = xml.find('Samples')
+            tag = xml.find('Tag')
+            pots = xml.find('Pots')
 
-			# raw coil data
-			raw= samples.find('Coil_Data')
-			data= raw.find('Data')
-			out= data.text.replace(' ','')
-			out= map(ord, out.decode("hex"))
-			out[:] = [x * ADC_To_Volts for x in out] 
-			x= range(len(out))
-			ax2.plot(x, out, color= 'b', label= "Raw Data")
+            # raw coil data
+            raw = samples.find('Coil_Data')
+            data = raw.find('Data')
+            out = data.text.replace(' ', '')
+            out = map(ord, out.decode("hex"))
+            out[:] = [x * ADC_To_Volts for x in out]
+            x = range(len(out))
+            ax2.plot(x, out, color='b', label="Raw Data")
 
-			# reader HIGH/LOW
-			raw= samples.find('Reader_Output')
-			data= raw.find('Data')
-			out= data.text.replace(' ','')
-			out= map(ord, out.decode("hex"))
+            # reader HIGH/LOW
+            raw = samples.find('Reader_Output')
+            data = raw.find('Data')
+            out = data.text.replace(' ', '')
+            out = map(ord, out.decode("hex"))
 
-			# convert to value that will show on scale
-			for i in range(len(out)):
-				if out[i]:
-					out[i]= 258
-				else:
-					out[i]= 4
-			ax1.plot(x, out, '-', color='g', label= 'Reader Logic')
-			# show compressed version
-			for i in range(len(out)):
-				if out[i] == 258:
-					out[i]= 320
-				else:
-					out[i]= 300
-			ax1.plot(x, out, '-', color='g')
-					
-			#ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
+            # convert to value that will show on scale
+            for i in range(len(out)):
+                if out[i]:
+                    out[i] = 258
+                else:
+                    out[i] = 4
+            ax1.plot(x, out, '-', color='g', label='Reader Logic')
+            # show compressed version
+            for i in range(len(out)):
+                if out[i] == 258:
+                    out[i] = 320
+                else:
+                    out[i] = 300
+            ax1.plot(x, out, '-', color='g')
 
-			# bit period
-			raw= samples.find('Bit_Period')
-			data= raw.find('Data')
-			out= data.text.replace(' ','')
-			out= map(ord, out.decode("hex"))
-			# show bit period as single vertical stripe
-			prev= out[0]
-			fill= 0
-			fill1= 0
-			toggle= True
-			for i in range(len(out)):
-				if out[i] != prev:
-					prev= out[i]
-					if fill1:
-						fill= fill1
-						fill1= i
-					else:
-						fill1= i
-					# fill every other stripe
-					if toggle:
-						ax1.axvspan(fill, fill1, facecolor='r', alpha= 0.1)
-					toggle= not toggle
-			# find first stripe and add legend
-			for i in range(len(out)):
-				if(out[i]):
-					break
-			legend= tag.find('Data_Rate')
-			data= legend.find('Data').text
-			ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color= 'r', alpha= 0.5, rotation= 270, ha= 'center', va= 'top')
+            # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
+
+            # bit period
+            raw = samples.find('Bit_Period')
+            data = raw.find('Data')
+            out = data.text.replace(' ', '')
+            out = map(ord, out.decode("hex"))
+            # show bit period as single vertical stripe
+            prev = out[0]
+            fill = 0
+            fill1 = 0
+            toggle = True
+            for i in range(len(out)):
+                if out[i] != prev:
+                    prev = out[i]
+                    if fill1:
+                        fill = fill1
+                        fill1 = i
+                    else:
+                        fill1 = i
+                    # fill every other stripe
+                    if toggle:
+                        ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
+                    toggle = not toggle
+            # find first stripe and add legend
+            for i in range(len(out)):
+                if (out[i]):
+                    break
+            legend = tag.find('Data_Rate')
+            data = legend.find('Data').text
+            ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color='r', alpha=0.5, rotation=270,
+                     ha='center', va='top')
 
 
-			# pot settings
-			color= 'r'
-			for element in 'Pot_High', 'Pot_Low ':
-				raw= pots.find(element.strip())
-				data= raw.find('Data').text
-				# convert pot setting to volts
-				out= [float(data) * POT_To_Volts] * len(x)
-				ax2.plot(x, out, '--', color= color, label= element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
-				#ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
-				color= 'm'
+            # pot settings
+            color = 'r'
+            for element in 'Pot_High', 'Pot_Low ':
+                raw = pots.find(element.strip())
+                data = raw.find('Data').text
+                # convert pot setting to volts
+                out = [float(data) * POT_To_Volts] * len(x)
+                ax2.plot(x, out, '--', color=color,
+                         label=element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
+                # ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
+                color = 'm'
 
-			# done - label and show graph
-			# ADC scale needs to match volts (5v / 3.3v)
-			ax1.set_ylim(-5, 256 * 1.515151515)
-			title= tag.find('Tag_Type')
-			pyplot.xlim(0, len(x))
-			pyplot.title('RFIDler - ' + title.find('Data').text)
-			ax1.set_ylabel('Signal Strength (ADC)')
-			ax1.set_xlabel('Sample Number')
-			ax1.legend(loc=2)
-			fig.canvas.set_window_title('RFIDler plot')
-			# volts scale up to 5.0v as that is max pot setting
-			# note that the ADC will clip at 3.3v, so although we can use a higher pot setting, 
-			# we can't see token samples above 3.3v
-			ax2.set_ylim(0, 5.0)
-			ax2.set_ylabel('Signal Strength (Volts)', rotation= 270)
-			ax2.legend(loc=1)
-			pyplot.show()
-		else:
-			output('Failed: ' + data)
-		continue
+            # done - label and show graph
+            # ADC scale needs to match volts (5v / 3.3v)
+            ax1.set_ylim(-5, 256 * 1.515151515)
+            title = tag.find('Tag_Type')
+            pyplot.xlim(0, len(x))
+            pyplot.title('RFIDler - ' + title.find('Data').text)
+            ax1.set_ylabel('Signal Strength (ADC)')
+            ax1.set_xlabel('Sample Number')
+            ax1.legend(loc=2)
+            fig.canvas.set_window_title('RFIDler plot')
+            # volts scale up to 5.0v as that is max pot setting
+            # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
+            # we can't see token samples above 3.3v
+            ax2.set_ylim(0, 5.0)
+            ax2.set_ylabel('Signal Strength (Volts)', rotation=270)
+            ax2.legend(loc=1)
+            pyplot.show()
+        else:
+            output('Failed: ' + data)
+        continue
 
-	if command == 'PROMPT':
-		raw_input(sys.argv[current])
-		current += 1
-		continue
- 
-	# perform hardware tests for manufacturing assurance
-	# requires hardware to be placed on test jig  
-	if command == 'TEST':
-		test= 1
-		print 'Testing H/W. Hit <ESC> to end.'
-		while 42:
-			print 'waiting for board...'
-			while 42:
-				rfidler.disconnect()
-				result, reason= rfidler.connect(port)
-				if result:
-					break
-				if os.path.exists('/dev/hidraw1'):
-					print 'bootloader mode - flashing...'
-					os.system('mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
+    if command == 'PROMPT':
+        raw_input(sys.argv[current])
+        current += 1
+        continue
 
-			os.system('clear')
-			test_result= 'Pass'
-			print 'Starting test', test
-			for x in 'PING', \
-				 'DEBUGOFF 0',\
-				 'DEBUGON 4',\
-				 'DEBUGON 2', 'SET TAG HITAG2', 'UID', 'DEBUGOFF 2',\
-				 'DEBUGON 3', 'SET TAG INDALA64', 'UID', 'DEBUGOFF 3',\
-				 'TEST-WIEGAND', 'TEST-SC', 'TEST-SD', \
-				 'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
-				print '  Test %s - ' % x,
-				sys.stdout.flush()
-				for z in range(10):
-					result, data= rfidler.command(x)
-					if result:
-						break
-				print result, data
-				if not result:
-					test_result= 'Fail!'
-			# now wait for board to change
-			os.system('figlet ' + test_result)
-			test += 1
-			print 'load next board'
-			while 42:
-				try:
-					result, data= rfidler.command('PING')
-					if not result:
-						break
-				except:
-					break
-		continue
+    # perform hardware tests for manufacturing assurance
+    # requires hardware to be placed on test jig
+    if command == 'TEST':
+        test = 1
+        print 'Testing H/W. Hit <ESC> to end.'
+        while 42:
+            print 'waiting for board...'
+            while 42:
+                rfidler.disconnect()
+                result, reason = rfidler.connect(port)
+                if result:
+                    break
+                if os.path.exists('/dev/hidraw1'):
+                    print 'bootloader mode - flashing...'
+                    os.system(
+                        'mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
 
-	if command == 'SLEEP':
-		output('Sleeping for %s seconds' % sys.argv[current])
-		time.sleep(float(sys.argv[current]))
-		current += 1
-		continue
+            os.system('clear')
+            test_result = 'Pass'
+            print 'Starting test', test
+            for x in 'PING', \
+                     'DEBUGOFF 0', \
+                     'DEBUGON 4', \
+                     'DEBUGON 2', 'SET TAG HITAG2', 'UID', 'DEBUGOFF 2', \
+                     'DEBUGON 3', 'SET TAG INDALA64', 'UID', 'DEBUGOFF 3', \
+                     'TEST-WIEGAND', 'TEST-SC', 'TEST-SD', \
+                     'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
+                print '  Test %s - ' % x,
+                sys.stdout.flush()
+                for z in range(10):
+                    result, data = rfidler.command(x)
+                    if result:
+                        break
+                print result, data
+                if not result:
+                    test_result = 'Fail!'
+            # now wait for board to change
+            os.system('figlet ' + test_result)
+            test += 1
+            print 'load next board'
+            while 42:
+                try:
+                    result, data = rfidler.command('PING')
+                    if not result:
+                        break
+                except:
+                    break
+        continue
 
-	if command == 'TERMINAL':
-		while 42:
-			while(rfidler.Connection.inWaiting()):
-				sys.stdout.write(rfidler.Connection.readline(1))
-				sys.stdout.flush()
-			# send typed characters
-			while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-				x= sys.stdin.read(1)
-				rfidler.Connection.write(x)
-				# read back echo
-				x= rfidler.Connection.read(1)
-				sys.stdout.write(x)
-				sys.stdout.flush()
+    if command == 'SLEEP':
+        output('Sleeping for %s seconds' % sys.argv[current])
+        time.sleep(float(sys.argv[current]))
+        current += 1
+        continue
 
-	# set quiet flag so we only see responses, not sent commands
-	if command == 'QUIET':
-		Quiet= True
-		continue
+    if command == 'TERMINAL':
+        while 42:
+            while rfidler.Connection.inWaiting():
+                sys.stdout.write(rfidler.Connection.readline(1))
+                sys.stdout.flush()
+            # send typed characters
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                x = sys.stdin.read(1)
+                rfidler.Connection.write(x)
+                # read back echo
+                x = rfidler.Connection.read(1)
+                sys.stdout.write(x)
+                sys.stdout.flush()
 
-	# catchall - pass command directly
-	output("sending '%s'" % command)
-	sys.stdout.flush()
-	result, data= rfidler.command(command)
-	if result:
-		for line in data:
-			print line
-	else:
-		output('Failed: ' + data)
-	continue
+    # set quiet flag so we only see responses, not sent commands
+    if command == 'QUIET':
+        Quiet = True
+        continue
+
+    # catchall - pass command directly
+    output("sending '%s'" % command)
+    sys.stdout.flush()
+    result, data = rfidler.command(command)
+    if result:
+        for line in data:
+            print line
+    else:
+        output('Failed: ' + data)
+    continue

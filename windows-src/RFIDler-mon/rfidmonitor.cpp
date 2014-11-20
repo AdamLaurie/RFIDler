@@ -145,16 +145,21 @@ public:
         optViewSortOrder(lvDispName), optViewStyleButton(ID_VIEW_DETAILS),
         optTimerRegistrySave(0)
         {
-            // initial options: aShowNonConfig aShowNotPresent aShowDevBoards aShowRecentDisc
-            optShowNonConfig = FALSE;
-            optShowNotPresent = FALSE;
-            optShowDevBoards = TRUE;
-            optShowRecentDisc = TRUE;
-            optShowAnySerial = FALSE;
+            // initial What to show options:
+            optDefShowNonConfig = FALSE;
+            optDefShowNotPresent = FALSE;
+            optDefShowDevBoards = TRUE;
+            optDefShowRecentDisc = TRUE;
+            optDefShowAnySerial = FALSE;
+
+            optShowFlags = optDefaultShowFlags;
+
             // initial notifications: aRfidlerArrFlash aBootArrFlash aSerialArrFlash
-            optNotifyRfidlerArrFlash = FALSE;
-            optNotifyBootArrFlash = FALSE;
-            optNotifyMicrochipArrFlash = FALSE;
+            optDefNotifyRfidlerArrFlash = TRUE;
+            optDefNotifyBootArrFlash = FALSE;
+            optDefNotifyMicrochipArrFlash = FALSE;
+
+            optNotifyFlags = optDefaultNotifyFlags;
 
             optWindowPlace.left = 0;
             optWindowPlace.top = 0;
@@ -179,18 +184,20 @@ public:
     BOOL ShowDevBoardsOrAnySerial() const { return optShowDevBoards || optShowAnySerial; }
     BOOL ShowRecentDisc() const { return optShowRecentDisc; }
     BOOL ShowAnySerial() const { return optShowAnySerial; }
-    void SetShowNonConfig(BOOL value) { optShowNonConfig = value; }
-    void SetShowNotPresent(BOOL value) { optShowNotPresent = value; }
-    void SetShowDevBoards(BOOL value) { optShowDevBoards = value; }
-    void SetShowRecentDisc(BOOL value) { optShowRecentDisc = value; }
-    void SetShowAnySerial(BOOL value) { optShowAnySerial = value; }
+    BOOL SetShowNonConfig(BOOL value) { BOOL old = optShowNonConfig; optShowNonConfig = value; return old; }
+    BOOL SetShowNotPresent(BOOL value) { BOOL old = optShowNotPresent; optShowNotPresent = value; return old; }
+    BOOL SetShowDevBoards(BOOL value) { BOOL old = optShowDevBoards; optShowDevBoards = value; return old; }
+    BOOL SetShowRecentDisc(BOOL value) { BOOL old = optShowRecentDisc; optShowRecentDisc = value; return old; }
+    BOOL SetShowAnySerial(BOOL value) { BOOL old = optShowAnySerial; optShowAnySerial = value; return old; }
+    BOOL SetShowFlagsToDefault();
 
     BOOL NotifyRfidlerArrFlash() const { return optNotifyRfidlerArrFlash; }
     BOOL NotifyBootArrFlash() const { return optNotifyBootArrFlash; }
     BOOL NotifyMicrochipArrFlash() const { return optNotifyMicrochipArrFlash; }
-    void SetNotifyRfidlerArrFlash(BOOL value) { optNotifyRfidlerArrFlash = value; }
-    void SetNotifyBootArrFlash(BOOL value) { optNotifyBootArrFlash = value; }
-    void SetNotifyMicrochipArrFlash(BOOL value) { optNotifyMicrochipArrFlash = value; }
+    BOOL SetNotifyRfidlerArrFlash(BOOL value) { BOOL old = optNotifyRfidlerArrFlash; optNotifyRfidlerArrFlash = value; return old; }
+    BOOL SetNotifyBootArrFlash(BOOL value) { BOOL old = optNotifyBootArrFlash; optNotifyBootArrFlash = value; return old; }
+    BOOL SetNotifyMicrochipArrFlash(BOOL value) { BOOL old = optNotifyMicrochipArrFlash; optNotifyMicrochipArrFlash = value; return old; }
+    BOOL SetNotifyFlagsToDefault();
 
     // save changed values
     void SaveWindowInfo(HWND hWndMain, const RECT &rc);
@@ -202,13 +209,31 @@ private:
 #pragma warning(disable: 4201)
     // device list & notify options
     union {
+        int     optDefaultShowFlags;
+        struct {
+            BOOL optDefShowNonConfig:1;    // IDC_SHOW_UNCONFIG
+            BOOL optDefShowNotPresent:1;   // IDC_SHOWALL
+            BOOL optDefShowDevBoards:1;    // IDC_SHOWBITWHACKER
+            BOOL optDefShowRecentDisc:1;   // IDC_SHOW_RECENTDISC
+            BOOL optDefShowAnySerial:1;    // IDC_OTHERSERIAL
+        };
+    };
+    union {
         int     optShowFlags;
         struct {
-            BOOL optShowNonConfig:1;    // IDC_SHOW_UNCONFIG
-            BOOL optShowNotPresent:1;   // IDC_SHOWALL
-            BOOL optShowDevBoards:1;    // IDC_SHOWBITWHACKER
-            BOOL optShowRecentDisc:1;   // IDC_SHOW_RECENTDISC
-            BOOL optShowAnySerial:1;    // IDC_XYZ
+            BOOL optShowNonConfig:1;
+            BOOL optShowNotPresent:1;
+            BOOL optShowDevBoards:1;
+            BOOL optShowRecentDisc:1;
+            BOOL optShowAnySerial:1;
+        };
+    };
+    union {
+        int     optDefaultNotifyFlags;
+        struct {
+            BOOL optDefNotifyRfidlerArrFlash:1;
+            BOOL optDefNotifyBootArrFlash:1;
+            BOOL optDefNotifyMicrochipArrFlash:1;
         };
     };
     union {
@@ -1134,6 +1159,21 @@ HWND InitNotificationControls(MonOptions *aOptions, HWND hWndTab)
 }
 
 
+void SetShowOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions)
+{
+    SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, 
+        aOptions->ShowNonConfig() ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, 
+        aOptions->ShowNotPresent() ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_SHOW_BITWHACKER), BM_SETCHECK, 
+        aOptions->ShowDevBoards() ? BST_CHECKED : BST_UNCHECKED, 0);        
+    SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, 
+        aOptions->ShowRecentDisc() ? BST_CHECKED : BST_UNCHECKED, 0);        
+    SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, 
+        aOptions->ShowAnySerial() ? BST_CHECKED : BST_UNCHECKED, 0);        
+}
+
+
 BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     static MonOptions *newOptions;
@@ -1145,21 +1185,7 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
         hWndParentDlg = GetParent(GetParent(hWnd));
         newOptions = (MonOptions *) lParam;
-        if (newOptions->ShowNonConfig()) {
-            SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->ShowNotPresent()) {
-            SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->ShowDevBoards()) {
-            SendMessage(GetDlgItem(hWnd, IDC_SHOW_BITWHACKER), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->ShowRecentDisc()) {
-            SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->ShowAnySerial()) {
-            SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, BST_CHECKED, 0);
-        }
+        SetShowOptionsCheckBoxes(hWnd, newOptions);
         EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
         return TRUE;
 
@@ -1174,57 +1200,49 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
             switch (wID) 
             {
             case IDC_CHECK_SHOW_ALL:                
-                if (!newOptions->ShowNonConfig()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetShowNonConfig(TRUE);
+                if (!newOptions->SetShowNonConfig(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->ShowNotPresent()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetShowNotPresent(TRUE);
+                if (!newOptions->SetShowNotPresent(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->ShowDevBoards()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_BITWHACKER), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetShowDevBoards(TRUE);
+                if (!newOptions->SetShowDevBoards(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->ShowRecentDisc()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetShowRecentDisc(TRUE);
+                if (!newOptions->SetShowRecentDisc(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->ShowAnySerial()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetShowAnySerial(TRUE);
+                if (!newOptions->SetShowAnySerial(TRUE)) {
                     enableApply = TRUE;
+                }
+                if (enableApply) {
+                    SetShowOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_CHECK_SHOW_NONE:
-                if (newOptions->ShowNonConfig()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, BST_UNCHECKED, 0);
-                    newOptions->SetShowNonConfig(FALSE);
+                if (newOptions->SetShowNonConfig(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->ShowNotPresent()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, BST_UNCHECKED, 0);
-                    newOptions->SetShowNotPresent(FALSE);
+                if (newOptions->SetShowNotPresent(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->ShowDevBoards()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_BITWHACKER), BM_SETCHECK, BST_UNCHECKED, 0);
-                    newOptions->SetShowDevBoards(FALSE);
+                if (newOptions->SetShowDevBoards(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->ShowRecentDisc()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, BST_UNCHECKED, 0);
-                    newOptions->SetShowRecentDisc(FALSE);
+                if (newOptions->SetShowRecentDisc(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->ShowAnySerial()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, BST_UNCHECKED, 0);
-                    newOptions->SetShowAnySerial(FALSE);
+                if (newOptions->SetShowAnySerial(FALSE)) {
                     enableApply = TRUE;
+                }
+                if (enableApply) {
+                    SetShowOptionsCheckBoxes(hWnd, newOptions);
+                }
+                break;
+            case IDC_DEFAULT:
+                if (newOptions->SetShowFlagsToDefault()) {
+                    enableApply = TRUE;
+                    SetShowOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_SHOW_UNCONFIG:
@@ -1259,6 +1277,17 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 }
 
 
+void SetNotifyOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions)
+{
+    SendMessage(GetDlgItem(hWnd, IDC_RFID_ARR_FLASH), BM_SETCHECK, 
+        aOptions->NotifyRfidlerArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_BOOT_ARR_FLASH), BM_SETCHECK, 
+        aOptions->NotifyBootArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, 
+        aOptions->NotifyMicrochipArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
+    }
+
+
 BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     static MonOptions *newOptions;
@@ -1270,15 +1299,7 @@ BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM l
     case WM_INITDIALOG:
         hWndParentDlg = GetParent(GetParent(hWnd));
         newOptions = (MonOptions *) lParam;
-        if (newOptions->NotifyRfidlerArrFlash()) {
-            SendMessage(GetDlgItem(hWnd, IDC_RFID_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->NotifyBootArrFlash()) {
-            SendMessage(GetDlgItem(hWnd, IDC_BOOT_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-        }
-        if (newOptions->NotifyMicrochipArrFlash()) {
-            SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-        }
+        SetNotifyOptionsCheckBoxes(hWnd, newOptions);
         EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
         return TRUE;
 
@@ -1293,37 +1314,39 @@ BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM l
             switch (wID) 
             {
             case IDC_CHECK_SHOW_ALL:                
-                if (!newOptions->NotifyRfidlerArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_RFID_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyRfidlerArrFlash(TRUE);
+                if (!newOptions->SetNotifyRfidlerArrFlash(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->NotifyBootArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_BOOT_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyBootArrFlash(TRUE);
+                if (!newOptions->SetNotifyBootArrFlash(TRUE)) {
                     enableApply = TRUE;
                 }
-                if (!newOptions->NotifyMicrochipArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyMicrochipArrFlash(TRUE);
+                if (!newOptions->SetNotifyMicrochipArrFlash(TRUE)) {
                     enableApply = TRUE;
+                }
+                if (enableApply) {
+                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_CHECK_SHOW_NONE:
-                if (newOptions->NotifyRfidlerArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_RFID_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyRfidlerArrFlash(FALSE);
+                if (newOptions->SetNotifyRfidlerArrFlash(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->NotifyBootArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_BOOT_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyBootArrFlash(FALSE);
+                if (newOptions->SetNotifyBootArrFlash(FALSE)) {
                     enableApply = TRUE;
                 }
-                if (newOptions->NotifyMicrochipArrFlash()) {
-                    SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
-                    newOptions->SetNotifyMicrochipArrFlash(FALSE);
+                if (newOptions->SetNotifyMicrochipArrFlash(FALSE)) {
                     enableApply = TRUE;
+                }
+                if (enableApply) {
+                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
+                }
+                break;
+            case IDC_DEFAULT:
+                if (newOptions->SetNotifyFlagsToDefault()) {
+                    enableApply = TRUE;
+                }
+                if (enableApply) {
+                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_RFID_ARR_FLASH:
@@ -1407,6 +1430,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 break;
             case IDC_CHECK_SHOW_ALL:                
             case IDC_CHECK_SHOW_NONE:
+            case IDC_DEFAULT:
                 // send to the options page
                 PostMessage(hWndOptionsPage[currPage], iMsg, wParam, lParam);
                 handled++;
@@ -4647,6 +4671,26 @@ void MonOptions::CancelRegSaveTimer(HWND hWndMain)
         KillTimer(hWndMain, optTimerRegistrySave);
         optTimerRegistrySave = 0;
     }
+}
+
+
+BOOL MonOptions::SetShowFlagsToDefault()
+{
+    if (optShowFlags != optDefaultShowFlags) {
+        optShowFlags = optDefaultShowFlags;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+BOOL MonOptions::SetNotifyFlagsToDefault()
+{
+    if (optNotifyFlags != optDefaultNotifyFlags) {
+        optNotifyFlags = optDefaultNotifyFlags;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 

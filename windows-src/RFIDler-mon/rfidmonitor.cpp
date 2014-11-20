@@ -52,6 +52,7 @@
 #include <assert.h>
 #include <strsafe.h>
 #include <WinError.h>
+#include <uxtheme.h> 
 
 #include "resource.h"
 
@@ -62,7 +63,7 @@
  */
 #pragma comment(lib, "ComCtl32.lib")
 #pragma comment(lib, "SetupAPI.lib")
-
+#pragma comment(lib, "uxtheme.lib")
 
 /* proclaim support for "Visual Styles" / i.e. Windows Vista Themes
  Ensure we only run on Windows XP with Common Control v6 installed,
@@ -145,11 +146,11 @@ public:
         optTimerRegistrySave(0)
         {
             // initial options: aShowNonConfig aShowNotPresent aShowDevBoards aShowRecentDisc
-            optShowNonConfig = TRUE; // todo FALSE;
-            optShowNotPresent = TRUE; // todo FALSE;
+            optShowNonConfig = FALSE;
+            optShowNotPresent = FALSE;
             optShowDevBoards = TRUE;
             optShowRecentDisc = TRUE;
-            optShowAnySerial = TRUE; // todo FALSE;
+            optShowAnySerial = FALSE;
             // initial notifications: aRfidlerArrFlash aBootArrFlash aSerialArrFlash
             optNotifyRfidlerArrFlash = FALSE;
             optNotifyBootArrFlash = FALSE;
@@ -259,7 +260,7 @@ enum SerialType { SerialNone, SerialPort, SerialModem, SerialMultiport };
 class DeviceInfo {
 public:
     static void SetDeviceTracker(DeviceTracker *devTracker);
-    static DeviceInfo *NewDevice(int itemPos, enum DevType aDevType, 
+    static DeviceInfo *NewDevice(enum DevType aDevType, 
         enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortname,
         wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
         unsigned aUsbHub, unsigned aUsbPort, BOOL aUsbValid, unsigned aScanId, DeviceInfo *aDevNext,
@@ -422,7 +423,7 @@ private:
     BOOL CheckInitialScanFlag(enum DevType dType);
     void DetermineArrivalNotifications(enum DevType dType, enum DevState newState);
     void DetermineRemovalNotifications(enum DevType dType, enum DevState oldState, enum DevState newState);
-    BOOL AddViewItem(int itemPos, const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
+    BOOL AddViewItem(const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
             const TCHAR *aState, const TCHAR *aUsbLocation, const TCHAR *aSerialNumber, LPARAM lParam);
     int FindViewItem(LPARAM lParam);
     void RemoveViewItem(LPARAM lParam);
@@ -447,7 +448,7 @@ private:
     void ScanIncludingUnconfigDevs(FILETIME &aNow, unsigned aScanId);
     void ScanBootDevices(FILETIME &aNow, unsigned aScanId);
     void ScanSerialDevices(FILETIME &aNow, unsigned aScanId);
-    void AddOrUpdateDevice(enum DevType DevRfidler, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
+    void AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
         const wchar_t *devInstanceId, DWORD size, SerialType aSerialType, FILETIME &aNow, unsigned aScanId);
     void KickArrivalTimer();
     void KickDevScanTimer();
@@ -772,7 +773,7 @@ static void RecalcControlPositions(HWND hWnd, WindowPos *wnd)
 }
 
 
-static void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker)
+void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker)
 {
     RECT rc;
 
@@ -1105,14 +1106,10 @@ HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTempl
 
     if (child) {
         // move child dialog away from tabs
-        RECT rc, TabRect;
+        RECT rc;
 
         GetClientRect(hWndTab, &rc);
-        TabCtrl_GetItemRect(hWndTab, 0, &TabRect);
-        rc.top += 2 + TabRect.bottom;
-        rc.left += 2;
-        rc.bottom -= 2;
-        rc.right -= 4;
+        TabCtrl_AdjustRect(hWndTab, FALSE, &rc);
         SetWindowPos(child, 0, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
         // show first tab
         if (itemId == 0) {
@@ -1163,7 +1160,8 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
         if (newOptions->ShowAnySerial()) {
             SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, BST_CHECKED, 0);
         }
-        return 0;
+        EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
+        return TRUE;
 
     case WM_NOTIFYFORMAT:
         return NFR_UNICODE;
@@ -1281,7 +1279,8 @@ BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM l
         if (newOptions->NotifyMicrochipArrFlash()) {
             SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, BST_CHECKED, 0);
         }
-        return 0;
+        EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
+        return TRUE;
 
     case WM_NOTIFYFORMAT:
         return NFR_UNICODE;
@@ -1376,7 +1375,12 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         currPage = 0;
         hWndOptionsPage[0] = InitShowControls(newOptions, hWndTab);
         hWndOptionsPage[1] = InitNotificationControls(newOptions, hWndTab);
-        break;
+        { // mark Tab control as parent
+            LONG_PTR value = GetWindowLongPtr(hWndTab, GWL_EXSTYLE);
+            value |= WS_EX_CONTROLPARENT;
+            SetWindowLongPtr(hWndTab, GWL_EXSTYLE, value);
+        }
+        return TRUE;
 
     case WM_COMMAND:
         {
@@ -1444,6 +1448,15 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         EndDialog(hWnd, 0);
         handled++;
+        break;
+
+    case WM_DESTROY:
+        for (int i = 0; i < KNumPropPages; i++) {
+            if (hWndOptionsPage[i]) {
+                DestroyWindow(hWndOptionsPage[i]);
+                hWndOptionsPage[i] = NULL;
+            }
+        }
         break;
     }
 
@@ -1644,7 +1657,7 @@ BOOL CALLBACK InstallConfigDlgProc (
         CheckProgramShortcuts(shortcut, &deskLinkExists, &startlinkExists);
         CheckRadioButton(hWnd, IDC_DESKNO, IDC_DESKYES, deskLinkExists ? IDC_DESKYES : IDC_DESKNO);
         CheckRadioButton(hWnd, IDC_STARTNO, IDC_STARTYES, startlinkExists ? IDC_STARTYES : IDC_STARTNO);
-        break;
+        return TRUE;
 
     case WM_COMMAND:
         {
@@ -1825,7 +1838,7 @@ void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip)
 {
     /* LVN_GETINFOTIP is broken as lParam member field is zero, not the value
         set when the List View Item was created.
-        So we need to ask for the lParam, to get the pointer to DeviceInfo),
+        So we need to ask for the lParam, to get the pointer to DeviceInfo,
         so we know what infotip text to send back!
     */
     DeviceInfo *dev = DevInfoFromListItem(pGetInfoTip->hdr.hwndFrom, pGetInfoTip->iItem);
@@ -2074,7 +2087,7 @@ void DeviceInfo::SetDeviceTracker(DeviceTracker *devTracker)
 
 
 // new DeviceInfo object, transfers ownership of strings, 
-DeviceInfo *DeviceInfo::NewDevice(int itemPos, enum DevType aDevType, 
+DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType, 
     enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortName,
     wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
     unsigned aUsbHub, unsigned aUsbPort, BOOL aUsbValid, unsigned aScanId, DeviceInfo *aDevNext,
@@ -2094,7 +2107,7 @@ DeviceInfo *DeviceInfo::NewDevice(int itemPos, enum DevType aDevType,
     if (newDev) {
         TCHAR   buffer[20];
 
-        // update double linked lists
+        // update double linked list
         if (aDevNext) {
             aDevNext->devPrev = newDev;
         }
@@ -2104,7 +2117,7 @@ DeviceInfo *DeviceInfo::NewDevice(int itemPos, enum DevType aDevType,
             (newDev->DeviceState() == DevArrived) ? _T("%s 0min") : _T("%s"), newDev->StateName());
 
         // display update shouldn't fail, but check anyway
-        if (!gdevTracker->AddViewItem(itemPos, newDev->DisplayName(), newDev->devImage,
+        if (!gdevTracker->AddViewItem(newDev->DisplayName(), newDev->devImage,
                 newDev->DevTypeName(), buffer, newDev->LocationString(), aSerialnumber,
                 (LPARAM)newDev)) {
             newDev->Destroy();
@@ -2495,6 +2508,8 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
 #ifdef _DEBUG
                 PrintDebugStatus(_T("Change state to arrived\n"));
 #endif
+                devDeleteOnUnlock = FALSE; // device has returned, no longer need to delete
+
                 // update DeviceTracker counts, decide on notifications 
                 gdevTracker->DetermineArrivalNotifications(devType, aDevState);
 
@@ -2717,7 +2732,7 @@ void DeviceTracker::RemoveViewItem(LPARAM lParam)
 }
 
 
-BOOL DeviceTracker::AddViewItem(int itemPos, const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
+BOOL DeviceTracker::AddViewItem(const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
             const TCHAR *aState, const TCHAR *aUsbLocation, const TCHAR *aSerialNumber, LPARAM lParam)
 {
     LVITEM lvItem;
@@ -2728,7 +2743,7 @@ BOOL DeviceTracker::AddViewItem(int itemPos, const TCHAR *aName, enum DevImage a
 
 
     ZeroMemory(&lvItem, sizeof(LVITEM));
-    lvItem.iItem = itemPos;
+    lvItem.iItem = 0;
     assert(lvDispName == 0);
     lvItem.iSubItem = lvDispName; // must be 0
     lvItem.mask = LVIF_PARAM;
@@ -2982,7 +2997,7 @@ void DeviceTracker::OnDeviceChange(UINT uiType, LPARAM lParam)
 }
 
 
-// put icons in image list
+// put device icons in image list
 HIMAGELIST DeviceTracker::InitImageList(int cx, int cy, unsigned count, const int *iconlist)
 {
     HIMAGELIST iList = ImageList_Create(cx, cy, ILC_MASK, count, count);
@@ -2992,7 +3007,6 @@ HIMAGELIST DeviceTracker::InitImageList(int cx, int cy, unsigned count, const in
         BOOL fail = FALSE;
 
         for (i = 0; (i < count) && !fail; i++) {
-            // HICON hi = LoadIcon(mHInst, MAKEINTRESOURCE(iconlist[i]));
             HICON hi = (HICON) LoadImage(mHInst, MAKEINTRESOURCE(iconlist[i]),
                 IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
             if (hi) {
@@ -3201,7 +3215,7 @@ void DeviceTracker::Cleanup()
         DestroyIcon(mIcoMonitor33);
     }
 
-    // free device lists
+    // free device list
     {
         DeviceInfo *devPtr = mListDevices;
 
@@ -3884,7 +3898,6 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
     BOOL            isWinSerial = FALSE;
     DeviceInfo      *devItem = NULL;
     int             portnumber = -1;
-    int             pos = 0; // position in ordered list
 
     if (!mOptions.ShowNotPresent()) {
         dState = DevPresent;
@@ -3940,7 +3953,7 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
         DeviceInfo *item;
 
         // create new device object, & add to display
-        item = DeviceInfo::NewDevice(pos,
+        item = DeviceInfo::NewDevice(
             (aDevType == DevMicroBootShadow) ? DevMicroBoot : aDevType, dState, aNow,
             serialNumber, portname, friendlyname, hardwareId, portnumber, containerId, usbHub, usbPort,
             usbValid, aScanId, mListDevices, isWinSerial, aSerialType);
@@ -4177,6 +4190,9 @@ void DeviceTracker::UpdateWndIconAndNotifications()
  /*
   Windows bug: sometimes small icon updates but big taskbar one doesn't 
   Workaround is just to keep refreshing ...
+  Unfortunately at some point Windows Shell seems to only use a cached icon
+  on the Taskbar. At least the small icon in corner of the window changes
+  as intended.
   */
 void DeviceTracker::AppIconRefresh()
 {
@@ -4619,7 +4635,7 @@ void MonOptions::SaveViewStyleButton(HWND hWndMain, int newStyle)
 void MonOptions::KickRegSaveTimer(HWND hWndMain)
 {
     if (!optTimerRegistrySave) {
-        // run timer afte ~15s
+        // run timer after ~15s
         SetTimer (hWndMain, optTimerRegistrySave = REGISTRY_SAVE_MAGICNUMBER, 15000, NULL);
     }
 }
@@ -4634,4 +4650,4 @@ void MonOptions::CancelRegSaveTimer(HWND hWndMain)
 }
 
 
-/* end of filed rfidonitor.c */
+/* end of file rfidmonitor.cpp */

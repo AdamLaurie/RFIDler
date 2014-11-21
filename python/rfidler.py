@@ -160,6 +160,146 @@ def output(message):
         print message
 
 
+def store_data(data):
+    root = ET.fromstring(''.join(data))
+    # wrap it in an ElementTree instance, and save as XML
+    tree = ET.ElementTree(root)
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    filename = "dump_%s.xml" % timestr
+    tree.write(filename)
+    output("Wrote dump to %s" % filename)
+
+def load_data(fname):
+    try:
+        with open(fname, "r") as f:
+            lines = f.readlines()
+    except Exception, e:
+        return [False, str(e)]
+
+    return [True, lines]
+
+def plot_data(data):
+    # create graphic objects
+    fig, ax1 = pyplot.subplots()
+    # we need second subplot for voltage scale
+    ax2 = ax1.twinx()
+
+    # get xml sections
+    xml = ET.fromstring(''.join(data))
+    samples = xml.find('Samples')
+    tag = xml.find('Tag')
+    pots = xml.find('Pots')
+
+    # raw coil data
+    raw = samples.find('Coil_Data')
+    data = raw.find('Data')
+    out = data.text.replace(' ', '')
+    out = map(ord, out.decode("hex"))
+    out[:] = [x * ADC_To_Volts for x in out]
+    x = range(len(out))
+    ax2.plot(x, out, color='b', label="Raw Data")
+
+    # reader HIGH/LOW
+    raw = samples.find('Reader_Output')
+    data = raw.find('Data')
+    out = data.text.replace(' ', '')
+    out = map(ord, out.decode("hex"))
+
+    #Use a counter to help calc bit period
+    count = 0
+    prev = out[0]
+    bitcounts = []
+
+    # convert to value that will show on scale
+    for i in range(len(out)):
+        if out[i] != prev:
+            prev = out[i]
+            bitcounts.append(count)
+            count = 1
+        else:
+            count = count +1
+
+        if out[i]:
+            out[i] = 258
+        else:
+            out[i] = 4
+
+    print("Bit periods")
+    print(bitcounts)
+    
+    ax1.plot(x, out, '-', color='g', label='Reader Logic')
+    # show compressed version
+    for i in range(len(out)):
+        if out[i] == 258:
+            out[i] = 320
+        else:
+            out[i] = 300
+    ax1.plot(x, out, '-', color='g')
+
+    # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
+
+    # bit period
+    raw = samples.find('Bit_Period')
+    data = raw.find('Data')
+    out = data.text.replace(' ', '')
+    out = map(ord, out.decode("hex"))
+    # show bit period as single vertical stripe
+    prev = out[0]
+    fill = 0
+    fill1 = 0
+    toggle = True
+    for i in range(len(out)):
+        if out[i] != prev:
+            prev = out[i]
+            if fill1:
+                fill = fill1
+                fill1 = i
+            else:
+                fill1 = i
+            # fill every other stripe
+            if toggle:
+                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
+            toggle = not toggle
+    # find first stripe and add legend
+    for i in range(len(out)):
+        if (out[i]):
+            break
+    legend = tag.find('Data_Rate')
+    data = legend.find('Data').text
+    ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color='r', alpha=0.5, rotation=270,
+             ha='center', va='top')
+
+
+    # pot settings
+    color = 'r'
+    for element in 'Pot_High', 'Pot_Low ':
+        raw = pots.find(element.strip())
+        data = raw.find('Data').text
+        # convert pot setting to volts
+        out = [float(data) * POT_To_Volts] * len(x)
+        ax2.plot(x, out, '--', color=color,
+                 label=element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
+        # ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
+        color = 'm'
+
+    # done - label and show graph
+    # ADC scale needs to match volts (5v / 3.3v)
+    ax1.set_ylim(-5, 256 * 1.515151515)
+    title = tag.find('Tag_Type')
+    pyplot.xlim(0, len(x))
+    pyplot.title('RFIDler - ' + title.find('Data').text)
+    ax1.set_ylabel('Signal Strength (ADC)')
+    ax1.set_xlabel('Sample Number')
+    ax1.legend(loc=2)
+    fig.canvas.set_window_title('RFIDler plot')
+    # volts scale up to 5.0v as that is max pot setting
+    # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
+    # we can't see token samples above 3.3v
+    ax2.set_ylim(0, 5.0)
+    ax2.set_ylabel('Signal Strength (Volts)', rotation=270)
+    ax2.legend(loc=1)
+    pyplot.show()
+
 if len(sys.argv) < 3:
     print """
  usage: {0} <PORT> <COMMAND> [ARGS] [COMMAND [ARGS] ...]
@@ -169,6 +309,8 @@ if len(sys.argv) < 3:
      DEBUG <OFF|ON>           Show serial comms
      FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]
      PLOT[N] <SAMPLES>        Plot raw coil samples ([N]o local clock)
+     DUMP[N] <SAMPLES>        Save raw coil samples to file ([N]o local clock)
+     LOAD <file>              Load and plot saved sample-file        
      PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>
      QUIET                    Supress confirmation of sent command (show results only)
      SLEEP <SECONDS>          Pause for SECONDS
@@ -252,117 +394,20 @@ while current < len(sys.argv):
         current += 1
         continue
 
-    if command == 'PLOT' or command == 'PLOTN':
-        if command == 'PLOT':
+    if command in ['PLOT', 'PLOTN', 'DUMP', 'DUMPN', 'LOAD']:
+        if command in ['PLOT', 'DUMP']:
             result, data = rfidler.command('ANALOGUE %s' % sys.argv[current])
-        else:
+        elif command in ['PLOTN', 'DUMPN']:
             result, data = rfidler.command('ANALOGUEN %s' % sys.argv[current])
+        else:
+            result, data = load_data(sys.argv[current])
+
         current += 1
         if result:
-            # create graphic objects
-            fig, ax1 = pyplot.subplots()
-            # we need second subplot for voltage scale
-            ax2 = ax1.twinx()
-
-            # get xml sections
-            xml = ET.fromstring(''.join(data))
-            samples = xml.find('Samples')
-            tag = xml.find('Tag')
-            pots = xml.find('Pots')
-
-            # raw coil data
-            raw = samples.find('Coil_Data')
-            data = raw.find('Data')
-            out = data.text.replace(' ', '')
-            out = map(ord, out.decode("hex"))
-            out[:] = [x * ADC_To_Volts for x in out]
-            x = range(len(out))
-            ax2.plot(x, out, color='b', label="Raw Data")
-
-            # reader HIGH/LOW
-            raw = samples.find('Reader_Output')
-            data = raw.find('Data')
-            out = data.text.replace(' ', '')
-            out = map(ord, out.decode("hex"))
-
-            # convert to value that will show on scale
-            for i in range(len(out)):
-                if out[i]:
-                    out[i] = 258
-                else:
-                    out[i] = 4
-            ax1.plot(x, out, '-', color='g', label='Reader Logic')
-            # show compressed version
-            for i in range(len(out)):
-                if out[i] == 258:
-                    out[i] = 320
-                else:
-                    out[i] = 300
-            ax1.plot(x, out, '-', color='g')
-
-            # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
-
-            # bit period
-            raw = samples.find('Bit_Period')
-            data = raw.find('Data')
-            out = data.text.replace(' ', '')
-            out = map(ord, out.decode("hex"))
-            # show bit period as single vertical stripe
-            prev = out[0]
-            fill = 0
-            fill1 = 0
-            toggle = True
-            for i in range(len(out)):
-                if out[i] != prev:
-                    prev = out[i]
-                    if fill1:
-                        fill = fill1
-                        fill1 = i
-                    else:
-                        fill1 = i
-                    # fill every other stripe
-                    if toggle:
-                        ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
-                    toggle = not toggle
-            # find first stripe and add legend
-            for i in range(len(out)):
-                if (out[i]):
-                    break
-            legend = tag.find('Data_Rate')
-            data = legend.find('Data').text
-            ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color='r', alpha=0.5, rotation=270,
-                     ha='center', va='top')
-
-
-            # pot settings
-            color = 'r'
-            for element in 'Pot_High', 'Pot_Low ':
-                raw = pots.find(element.strip())
-                data = raw.find('Data').text
-                # convert pot setting to volts
-                out = [float(data) * POT_To_Volts] * len(x)
-                ax2.plot(x, out, '--', color=color,
-                         label=element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
-                # ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
-                color = 'm'
-
-            # done - label and show graph
-            # ADC scale needs to match volts (5v / 3.3v)
-            ax1.set_ylim(-5, 256 * 1.515151515)
-            title = tag.find('Tag_Type')
-            pyplot.xlim(0, len(x))
-            pyplot.title('RFIDler - ' + title.find('Data').text)
-            ax1.set_ylabel('Signal Strength (ADC)')
-            ax1.set_xlabel('Sample Number')
-            ax1.legend(loc=2)
-            fig.canvas.set_window_title('RFIDler plot')
-            # volts scale up to 5.0v as that is max pot setting
-            # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
-            # we can't see token samples above 3.3v
-            ax2.set_ylim(0, 5.0)
-            ax2.set_ylabel('Signal Strength (Volts)', rotation=270)
-            ax2.legend(loc=1)
-            pyplot.show()
+            if command in ['PLOT', 'PLOTN','LOAD']:
+                plot_data(data)
+            else:
+                store_data(data)
         else:
             output('Failed: ' + data)
         continue

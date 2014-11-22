@@ -189,6 +189,8 @@ public:
     BOOL SetShowDevBoards(BOOL value) { BOOL old = optShowDevBoards; optShowDevBoards = value; return old; }
     BOOL SetShowRecentDisc(BOOL value) { BOOL old = optShowRecentDisc; optShowRecentDisc = value; return old; }
     BOOL SetShowAnySerial(BOOL value) { BOOL old = optShowAnySerial; optShowAnySerial = value; return old; }
+    BOOL SetShowFlagsToAll();  // return flag indicates value change
+    BOOL SetShowFlagsToNone();
     BOOL SetShowFlagsToDefault();
 
     BOOL NotifyRfidlerArrFlash() const { return optNotifyRfidlerArrFlash; }
@@ -197,6 +199,8 @@ public:
     BOOL SetNotifyRfidlerArrFlash(BOOL value) { BOOL old = optNotifyRfidlerArrFlash; optNotifyRfidlerArrFlash = value; return old; }
     BOOL SetNotifyBootArrFlash(BOOL value) { BOOL old = optNotifyBootArrFlash; optNotifyBootArrFlash = value; return old; }
     BOOL SetNotifyMicrochipArrFlash(BOOL value) { BOOL old = optNotifyMicrochipArrFlash; optNotifyMicrochipArrFlash = value; return old; }
+    BOOL SetNotifyFlagsToAll();  // return flag indicates value change
+    BOOL SetNotifyFlagsToNone();
     BOOL SetNotifyFlagsToDefault();
 
     // save changed values
@@ -244,6 +248,8 @@ private:
             BOOL optNotifyMicrochipArrFlash:1;   // IDC_MICROCHIP_ARR_FLASH
         };
     };
+    static const int optKAllShowFlags   = 0x001F;
+    static const int optKAllNotifyFlags = 0x0007;
 
     // options we have retrieved from registry
     union {
@@ -1200,42 +1206,14 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
             switch (wID) 
             {
             case IDC_CHECK_SHOW_ALL:                
-                if (!newOptions->SetShowNonConfig(TRUE)) {
+                if (newOptions->SetShowFlagsToAll()) {
                     enableApply = TRUE;
-                }
-                if (!newOptions->SetShowNotPresent(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (!newOptions->SetShowDevBoards(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (!newOptions->SetShowRecentDisc(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (!newOptions->SetShowAnySerial(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (enableApply) {
                     SetShowOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_CHECK_SHOW_NONE:
-                if (newOptions->SetShowNonConfig(FALSE)) {
+                if (newOptions->SetShowFlagsToNone()) {
                     enableApply = TRUE;
-                }
-                if (newOptions->SetShowNotPresent(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (newOptions->SetShowDevBoards(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (newOptions->SetShowRecentDisc(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (newOptions->SetShowAnySerial(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (enableApply) {
                     SetShowOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
@@ -1285,7 +1263,7 @@ void SetNotifyOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions)
         aOptions->NotifyBootArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, 
         aOptions->NotifyMicrochipArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
-    }
+}
 
 
 BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
@@ -1314,38 +1292,20 @@ BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM l
             switch (wID) 
             {
             case IDC_CHECK_SHOW_ALL:                
-                if (!newOptions->SetNotifyRfidlerArrFlash(TRUE)) {
+                if (newOptions->SetNotifyFlagsToAll()) {
                     enableApply = TRUE;
-                }
-                if (!newOptions->SetNotifyBootArrFlash(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (!newOptions->SetNotifyMicrochipArrFlash(TRUE)) {
-                    enableApply = TRUE;
-                }
-                if (enableApply) {
                     SetNotifyOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_CHECK_SHOW_NONE:
-                if (newOptions->SetNotifyRfidlerArrFlash(FALSE)) {
+                if (newOptions->SetNotifyFlagsToNone()) {
                     enableApply = TRUE;
-                }
-                if (newOptions->SetNotifyBootArrFlash(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (newOptions->SetNotifyMicrochipArrFlash(FALSE)) {
-                    enableApply = TRUE;
-                }
-                if (enableApply) {
                     SetNotifyOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
             case IDC_DEFAULT:
                 if (newOptions->SetNotifyFlagsToDefault()) {
                     enableApply = TRUE;
-                }
-                if (enableApply) {
                     SetNotifyOptionsCheckBoxes(hWnd, newOptions);
                 }
                 break;
@@ -1363,6 +1323,7 @@ BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM l
                 break;
             }
             if (enableApply && hWndParentDlg) {
+                // some selection changed, tell parent dialog to enable Apply button
                 SendMessage(hWndParentDlg, WM_APP, 0, 0);
             }
         }
@@ -1398,7 +1359,12 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         currPage = 0;
         hWndOptionsPage[0] = InitShowControls(newOptions, hWndTab);
         hWndOptionsPage[1] = InitNotificationControls(newOptions, hWndTab);
-        { // mark Tab control as parent
+        { 
+            /* mark Tab control as parent, dialog pages should already have this via DS_CONTROL
+               This should ensure tab key moves through all the controls correctly.
+               Minor Windows bug: tab key does select the the tab control, so it is hard
+               (impossible?) to change pages with keyboard.
+               */
             LONG_PTR value = GetWindowLongPtr(hWndTab, GWL_EXSTYLE);
             value |= WS_EX_CONTROLPARENT;
             SetWindowLongPtr(hWndTab, GWL_EXSTYLE, value);
@@ -1409,15 +1375,13 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         {
             int wID = LOWORD (wParam);
 
-            switch (wID) 
+            switch (wID)
             {
             case IDOK:
                 DevTracker->SetOptions(*newOptions, DeviceTracker::SetAll);
-                EndDialog(hWnd, 0);
-                handled++;
-                break;
+                // fall through
             case IDCANCEL:
-                EndDialog(hWnd, 1);
+                EndDialog(hWnd, wID);
                 handled++;
                 break;
             case IDC_APPLY:
@@ -1431,7 +1395,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             case IDC_CHECK_SHOW_ALL:                
             case IDC_CHECK_SHOW_NONE:
             case IDC_DEFAULT:
-                // send to the options page
+                // send to the current options page
                 PostMessage(hWndOptionsPage[currPage], iMsg, wParam, lParam);
                 handled++;
                 break;
@@ -1439,7 +1403,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-    case WM_APP: // enable apply button
+    case WM_APP: // enable apply button (request from current options page)
         if (!ApplyEnabled[currPage]) {
             EnableWindow(GetDlgItem(hWnd, IDC_APPLY), TRUE);
             ApplyEnabled[currPage] = TRUE;
@@ -1456,11 +1420,13 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 switch (index) {
                 case 0:
                 case 1:
-                    // flip tabs
+                    // flip tabs, update Apply button state
                     ShowWindow(hWndOptionsPage[0], index == 0 ? SW_SHOWNA :SW_HIDE);
                     ShowWindow(hWndOptionsPage[1], index == 1 ? SW_SHOWNA :SW_HIDE);
+                    if (ApplyEnabled[currPage] != ApplyEnabled[index]) {
+                        EnableWindow(GetDlgItem(hWnd, IDC_APPLY), ApplyEnabled[index]);
+                    }
                     currPage = index;
-                    EnableWindow(GetDlgItem(hWnd, IDC_APPLY), ApplyEnabled[currPage]);
                     break;
                 }
                 handled++;
@@ -1475,6 +1441,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_DESTROY:
+        // destroy windows & release memory for option pages
         for (int i = 0; i < KNumPropPages; i++) {
             if (hWndOptionsPage[i]) {
                 DestroyWindow(hWndOptionsPage[i]);
@@ -4674,10 +4641,50 @@ void MonOptions::CancelRegSaveTimer(HWND hWndMain)
 }
 
 
+BOOL MonOptions::SetShowFlagsToAll()
+{
+    if (optShowFlags != optKAllShowFlags) {
+        optShowFlags = optKAllShowFlags;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+BOOL MonOptions::SetShowFlagsToNone()
+{
+    if (optShowFlags != 0) {
+        optShowFlags = 0;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
 BOOL MonOptions::SetShowFlagsToDefault()
 {
     if (optShowFlags != optDefaultShowFlags) {
         optShowFlags = optDefaultShowFlags;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+BOOL MonOptions::SetNotifyFlagsToAll()
+{
+    if (optNotifyFlags != optKAllNotifyFlags) {
+        optNotifyFlags = optKAllNotifyFlags;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+BOOL MonOptions::SetNotifyFlagsToNone()
+{
+    if (optNotifyFlags != 0) {
+        optNotifyFlags = 0;
         return TRUE;
     }
     return FALSE;

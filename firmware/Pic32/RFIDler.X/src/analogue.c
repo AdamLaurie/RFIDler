@@ -154,7 +154,7 @@ void analogue_sample(unsigned int length, BOOL local_read)
 {
     unsigned int i, scale;
     // we have a static buffer for samples, so if we want to see more, scale sample rate accordingly
-    scale= ((((length - 1)) / sizeof(DataBuff))) +1 ; //Multiply by 256
+    scale= (((length - 1) / sizeof(DataBuff))) +1 ; 
     /**
      The way this is implemented,
      - If length less than 8096, scale will be == 1
@@ -173,7 +173,6 @@ void analogue_sample(unsigned int length, BOOL local_read)
     for(i= 0 ; i < length ; ++i)
     {
         DataBuff[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
-        DataBuff[i / scale]= (0xAAAAAAAA & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
     }
 
     FakeRead= FALSE;

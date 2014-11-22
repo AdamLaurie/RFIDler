@@ -141,9 +141,9 @@ import select
 import os
 import time
 import xml.etree.ElementTree as ET
-
+import collections
 from matplotlib import pyplot
-
+import numpy
 import RFIDler
 
 
@@ -160,12 +160,12 @@ def output(message):
         print message
 
 
-def store_data(data):
+def store_data(data,  filename_prefix = "dump"):
     root = ET.fromstring(''.join(data))
     # wrap it in an ElementTree instance, and save as XML
     tree = ET.ElementTree(root)
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    filename = "dump_%s.xml" % timestr
+    filename = "%s_%s.xml" % (filename_prefix, timestr)
     tree.write(filename)
     output("Wrote dump to %s" % filename)
 
@@ -178,9 +178,27 @@ def load_data(fname):
 
     return [True, lines]
 
+
+
+#def autocorr(data):
+#    """
+#    See 
+#    http://stackoverflow.com/questions/643699/how-can-i-use-numpy-correlate-to-do-autocorrelation
+#    """
+#    x1 = 300
+#    x2 = 400
+#    result1 = numpy.correlate(data[:x1], data, mode='same')
+#    result2 = numpy.correlate(data[:x2], data, mode='same')
+#    print(len(result1))
+#    print(len(data))
+#    return (result1, result2)
+
 def plot_data(data):
+    
     # create graphic objects
     fig, ax1 = pyplot.subplots()
+#    fig, (ax1, ax_corr) = pyplot.subplots(2)
+
     # we need second subplot for voltage scale
     ax2 = ax1.twinx()
 
@@ -227,6 +245,23 @@ def plot_data(data):
     print("Bit periods")
     print(bitcounts)
     
+    print("Most common bit periods:")
+    print("\n".join(["%d : %d" % kv for kv in collections.Counter(bitcounts).most_common(10)]))
+
+ #   Not  yet finished
+ #   ax_corr2 = ax_corr.twinx()
+ #   #Show autocorrelation
+ #   Some test-data
+ #   #         100       5 * 2=10          3 * 100      9* 10 =90 ==>  500
+ #   #x_data = [0,1]*50 +[1,40,1,90,12]*2+[0,0,24]*100+[15,1,34,1,500,12,13,1,1]*10
+ #   x_data = [0]*200+[1,2,3,4,5,6,7,8,9,500]*10+[0]*200
+ #   x_data = x_data+x_data+x_data+x_data
+ #   #Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
+ #   (autoc_1, autoc_2) = autocorr(x_data)
+ #   ax_corr.plot(range(len(autoc_1)) , autoc_1 , range(len(autoc_1)) , "-", color='b',label = "Autocorrelation (full)")
+ #   ax_corr2.plot(range(len(autoc_2)) , autoc_2 , range(len(autoc_2)) , "-", color='g',label = "Autocorrelation (500 samples)")
+
+
     ax1.plot(x, out, '-', color='g', label='Reader Logic')
     # show compressed version
     for i in range(len(out)):
@@ -306,16 +341,16 @@ if len(sys.argv) < 3:
 
    Commands:
 
-     DEBUG <OFF|ON>           Show serial comms
-     FLASH[P] <IMAGE.HEX>     Set bootloader mode and flash IMAGE.HEX [in Production mode]
-     PLOT[N] <SAMPLES>        Plot raw coil samples ([N]o local clock)
-     DUMP[N] <SAMPLES>        Save raw coil samples to file ([N]o local clock)
-     LOAD <file>              Load and plot saved sample-file        
-     PROMPT <MESSAGE>         Print MESSAGE and wait for <ENTER>
-     QUIET                    Supress confirmation of sent command (show results only)
-     SLEEP <SECONDS>          Pause for SECONDS
-     TEST                     Run hardware manufacting test suite
-
+     DEBUG <OFF|ON>                      Show serial comms
+     FLASH[P] <IMAGE.HEX>                Set bootloader mode and flash IMAGE.HEX [in Production mode]
+     PLOT[N] <SAMPLES>                   Plot raw coil samples ([N]o local clock)
+     STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
+     LOAD <file>                         Load and plot saved sample-file        
+     PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
+     QUIET                               Supress confirmation of sent command (show results only)
+     SLEEP <SECONDS>                     Pause for SECONDS
+     TEST                                Run hardware manufacting test suite
+    
    Commands will be executed sequentially.
    Unrecognised commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
@@ -394,10 +429,14 @@ while current < len(sys.argv):
         current += 1
         continue
 
-    if command in ['PLOT', 'PLOTN', 'DUMP', 'DUMPN', 'LOAD']:
-        if command in ['PLOT', 'DUMP']:
+    if command == 'XKCD':
+        pyplot.xkcd()
+        continue
+
+    if command in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
+        if command in ['PLOT', 'STORE']:
             result, data = rfidler.command('ANALOGUE %s' % sys.argv[current])
-        elif command in ['PLOTN', 'DUMPN']:
+        elif command in ['PLOTN', 'STOREN']:
             result, data = rfidler.command('ANALOGUEN %s' % sys.argv[current])
         else:
             result, data = load_data(sys.argv[current])
@@ -407,7 +446,9 @@ while current < len(sys.argv):
             if command in ['PLOT', 'PLOTN','LOAD']:
                 plot_data(data)
             else:
-                store_data(data)
+                # Store
+                store_data(data, sys.argv[current])
+                current += 1
         else:
             output('Failed: ' + data)
         continue

@@ -179,7 +179,7 @@ ROM USB_DEVICE_DESCRIPTOR device_dsc=
     RFIDLER_HW_VERSION,     // Device release number in BCD format
     0x01,                   // Manufacturer string index
     0x02,                   // Product string index
-    0x00,                   // Device serial number string index
+    RFIDLER_SERIAL_NUMBER_STRING_DESC_INDEX,  // Device serial number string index
     0x01                    // Number of possible configurations
 };
 
@@ -274,15 +274,23 @@ ROM struct{BYTE bLength;BYTE bDscType;WORD string[1];}sd000={
 sizeof(sd000),USB_DESCRIPTOR_STRING,{0x0409}};
 
 //Manufacturer string descriptor
-ROM struct{BYTE bLength;BYTE bDscType;WORD string[25];}sd001={
+ROM struct{BYTE bLength;BYTE bDscType;WORD string[18];}sd001={
 sizeof(sd001),USB_DESCRIPTOR_STRING,
 {'A','p','e','r','t','u','r','e',' ','L','a','b','s',' ','L','t','d','.'
 }};
 
 //Product string descriptor
-ROM struct{BYTE bLength;BYTE bDscType;WORD string[25];}sd002={
+ROM struct{BYTE bLength;BYTE bDscType;WORD string[10];}sd002={
 sizeof(sd002),USB_DESCRIPTOR_STRING,
 {'R','F','I','D','l','e','r','-','L','F'}
+};
+
+
+// Buffer to put USB serial number, Unicode version of unique Ethernet MAC
+ROM struct{BYTE bLength;BYTE bDscType;WORD string[24];}sd003={
+sizeof(sd003),USB_DESCRIPTOR_STRING,
+{'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',
+'0','1','2','3','4','5','6','7'}
 };
 
 //Array of configuration descriptors
@@ -295,7 +303,8 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
 {
     (ROM BYTE *ROM)&sd000,
     (ROM BYTE *ROM)&sd001,
-    (ROM BYTE *ROM)&sd002
+    (ROM BYTE *ROM)&sd002,
+    (ROM BYTE *ROM)&sd003
 };
 
 #pragma code

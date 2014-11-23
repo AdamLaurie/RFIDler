@@ -97,7 +97,7 @@
 
 #define USB_SUPPORT_DEVICE
 
-#define USB_NUM_STRING_DESCRIPTORS 3
+#define USB_NUM_STRING_DESCRIPTORS 4
 
 //#define USB_INTERRUPT_LEGACY_CALLBACKS
 #define USB_ENABLE_ALL_HANDLERS
@@ -130,5 +130,8 @@
 //#define USB_CDC_SUPPORT_ABSTRACT_CONTROL_MANAGEMENT_CAPABILITIES_D2 //Send_Break command
 #define USB_CDC_SUPPORT_ABSTRACT_CONTROL_MANAGEMENT_CAPABILITIES_D1 //Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and Serial_State commands
 /** DEFINITIONS ****************************************************/
+
+#define RFIDLER_SERIAL_NUMBER_STRING_DESC_INDEX   3
+
 
 #endif //USBCFG_H

@@ -235,6 +235,7 @@ static void InitializeSystem(void);
 BYTE ProcessIO(void);
 void USBCBSendResume(void);
 void UserInit(void);
+void MakeUSBSerialNumberFromEMAC(void);
 void parse_BL_packet(void);
 BYTE ProcessSerialCommand(char *command);
 unsigned int read_adc(void);
@@ -311,6 +312,8 @@ static void InitializeSystem(void)
     // set to highest priority so our protocol timings are always accurate (use 6 or less everywhere else)
     // FIXME: this doesn't actually work - test by starting clock and doing 'timer-test'
     mT5SetIntPriority(7);
+
+    MakeUSBSerialNumberFromEMAC();
 
     USBDeviceInit();
     

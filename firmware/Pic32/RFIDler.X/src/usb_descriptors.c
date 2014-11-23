@@ -287,10 +287,9 @@ sizeof(sd002),USB_DESCRIPTOR_STRING,
 
 
 // Buffer to put USB serial number, Unicode version of unique Ethernet MAC
-ROM struct{BYTE bLength;BYTE bDscType;WORD string[24];}sd003={
+static struct{BYTE bLength;BYTE bDscType;WORD string[12];}sd003={
 sizeof(sd003),USB_DESCRIPTOR_STRING,
-{'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',
-'0','1','2','3','4','5','6','7'}
+{'0','1','2','3','4','5','6','7','8','9','A','B'}
 };
 
 //Array of configuration descriptors
@@ -308,5 +307,37 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
 };
 
 #pragma code
+
+// Read device's unique Ethernet MAC Address, use for USB serial number
+void MakeUSBSerialNumberFromEMAC(void)
+{
+    WORD sernum;
+    WORD index = 0;
+
+    while (index < 12)
+    {
+        WORD d = 0;
+        // choose part of the Ethernet MAC address to read
+        if (index == 0)
+            sernum = EMAC1SA0;
+        else if (index == 4)
+            sernum = EMAC1SA1;
+        else
+            sernum = EMAC1SA2;
+
+        // convert 16 bits to Unicode hexadecimal format
+        while ((d < 4) && (index < 12))
+        {
+            WORD unichar = sernum & 0x000f;
+            if (unichar < 10)
+                unichar += '0';
+            else
+                unichar += ('A' - 10);
+            sd003.string[index++] = unichar;
+            sernum >>= 4; // shift right
+            d++;
+        }
+    }
+ }
 #endif
 /** EOF usb_descriptors.c ****************************************************/

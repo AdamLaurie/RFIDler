@@ -147,7 +147,7 @@ void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsig
     RFIDlerConfig.RWD_Zero_Period= pw0;
     RFIDlerConfig.RWD_One_Period= pw1;
     RFIDlerConfig.RWD_Zero_Gap_Period= gap0;
-    RFIDlerConfig.RWD_Zero_Gap_Period= gap1;
+    RFIDlerConfig.RWD_One_Gap_Period= gap1;
     RFIDlerConfig.RWD_Wait_Switch_TX_RX= wait_txrx;
     RFIDlerConfig.RWD_Wait_Switch_RX_TX= wait_rxtx;
     RFIDlerConfig.RWD_Barrier_Period= barperiod;
@@ -185,6 +185,9 @@ BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BO
     RWD_Post_Wait= post_wait * 2;
     
     if(!RWD_Zero_Period || !RWD_One_Period || !RWD_Zero_Gap_Period || !RWD_One_Gap_Period)
+        return FALSE;
+
+    if(RWD_Barrier_Bits && (!RWD_Barrier_Period || !RWD_Barrier_Gap_Period))
         return FALSE;
 
     // convert ascii string to bin if required

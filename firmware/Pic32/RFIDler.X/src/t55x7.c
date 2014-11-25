@@ -146,7 +146,7 @@ const BYTE T55x7_Compat_Data_Rates[]= {8, 16, 32, 40, 50, 64, 100, 128};
 BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length)
 {
     // send command
-    if(!rwd_send(command, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, T55X7_START_GAP - RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(command, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, T55X7_START_GAP - RFIDlerConfig.RWD_Zero_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     if(!response_length)
@@ -329,7 +329,8 @@ BOOL t55x7_rwd_test(BYTE *pattern)
             {
                 if(get_user_abort())
                     return found;
-                RFIDlerConfig.RWD_Gap_Period= gap;
+                RFIDlerConfig.RWD_Zero_Gap_Period= gap;
+                RFIDlerConfig.RWD_One_Gap_Period= gap;
                 RFIDlerConfig.RWD_One_Period= one;
                 RFIDlerConfig.RWD_Zero_Period= zero;
                 if(get_tag_uid(tmp))

@@ -142,7 +142,7 @@
 #define TMP_SMALL_BUFF_LEN  256
 #define ANALOGUE_BUFF_LEN   8192
 
-#define COMMS_BUFFER_SIZE   128
+#define COMMS_BUFFER_SIZE   256
 
 #define SAMPLEMASK          ~(BIT_1 | BIT_0)    // mask to remove two bottom bits from analogue sample - we will then use those for reader & bit period
 
@@ -169,7 +169,11 @@ extern BYTE             Password[9];                        // 32 bits as HEX st
 // RWD (read/write device) coil state
 extern BYTE             RWD_State;                              // current state of RWD coil
 extern unsigned long    RWD_Fc;                                 // field clock in uS
-extern unsigned long    RWD_Gap_Period;                         // length of command gaps in SYSTEM ticks
+extern unsigned long    RWD_Zero_Gap_Period;                    // post one and zero bit gap lengths in SYSTEM ticks
+extern unsigned long    RWD_One_Gap_Period;
+extern BYTE             RWD_Barrier_Bits;                       // Number of bits between barriers
+extern unsigned long    RWD_Barrier_Period;                     // periods for a (byte/word) barrier if needed
+extern unsigned long    RWD_Barrier_Gap_Period;
 extern unsigned int     RWD_Zero_Period;                        // length of '0' in OC5 ticks
 extern unsigned int     RWD_One_Period;                         // length of '1' in OC5 ticks
 extern unsigned long    RWD_Sleep_Period;                       // length of initial sleep to reset tag in system ticks
@@ -211,13 +215,17 @@ typedef struct {
     unsigned int    Repeat;
     unsigned int    PotLow;
     unsigned int    PotHigh;
-    unsigned int    RWD_Gap_Period;
+    unsigned int    RWD_Zero_Gap_Period;
     unsigned int    RWD_Zero_Period;
     unsigned int    RWD_One_Period;
     unsigned int    RWD_Sleep_Period;
     unsigned int    RWD_Wake_Period;
     unsigned int    RWD_Wait_Switch_TX_RX;
     unsigned int    RWD_Wait_Switch_RX_TX;
+    unsigned int    RWD_One_Gap_Period;
+    unsigned int    RWD_Barrier_Period;        // periods for a n-bit barrier if needed
+    unsigned int    RWD_Barrier_Gap_Period;
+    BYTE            RWD_Barrier_Bits;               // number of bits between barriers
 } StoredConfig;
 
 // somewhere to store TAG data. this will be interpreted according to the TAG
@@ -273,6 +281,7 @@ extern rtccDate	RTC_date;			// date structure
 #define                 RWD_STATE_SENDING_BIT           4       // RWD sending a data bit & gap
 #define                 RWD_STATE_POST_WAIT             5       // RWD finished sending data, now in forced wait period
 #define                 RWD_STATE_ACTIVE                6       // RWD finished, now just clocking a carrier
+#define                 RWD_STATE_SENDING_BARRIER       7       // RWD sending barrier between n-bit words
 
 // reader ISR states
 #define                 READER_STOPPED                  0       // reader not in use

@@ -132,7 +132,16 @@
 
 
 
-void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int wait_txrx, unsigned int wait_rxtx);
-BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait);
+void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
+        unsigned int gap0, unsigned int gap1, unsigned int wait_txrx, unsigned int wait_rxtx,
+        unsigned int barrier, unsigned int barperiod, unsigned int bargap);
+BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state,
+        unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
+        unsigned int gap, unsigned int post_wait);
+// rwd_send() variant supporting different preceeding gaps for 0 & 1 bits, and barrier pulses every n-bits
+BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state,
+        unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
+        unsigned int gap0, unsigned int gap1, unsigned int barrier, unsigned int barperiod, unsigned int bargap,
+        unsigned int post_wait);
 void rwd_test(BYTE *pass);
 

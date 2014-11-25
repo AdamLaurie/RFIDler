@@ -146,7 +146,7 @@ const BYTE PSK_Rates[]= {2, 4, 8, 8};
 BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length)
 {
     // send command
-    if(!rwd_send(command, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, Q5_START_GAP - RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(command, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, Q5_START_GAP - RFIDlerConfig.RWD_Zero_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     if(!response_length)
@@ -340,13 +340,14 @@ BOOL q5_rwd_test(BYTE *pattern)
                 blank= TRUE;
                 if(get_user_abort())
                     return found;
-                RFIDlerConfig.RWD_Gap_Period= gap;
+                RFIDlerConfig.RWD_Zero_Gap_Period= gap;
+                RFIDlerConfig.RWD_One_Gap_Period= gap;
                 RFIDlerConfig.RWD_One_Period= one;
                 RFIDlerConfig.RWD_Zero_Period= zero;
                 // reset tag
                 get_tag_uid(tmp);
                 // try to switch off modulation
-                rwd_send(Q5_MODULATION_DEFEAT, strlen(Q5_MODULATION_DEFEAT), NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+                rwd_send(Q5_MODULATION_DEFEAT, strlen(Q5_MODULATION_DEFEAT), NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Zero_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period,RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
                 // read a block with no sync & no manchester - will be all '0' if not modulating
                 RFIDlerConfig.Manchester= FALSE;
                 if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, 0, RFIDlerConfig.Timeout, NO_ONESHOT_READ, HEX) == RFIDlerConfig.DataBits)

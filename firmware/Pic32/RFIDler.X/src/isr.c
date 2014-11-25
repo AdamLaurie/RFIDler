@@ -151,6 +151,9 @@ BOOL Manchester_Error= FALSE;
 void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
 {
     static unsigned int count= 0;
+    static unsigned int barriercount= 0;
+
+    unsigned long gap;
 
     // Clear interrupt flag
     mOC5ClearIntFlag();
@@ -192,6 +195,7 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             if(count == RWD_Wake_Period)
             {
                 count= 0;
+                barriercount = 0;
                 if(*RWD_Command_ThisBit != '*')
                     RWD_State= RWD_STATE_START_SEND;
                 else
@@ -206,17 +210,28 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             // send initial gap
             // stop modulation of coil and wait
             READER_CLOCK_ENABLE_OFF();
+            // decide next state and gap length
+            if (RWD_Barrier_Bits)
+            {
+                RWD_State= RWD_STATE_SENDING_BARRIER;
+                gap = RWD_Barrier_Gap_Period;
+            }
+            else
+            {
+                RWD_State= RWD_STATE_SENDING_BIT;
+                gap = *RWD_Command_ThisBit ? RWD_One_Gap_Period : RWD_Zero_Gap_Period;
+            }
+
             // time small amounts with ticks, large with uS
-            if(RWD_Gap_Period > MAX_TIMER5_TICKS)
-                Delay_us(CONVERT_TICKS_TO_US(RWD_Gap_Period));
+            if(gap > MAX_TIMER5_TICKS)
+                Delay_us(CONVERT_TICKS_TO_US(gap));
             else
             {
                 WriteTimer5(0);
-                while(GetTimer_ticks(NO_RESET) < RWD_Gap_Period)
+                while(GetTimer_ticks(NO_RESET) < gap)
                     ;
             }
             count= 0;
-            RWD_State= RWD_STATE_SENDING_BIT;
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // restart clock
             READER_CLOCK_ENABLE_ON();
@@ -227,22 +242,73 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             // clock running for bit period, then wait for gap period
             if((*RWD_Command_ThisBit && count == RWD_One_Period) || (!*RWD_Command_ThisBit && count == RWD_Zero_Period))
             {
+                unsigned long gap;
+
+                ++RWD_Command_ThisBit;
+                count= 0;
+                // decide next state and gap length
+                if (RWD_Barrier_Bits && (++barriercount == RWD_Barrier_Bits))
+                {
+                    RWD_State = RWD_STATE_SENDING_BARRIER;
+                    barriercount = 0;
+                    gap = RWD_Barrier_Gap_Period;
+                }
+                else if(*RWD_Command_ThisBit == '*')
+                {
+                    RWD_State= RWD_STATE_POST_WAIT;
+                    gap = RWD_Zero_Gap_Period;
+                }
+                else
+                {
+                    RWD_State= RWD_STATE_SENDING_BIT;
+                    gap = *RWD_Command_ThisBit ? RWD_One_Gap_Period : RWD_Zero_Gap_Period;
+                }
+
                 // stop modulation of coil and wait
                 READER_CLOCK_ENABLE_OFF();
-                if(RWD_Gap_Period > MAX_TIMER5_TICKS)
-                    Delay_us(CONVERT_TICKS_TO_US(RWD_Gap_Period));
+                if(gap > MAX_TIMER5_TICKS)
+                    Delay_us(CONVERT_TICKS_TO_US(gap));
                 else
                 {
                     WriteTimer5(0);
-                    while(GetTimer_ticks(NO_RESET) < RWD_Gap_Period)
+                    while(GetTimer_ticks(NO_RESET) < gap)
                         ;
                 }
-                ++RWD_Command_ThisBit;
-                count= 0;
+                // restart clock
+               READER_CLOCK_ENABLE_ON();
+            }
+            else
+                count++;
+            break;
+
+        case RWD_STATE_SENDING_BARRIER:
+            //DEBUG_PIN_4= !DEBUG_PIN_4;
+            // clock running for bit period, then wait for gap period
+            if(count == RWD_Barrier_Period)
+            {
+                unsigned long gap;
+                count = 0;
+
                 if(*RWD_Command_ThisBit == '*')
+                {
                     RWD_State= RWD_STATE_POST_WAIT;
+                    gap = RWD_Zero_Gap_Period;
+                }
                 else
+                {
                     RWD_State= RWD_STATE_SENDING_BIT;
+                    gap = *RWD_Command_ThisBit ? RWD_One_Gap_Period : RWD_Zero_Gap_Period;
+                }
+                // stop modulation of coil and wait
+                READER_CLOCK_ENABLE_OFF();
+                if(RWD_Barrier_Gap_Period > MAX_TIMER5_TICKS)
+                    Delay_us(CONVERT_TICKS_TO_US(RWD_Barrier_Gap_Period));
+                else
+                {
+                    WriteTimer5(0);
+                    while(GetTimer_ticks(NO_RESET) < RWD_Barrier_Gap_Period)
+                        ;
+                }
                 // restart clock
                READER_CLOCK_ENABLE_ON();
             }

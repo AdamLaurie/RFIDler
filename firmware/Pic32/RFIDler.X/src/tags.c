@@ -354,13 +354,18 @@ BOOL tag_set(BYTE tag)
     RFIDlerConfig.Sync[2]= 0x00;
     RFIDlerConfig.Sync[3]= 0x00;
     RFIDlerConfig.SyncBits= 0;
-    RFIDlerConfig.RWD_Gap_Period= 0;
+    RFIDlerConfig.RWD_Zero_Gap_Period= 0;
+    RFIDlerConfig.RWD_One_Gap_Period= 0;
     RFIDlerConfig.RWD_Sleep_Period= 0;
     RFIDlerConfig.RWD_Wake_Period= 0;
     RFIDlerConfig.RWD_Zero_Period= 0;
     RFIDlerConfig.RWD_One_Period= 0;
     RFIDlerConfig.RWD_Wait_Switch_RX_TX= 0;
     RFIDlerConfig.RWD_Wait_Switch_TX_RX= 0;
+    RFIDlerConfig.RWD_Barrier_Bits = 0;
+    RFIDlerConfig.RWD_Barrier_Period= 0;
+    RFIDlerConfig.RWD_Barrier_Gap_Period= 0;
+
 
     switch(tag)
     {
@@ -478,7 +483,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.RWD_Gap_Period= 5; // 4 - 10
+            RFIDlerConfig.RWD_Zero_Gap_Period= 5; // 4 - 10
+            RFIDlerConfig.RWD_One_Gap_Period= RFIDlerConfig.RWD_Zero_Gap_Period;
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 500; // documentations says ~3ms, so round up a bit
             RFIDlerConfig.RWD_Zero_Period= 18; // 18 - 22
@@ -504,7 +510,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10 (4)
+            RFIDlerConfig.RWD_Zero_Gap_Period= 4; // 4 - 10 (4)
+            RFIDlerConfig.RWD_One_Gap_Period= RFIDlerConfig.RWD_Zero_Gap_Period;
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 525; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
             RFIDlerConfig.RWD_Zero_Period= 19; //18; // 18 - 22
@@ -537,7 +544,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.SyncBits= 9;
             RFIDlerConfig.RWD_Sleep_Period= 13000;
             RFIDlerConfig.RWD_Wake_Period= 4000; // must be more than 3ms, but play it safe
-            RFIDlerConfig.RWD_Gap_Period= 50; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Zero_Gap_Period= 50; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_One_Gap_Period= RFIDlerConfig.RWD_Zero_Gap_Period;
             RFIDlerConfig.RWD_Zero_Period= 16; //24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
             RFIDlerConfig.RWD_One_Period= 48; //54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 48; //64; // q5 will exit downlink mode after 64 but may not yet be damped!
@@ -637,7 +645,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
             RFIDlerConfig.RWD_Sleep_Period= 13000; // small tags such as keyfobs need a long sleep to reset
             RFIDlerConfig.RWD_Wake_Period= 4000;
-            RFIDlerConfig.RWD_Gap_Period= 23; // 14; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Zero_Gap_Period= 23; // 14; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_One_Gap_Period= RFIDlerConfig.RWD_Zero_Gap_Period;
             RFIDlerConfig.RWD_Zero_Period= 16; // 24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
             RFIDlerConfig.RWD_One_Period= 48; // 54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 64; // t55x7 will exit downlink mode after 64 but we mustn't read until t55x7 switches damping on

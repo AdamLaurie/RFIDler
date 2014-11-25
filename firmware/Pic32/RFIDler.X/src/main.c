@@ -195,7 +195,11 @@ BYTE Password[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0};  // 32 bits as HEX string set wit
 // globals for RWD commands
 BYTE             RWD_State= RWD_STATE_INACTIVE;
 unsigned long    RWD_Fc= 0;                                     // field clock in uS
-unsigned long    RWD_Gap_Period= 0;                             // length of command gaps in SYSTEM ticks
+unsigned long    RWD_Zero_Gap_Period = 0;                       // post one and zero bit gap lengths in SYSTEM ticks
+unsigned long    RWD_One_Gap_Period = 0;
+BYTE             RWD_Barrier_Bits;                              // Number of bits between barriers
+unsigned long    RWD_Barrier_Period;                            // periods for a (byte/word) barrier if needed
+unsigned long    RWD_Barrier_Gap_Period;
 unsigned int     RWD_Zero_Period= 0;                            // length of '0' in OC5 ticks
 unsigned int     RWD_One_Period= 0;                             // length of '1' in OC5 ticks
 unsigned long    RWD_Sleep_Period= 0;                           // length of initial sleep to reset tag in uS
@@ -882,6 +886,8 @@ void show_usage(char *command)
         "PSK1 <HEX UID> <FC> <RATE> <SUB> <REPEAT>                    Emulate PSK1, Field Clock in uS/100, Data Rate in RF/n,\r\n\
                                                                       Sub Carrier in RF/n\r\n",
         "PWM <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP> <TXRX> <RXTX>      Set PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n",
+        "PWM2 <FC> <SLEEP> <WAKE> <PW0> <PW1> <GAP0> <GAP1> <TXRX> <RXTX> <BARRIER-BITS> <B-PERIOD> <B-GAP>\r\n"
+        "                                                             Set advanced PWM parameters for RWD commands, Field Clock in uS/100, timings in FCs\r\n"
         "READ <START BLOCK> [END BLOCK]                               Read and store data block(s) (may require auth/login)\r\n",
         "READER                                                       Go into READER mode (continuously acquire UID)\r\n",
         "REBOOT                                                       Perform soft reset\r\n",
@@ -967,7 +973,7 @@ BYTE ProcessSerialCommand(char *command)
     BYTE commandok= FALSE;
     BYTE tmpc;
     double tmpfloat;
-    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3,  tmpint4, tmpint5, tmpint6, tmpint7;
+    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11;
     static unsigned long tmplong;
     static char local_tmp[256], local_tmp1[256];
     BYTE *ccprompt= "";
@@ -1658,7 +1664,19 @@ BYTE ProcessSerialCommand(char *command)
     {
         if(sscanf(command + 4,"%u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5, &tmpint6, &tmpint7) == 8)
         {
-            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7);
+            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint5, tmpint6, tmpint7, 0, 0, 0);
+            commandok= command_ack(NO_DATA);
+        }
+        else
+            commandok= command_nack("Invalid parameters!");
+    }
+
+    if (strncmp(command, "PWM2 ", 4) == 0)
+    {
+        if(sscanf(command + 4,"%u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5,
+                &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11) == 12)
+        {
+            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11);
             commandok= command_ack(NO_DATA);
         }
         else
@@ -1740,7 +1758,10 @@ BYTE ProcessSerialCommand(char *command)
     {
         if(sscanf(command + 4,"%s", local_tmp) == 1)
         {
-            if(rwd_send(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, 0))
+            if(rwd_sendbarrier(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock,
+                    RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period,
+                    RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_One_Gap_Period,
+                    RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, 0))
                 commandok= command_ack(NO_DATA);
             else
                 commandok= command_nack("Failed! PWM parameters not set or invalid data!");

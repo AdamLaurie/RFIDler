@@ -165,7 +165,7 @@ BOOL hitag1_get_uid(BYTE *response)
 {
     BYTE tmp[132]; // 33 bits x 4
 
-    rwd_send(HITAG1_CC, strlen(HITAG1_CC), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+    rwd_send(HITAG1_CC, strlen(HITAG1_CC), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
      // get tag id in anti-collision mode (proprietary data format, so switch off manchester and read at double the data rate, for 4 x the data bits)
     RFIDlerConfig.Manchester= FALSE;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate / 2, tmp, RFIDlerConfig.DataBits * 4, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == RFIDlerConfig.DataBits * 4)
@@ -309,7 +309,7 @@ BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, B
     length += 8;
 
     // send command - first gap is GAP, not SLEEP
-    if(!rwd_send(tmp, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     // get/check 3 bit ACK if required
@@ -372,7 +372,7 @@ BOOL hitag2_get_uid(BYTE *response)
     // START_AUTH kills active crypto session
     CryptoActive= FALSE;
 
-    if(!rwd_send(HITAG2_START_AUTH, strlen(HITAG2_START_AUTH), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(HITAG2_START_AUTH, strlen(HITAG2_START_AUTH), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == RFIDlerConfig.DataBits)
     {
@@ -409,7 +409,7 @@ BOOL hitag2_pwd_auth(BYTE *response, BYTE *pwd)
         return FALSE;
 
     // wait for RX->TX period, then send 32 bit PWD
-    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
     // get 37 bit response: sync + config byte + 24 bit TAG pwd
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, 37, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == 37)
@@ -469,7 +469,7 @@ BOOL hitag2_crypto_auth(BYTE *response, BYTE *hexkey)
         return FALSE;
 
     // wait for RX->TX period, then send PRN+secret
-    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     // get 37 bit response: sync + config byte + 24 bit TAG pwd
@@ -505,7 +505,7 @@ BOOL hitag2_read_page(BYTE *response, BYTE block)
         hitag2_binstring_crypt(tmp, tmp);
 
     // send with RX->TX delay and no reset
-    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, 37, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == 37)
@@ -548,7 +548,7 @@ BOOL hitag2_write_page(BYTE block, BYTE *data)
         return FALSE;
 
     // send command with RX->TX delay and no reset
-    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp, strlen(tmp), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     // get ACK - 10 bytes + sync
@@ -573,7 +573,7 @@ BOOL hitag2_write_page(BYTE block, BYTE *data)
         hitag2_binstring_crypt(tmp1, tmp1);
 
     // send data with RX->TX delay and no reset
-    if(!rwd_send(tmp1, strlen(tmp1), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
+    if(!rwd_send(tmp1, strlen(tmp1), NO_RESET, BLOCK, RWD_STATE_WAKING, RFIDlerConfig.FrameClock, 0, RFIDlerConfig.RWD_Wait_Switch_RX_TX, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
 
     // no ack, so read back and verify
@@ -603,7 +603,8 @@ void hitag2_test_rwd(unsigned int gapmin, unsigned int gapmax, unsigned int zero
                 for(one= onemin ; one <= onemax ; ++one)
                 {
                     RFIDlerConfig.FrameClock= (unsigned long) fc;
-                    RFIDlerConfig.RWD_Gap_Period= gap;
+                    RFIDlerConfig.RWD_Zero_Gap_Period= gap;
+                    RFIDlerConfig.RWD_One_Gap_Period= gap;
                     RFIDlerConfig.RWD_Zero_Period= zero;
                     RFIDlerConfig.RWD_One_Period= one;
                     UserMessageNum("\rGap %d", gap);

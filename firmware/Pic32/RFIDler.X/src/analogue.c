@@ -153,10 +153,15 @@ void init_adc(BOOL slow)
 void analogue_sample(unsigned int length, BOOL local_read)
 {
     unsigned int i, scale;
-
     // we have a static buffer for samples, so if we want to see more, scale sample rate accordingly
-    scale= (((length - 1) / sizeof(DataBuff))) + 1;
-
+    scale= (((length - 1) / sizeof(DataBuff))) +1 ; 
+    /**
+     The way this is implemented,
+     - If length less than 8096, scale will be == 1
+     - If length more than 8096 (but less than 2*8096), scale == 2
+     - So, if length = 9000, every other sample will be stored, to a total
+     of 4500.
+     */
     init_adc(FAST);
     FakeRead= TRUE;
     // start read
@@ -166,17 +171,21 @@ void analogue_sample(unsigned int length, BOOL local_read)
     // get one sample per byte - max value from ADC is 1024 so divide by 4 (>>2)
     // add in digital sample state (BIT_1) and reader bit period (BIT_0) for display purposes
     for(i= 0 ; i < length ; ++i)
+    {
         DataBuff[i / scale]= (((read_adc() + DC_OFFSET) >> 2) & SAMPLEMASK) + (READER_DATA << 1) + ReaderPeriod;
+    }
+
     FakeRead= FALSE;
     SnifferMode= FALSE;
     stop_HW_clock();
+
 }
 
 // output analogue buffer as XML
 void analogue_xml_out(unsigned int length)
 {
     BYTE indent= 0, tmp;
-
+    char data_rate[10] = {0};
     if(length > sizeof(DataBuff))
         length= sizeof(DataBuff);
 
@@ -198,8 +207,8 @@ void analogue_xml_out(unsigned int length)
     xml_footer("Modulation", &indent);
     xml_header("Data_Rate", &indent);
     xml_item_text("Description", "Data Rate (Frame Clocks)", &indent);
-    sprintf(DataBuff, "%d",RFIDlerConfig.DataRate);
-    xml_item_text("Data", DataBuff, &indent);
+    snprintf(data_rate, 10, "%d",RFIDlerConfig.DataRate);
+    xml_item_text("Data", data_rate, &indent);
     xml_footer("Data_Rate", &indent);
     xml_footer("Tag", &indent);
 

@@ -203,4 +203,26 @@ The device will be programmed and will then reboot. `dmesg` should show:
 
 ### Mac OS X
 
-???
+## Install mphidflash from source
+Option 1, v1.6:
+```shell
+curl https://mphidflash.googlecode.com/svn/trunk/dist/mphidflash-1.6-src.tar.gz > mphidflash1-6.tar.gz
+mkdir mphidflash1-6
+tar -zxvf mphidflash1-6.tar.gz -C mphidflash1-6
+cd mphidflash1-6
+mkdir binaries
+sudo make install64
+```
+
+Option 2, latest:
+```shell
+svn checkout http://mphidflash.googlecode.com/svn/trunk/ mphidflash
+cd mphidflash
+sudo make install64
+```
+
+## Flash device
+```shell
+cd #RFIDler repo
+mphidflash -r -w firmware/Pic32/RFIDler.X/dist/default/production/RFIDler.X.production.hex
+```

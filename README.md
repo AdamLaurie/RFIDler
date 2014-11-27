@@ -224,5 +224,5 @@ sudo make install64
 ## Flash device
 ```shell
 cd #RFIDler repo
-mphidflash -r -w firmware/Pic32/RFIDler.X/dist/default/production/RFIDler.X.production.hex
+mphidflash -r -w firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex
 ```

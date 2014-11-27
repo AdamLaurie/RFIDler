@@ -1671,9 +1671,9 @@ BYTE ProcessSerialCommand(char *command)
             commandok= command_nack("Invalid parameters!");
     }
 
-    if (strncmp(command, "PWM2 ", 4) == 0)
+    if (strncmp(command, "PWM2 ", 5) == 0)
     {
-        if(sscanf(command + 4,"%u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5,
+        if(sscanf(command + 5,"%u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5,
                 &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11) == 12)
         {
             rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11);
@@ -1999,6 +1999,50 @@ BYTE ProcessSerialCommand(char *command)
         commandok= command_ack(DATA);
         tag_list();
         eod();
+    }
+
+    if (strncmp(command, "TAMATX ", 7) == 0)
+    {
+        unsigned char *str;
+        
+        str = findparameter((unsigned char*)command + 7);
+
+        if (ishexstring(str))
+        {
+            UserMessage("%s", "transmitting ...\r\n");
+            BOOL cmdok = TRUE;
+            do {
+                // hex string to binary, plus Tamagotchi sync header & checksum
+                unsigned int length = tamagotchi_hextobinarraywithcsum(local_tmp, &str, sizeof(local_tmp));
+
+                /*
+                UserMessageNum("binary message length %lu\r\n", length);
+                if (*str)
+                    UserMessage("next message \"%s\"\r\n", str);
+                */
+                
+                cmdok = rwd_sendbarrier(local_tmp, length, RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock,
+                        RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period,
+                        RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_One_Gap_Period,
+                        RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, 0);
+
+                if(cmdok && *str)
+                {
+                    str = findparameter(str);
+                    if (ishexstring(str)) {
+                        Delay_us(100); // wait 100us
+                    }
+                }
+            }
+            while (cmdok && *str);
+
+            if (cmdok)
+                commandok= command_ack(NO_DATA);
+            else
+                commandok= command_nack("Failed! PWM parameters not set or invalid data!");
+        }
+        else
+            commandok= command_nack("Invalid parameters!");
     }
 
     if(strcmp(command, "TCONFIG") == 0)

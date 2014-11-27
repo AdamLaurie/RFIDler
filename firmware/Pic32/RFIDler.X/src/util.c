@@ -389,8 +389,69 @@ unsigned int hextobinarray(unsigned char *target, unsigned char *source)
         for(i= 0 ; i < 4 ; ++i, ++count)
             *(target++)= (x >> (3 - i)) & 1;
     }
-    
+
     return count;
+}
+
+void uinttobinarray(unsigned char **target, unsigned int source, unsigned int bits, unsigned int *length, unsigned int maxbinlen)
+{
+    unsigned char *tgt = *target;
+    if ((*length + bits) <= maxbinlen)
+    {
+        *length += bits;
+        while(bits--)
+        {
+            *(tgt++)= (source >> bits) & 0x01;
+        }
+        *target = tgt;
+    }
+}
+
+
+unsigned int tamagotchi_hextobinarraywithcsum(unsigned char *target, unsigned char **source, unsigned int maxbinlen)
+{
+    unsigned char ch, x;
+    unsigned int bits = 0;
+    unsigned int csum = 0;
+    unsigned int length = 0;
+    unsigned char *src = *source;
+
+    // binary encode Tamagotchi carrier sync byte 0xF0
+    uinttobinarray(&target, 0xf0, 8, &length, maxbinlen);
+
+    // Tama mesage
+    for (ch = 0; (ch = *src++) && (length < maxbinlen);)
+    {
+        x <<= 4;
+        if ((ch >= '0') && (ch <= '9'))
+            x = x + (ch - '0');
+        else if ((ch >= 'A') && (ch <= 'F'))
+            x = x + (ch - 'A');
+        else if ((ch >= 'a') && (ch <= 'f'))
+            x = x + (ch - 'a');
+        else
+            break;
+
+        bits += 4;
+
+        // hex to binary work byte at a time in order to maintain checksum
+        if (bits == 8) {
+            uinttobinarray(&target, x, bits, &length, maxbinlen);
+            csum += x;
+            bits = 0;
+            x = 0;
+        }
+    }
+    // odd nibble (shouldn't happen)
+    if (bits) {
+        csum += x;
+        uinttobinarray(&target, x, bits, &length, maxbinlen);
+    }
+    // finally Tamagotchi checksum
+    uinttobinarray(&target, csum, 8, &length, maxbinlen);
+    // final position in source string
+    *source = src;
+    return length;
 }
 
 // convert hex to human readable binary string
@@ -825,6 +886,41 @@ void space_indent(BYTE count)
         UserMessage("%s", " ");
         --count;
     }
+}
+
+/* skip over whitespace (space or tab) prefix to a string */
+unsigned char *findparameter(unsigned char *str)
+{
+    while (*str && ((*str == ' ') || (*str == '\t')))
+        str++;
+    return str;
+}
+
+// check string is composed of ASCII hex, until end or space
+BOOL ishexstring(unsigned char *str)
+{
+    BOOL result = FALSE;
+
+    if (*str)
+    {
+        do
+        {
+            unsigned char ch = *str++;
+
+            if (((ch >= '0') && (ch <= '9')) ||
+                ((ch >= 'A') && (ch <= 'F')) ||
+                ((ch >= 'a') && (ch <= 'f')))
+            {
+                result = TRUE;
+            }
+            else if (ch != ' ')
+                result = FALSE;
+            else
+                break;
+        }
+        while (result && *str);
+    }
+    return result;
 }
 
 // some simple XML helper routines

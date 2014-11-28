@@ -164,6 +164,9 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
     switch (RWD_State)
     {
         case RWD_STATE_INACTIVE:
+            READER_CLOCK_ENABLE_OFF();
+            break;
+
         case RWD_STATE_ACTIVE:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             break;
@@ -198,6 +201,8 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
                 barriercount = 0;
                 if(*RWD_Command_ThisBit != '*')
                     RWD_State= RWD_STATE_START_SEND;
+                else if (RWD_Finish_Clock_Off)
+                    RWD_State= RWD_STATE_INACTIVE;
                 else
                     RWD_State= RWD_STATE_ACTIVE;
             }
@@ -283,7 +288,7 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
 
         case RWD_STATE_SENDING_BARRIER:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
-            // clock running for bit period, then wait for gap period
+            // clock running for barrier period, then wait for next gap period
             if(count == RWD_Barrier_Period)
             {
                 unsigned long gap;
@@ -291,7 +296,10 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
 
                 if(*RWD_Command_ThisBit == '*')
                 {
-                    RWD_State= RWD_STATE_POST_WAIT;
+                    if (RWD_Finish_Clock_Off && (0 == RWD_Post_Wait))
+                        RWD_State= RWD_STATE_INACTIVE;
+                    else
+                        RWD_State= RWD_STATE_POST_WAIT;
                     gap = RWD_Zero_Gap_Period;
                 }
                 else
@@ -301,16 +309,17 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
                 }
                 // stop modulation of coil and wait
                 READER_CLOCK_ENABLE_OFF();
-                if(RWD_Barrier_Gap_Period > MAX_TIMER5_TICKS)
-                    Delay_us(CONVERT_TICKS_TO_US(RWD_Barrier_Gap_Period));
+                if(gap > MAX_TIMER5_TICKS)
+                    Delay_us(CONVERT_TICKS_TO_US(gap));
                 else
                 {
                     WriteTimer5(0);
-                    while(GetTimer_ticks(NO_RESET) < RWD_Barrier_Gap_Period)
+                    while(GetTimer_ticks(NO_RESET) < gap)
                         ;
                 }
                 // restart clock
-               READER_CLOCK_ENABLE_ON();
+                if (RWD_State != RWD_STATE_INACTIVE)
+                    READER_CLOCK_ENABLE_ON();
             }
             else
                 count++;
@@ -322,7 +331,10 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             if(count == RWD_Post_Wait)
             {
                 count= 0;
-                RWD_State= RWD_STATE_ACTIVE;
+                if (RWD_Finish_Clock_Off)
+                    RWD_State= RWD_STATE_INACTIVE;
+                else
+                    RWD_State= RWD_STATE_ACTIVE;
             }
             else
                 count++;

@@ -214,6 +214,7 @@ void showconfig(void)
     UserMessageNum("\r\n  RWD One FC:            %d", RFIDlerConfig.RWD_One_Period);
     UserMessageNum("\r\n  RWD Wait RX->TX FC:    %d", RFIDlerConfig.RWD_Wait_Switch_RX_TX);
     UserMessageNum("\r\n  RWD Wait TX->RX FC:    %d", RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+    UserMessage("\r\n  RWD No Clock after tx: %s", RFIDlerConfig.RWD_Finish_Clock_Off ? "TRUE" : "FALSE");
     UserMessageNum("\r\n  Wiegand Pulse uS:      %d", RFIDlerConfig.Wiegand_Pulse);
     UserMessageNum("\r\n  Wiegand Gap uS:        %d", RFIDlerConfig.Wiegand_Gap);
     UserMessage("\r\n  Wiegand IdleState:     %s\r\n", (BYTE *) HighLow[RFIDlerConfig.Wiegand_IdleState]);

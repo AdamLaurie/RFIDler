@@ -197,9 +197,9 @@ BYTE             RWD_State= RWD_STATE_INACTIVE;
 unsigned long    RWD_Fc= 0;                                     // field clock in uS
 unsigned long    RWD_Zero_Gap_Period = 0;                       // post one and zero bit gap lengths in SYSTEM ticks
 unsigned long    RWD_One_Gap_Period = 0;
-BYTE             RWD_Barrier_Bits;                              // Number of bits between barriers
-unsigned long    RWD_Barrier_Period;                            // periods for a (byte/word) barrier if needed
-unsigned long    RWD_Barrier_Gap_Period;
+BYTE             RWD_Barrier_Bits= 0;                           // Number of bits between barriers
+unsigned long    RWD_Barrier_Period= 0;                         // periods for a (byte/word) barrier if needed
+unsigned long    RWD_Barrier_Gap_Period= 0;
 unsigned int     RWD_Zero_Period= 0;                            // length of '0' in OC5 ticks
 unsigned int     RWD_One_Period= 0;                             // length of '1' in OC5 ticks
 unsigned long    RWD_Sleep_Period= 0;                           // length of initial sleep to reset tag in uS
@@ -212,6 +212,7 @@ unsigned int     RWD_OC5_r= 0;                                  // Output Compar
 unsigned int     RWD_OC5_rs= 0;                                 // Output Compare Module secondary compare value
 BYTE             RWD_Command_Buff[TMP_SMALL_BUFF_LEN];          // Command buffer, array of bits as bytes, stored as 0x00/0x01, '*' terminated
 BYTE             *RWD_Command_ThisBit= RWD_Command_Buff;        // Current command bit
+BOOL             RWD_Finish_Clock_Off= FALSE;                   // turn off carrier clock after transmit
 
 BOOL stringPrinted;
 volatile BOOL buttonPressed;
@@ -913,6 +914,7 @@ void show_usage(char *command)
         "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
         "STOP                                                         Stop any running clocks\r\n",
         "TAGS                                                         Show known TAG TYPES\r\n",
+        "TAMATX <HEX MESSAGE> [MORE HEX MESSAGES ...]                 Tamagotchi Friends transmit of messages with sync & checksum, 100ms gaps\r\n",
         "TCONFIG                                                      Show TAG's config block\r\n",
         "TEST-HITAG                                                   Hitag2 crypto - test correctness & timing\r\n",
         "TEST-RWD [HEX KEY|PATTERN|PWD]                               Find ideal paramaters for RWD commands\r\n",
@@ -973,7 +975,7 @@ BYTE ProcessSerialCommand(char *command)
     BYTE commandok= FALSE;
     BYTE tmpc;
     double tmpfloat;
-    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11;
+    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11, tmpint12;
     static unsigned long tmplong;
     static char local_tmp[256], local_tmp1[256];
     BYTE *ccprompt= "";
@@ -1664,7 +1666,7 @@ BYTE ProcessSerialCommand(char *command)
     {
         if(sscanf(command + 4,"%u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5, &tmpint6, &tmpint7) == 8)
         {
-            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint5, tmpint6, tmpint7, 0, 0, 0);
+            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint5, tmpint6, tmpint7, 0, 0, 0, FALSE);
             commandok= command_ack(NO_DATA);
         }
         else
@@ -1673,10 +1675,10 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "PWM2 ", 5) == 0)
     {
-        if(sscanf(command + 5,"%u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5,
-                &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11) == 12)
+        if(sscanf(command + 5,"%u %u %u %u %u %u %u %u %u %u %u %u %u", &tmpint, &tmpint1, &tmpint2, &tmpint3, &tmpint4, &tmpint5,
+                &tmpint6, &tmpint7, &tmpint8, &tmpint9, &tmpint10, &tmpint11, &tmpint12) == 13)
         {
-            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11);
+            rwd_set_pwm(tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7, tmpint8, tmpint9, tmpint10, tmpint11, tmpint12);
             commandok= command_ack(NO_DATA);
         }
         else
@@ -1761,7 +1763,7 @@ BYTE ProcessSerialCommand(char *command)
             if(rwd_sendbarrier(local_tmp, strlen(local_tmp), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock,
                     RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period,
                     RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_One_Gap_Period,
-                    RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, 0))
+                    RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, RFIDlerConfig.RWD_Finish_Clock_Off, 0))
                 commandok= command_ack(NO_DATA);
             else
                 commandok= command_nack("Failed! PWM parameters not set or invalid data!");
@@ -2009,22 +2011,16 @@ BYTE ProcessSerialCommand(char *command)
 
         if (ishexstring(str))
         {
-            UserMessage("%s", "transmitting ...\r\n");
+            UserMessage("%s", "\r\ntransmitting ...\r\n");
             BOOL cmdok = TRUE;
             do {
                 // hex string to binary, plus Tamagotchi sync header & checksum
                 unsigned int length = tamagotchi_hextobinarraywithcsum(local_tmp, &str, sizeof(local_tmp));
 
-                /*
-                UserMessageNum("binary message length %lu\r\n", length);
-                if (*str)
-                    UserMessage("next message \"%s\"\r\n", str);
-                */
-                
-                cmdok = rwd_sendbarrier(local_tmp, length, RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock,
+                cmdok = rwd_sendbarrier(local_tmp, length, NO_RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock,
                         RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period,
                         RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Zero_Gap_Period, RFIDlerConfig.RWD_One_Gap_Period,
-                        RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, 0);
+                        RFIDlerConfig.RWD_Barrier_Bits, RFIDlerConfig.RWD_Barrier_Period, RFIDlerConfig.RWD_Barrier_Gap_Period, RFIDlerConfig.RWD_Finish_Clock_Off, 0);
 
                 if(cmdok && *str)
                 {

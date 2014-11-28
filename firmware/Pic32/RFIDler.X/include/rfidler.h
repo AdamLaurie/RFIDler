@@ -187,6 +187,7 @@ extern unsigned int     RWD_OC5_rs;                             // Output Compar
 extern BYTE             RWD_Command_Buff[TMP_SMALL_BUFF_LEN];   // Command buffer, array of bits as bytes, stored as 0x00/0x01, '*' terminated
 extern BYTE             *RWD_Command_ThisBit;                   // Current command bit
 extern BOOL             Reader_ISR_State;                       // current state of reader ISR
+extern BOOL             RWD_Finish_Clock_Off;                   // turn off carrier clock after transmit
 
 // NVM variables
 // timings etc. that want to survive a reboot should go here
@@ -223,9 +224,10 @@ typedef struct {
     unsigned int    RWD_Wait_Switch_TX_RX;
     unsigned int    RWD_Wait_Switch_RX_TX;
     unsigned int    RWD_One_Gap_Period;
-    unsigned int    RWD_Barrier_Period;        // periods for a n-bit barrier if needed
+    unsigned int    RWD_Barrier_Period;             // periods for a n-bit barrier if needed
     unsigned int    RWD_Barrier_Gap_Period;
     BYTE            RWD_Barrier_Bits;               // number of bits between barriers
+    BOOL            RWD_Finish_Clock_Off;           // turn off carrier clock after transmit
 } StoredConfig;
 
 // somewhere to store TAG data. this will be interpreted according to the TAG
@@ -274,7 +276,7 @@ extern rtccDate	RTC_date;			// date structure
 #define VOLTS_TO_POT        0.019607843F
 
 // RWD/clock states
-#define                 RWD_STATE_INACTIVE              0       // RWD not in use
+#define                 RWD_STATE_INACTIVE              0       // RWD not in use, or finished with clock disabled
 #define                 RWD_STATE_GO_TO_SLEEP           1       // RWD coil shutdown request
 #define                 RWD_STATE_WAKING                2       // RWD active for pre-determined period after reset
 #define                 RWD_STATE_START_SEND            3       // RWD start send of data

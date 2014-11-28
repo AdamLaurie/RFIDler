@@ -913,7 +913,7 @@ BOOL ishexstring(unsigned char *str)
             {
                 result = TRUE;
             }
-            else if (ch != ' ')
+            else if ((ch != ' ') && (ch != '\t'))
                 result = FALSE;
             else
                 break;

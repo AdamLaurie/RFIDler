@@ -365,7 +365,7 @@ BOOL tag_set(BYTE tag)
     RFIDlerConfig.RWD_Barrier_Bits = 0;
     RFIDlerConfig.RWD_Barrier_Period= 0;
     RFIDlerConfig.RWD_Barrier_Gap_Period= 0;
-
+    RFIDlerConfig.RWD_Finish_Clock_Off= FALSE;
 
     switch(tag)
     {

@@ -139,7 +139,7 @@
 // set default parameters for RWD PWM commands
 void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
         unsigned int gap0, unsigned int gap1, unsigned int wait_txrx, unsigned int wait_rxtx,
-        unsigned int barrier, unsigned int barperiod, unsigned int bargap)
+        unsigned int barrier, unsigned int barperiod, unsigned int bargap, BOOL finishWithClockOff)
 {
     RFIDlerConfig.FrameClock= fc;
     RFIDlerConfig.RWD_Sleep_Period= sleep;
@@ -153,18 +153,19 @@ void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsig
     RFIDlerConfig.RWD_Barrier_Period= barperiod;
     RFIDlerConfig.RWD_Barrier_Gap_Period= bargap;
     RFIDlerConfig.RWD_Barrier_Bits= (BYTE)barrier;
+    RFIDlerConfig.RWD_Finish_Clock_Off = finishWithClockOff;
 }
 
 // this routine accepts either binary arrays or binary strings
 BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
         unsigned int gap, unsigned int post_wait)
 {
-    return rwd_sendbarrier(command, length, reset, block, initial_state, fc, sleep, wake, pw0, pw1, gap, gap, 0, 0, 0, post_wait);
+    return rwd_sendbarrier(command, length, reset, block, initial_state, fc, sleep, wake, pw0, pw1, gap, gap, 0, 0, 0, 0, post_wait);
 }
 
 // rwd_send() variant supporting different preceeding gaps for 0 & 1 bits, and barrier pulses every n-bits
 BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1,
-        unsigned int gap0, unsigned int gap1, unsigned int barrier, unsigned int barperiod, unsigned int bargap, unsigned int post_wait)
+        unsigned int gap0, unsigned int gap1, unsigned int barrier, unsigned int barperiod, unsigned int bargap, BOOL finishWithClockOff, unsigned int post_wait)
 {
     unsigned int i;
 
@@ -175,7 +176,6 @@ BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BO
     RWD_Zero_Gap_Period= CONVERT_TO_TICKS(gap0 * fc);
     RWD_One_Gap_Period= CONVERT_TO_TICKS(gap1 * fc);
     RWD_Barrier_Bits= barrier;                       // Number of bits between barriers
-    RWD_Barrier_Period= CONVERT_TO_TICKS(barperiod * fc);
     RWD_Barrier_Gap_Period= CONVERT_TO_TICKS(bargap * fc);
 
     // convert FCs to OCM ticks
@@ -183,6 +183,9 @@ BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BO
     RWD_Zero_Period= pw0 * 2;
     RWD_One_Period= pw1 * 2;
     RWD_Post_Wait= post_wait * 2;
+    RWD_Barrier_Period= barperiod * 2;
+
+    RWD_Finish_Clock_Off = finishWithClockOff;
     
     if(!RWD_Zero_Period || !RWD_One_Period || !RWD_Zero_Gap_Period || !RWD_One_Gap_Period)
         return FALSE;
@@ -219,8 +222,14 @@ BOOL rwd_sendbarrier(unsigned char *command, unsigned int length, BOOL reset, BO
 
     // see if ISR has flagged RWD command finished
    if(block)
-       while(RWD_State != RWD_STATE_ACTIVE)
-           ;
+   {
+       if (finishWithClockOff)
+           while(RWD_State != RWD_STATE_INACTIVE)
+               ;
+       else
+           while(RWD_State != RWD_STATE_ACTIVE)
+               ;
+   }
 
     return TRUE;
 }

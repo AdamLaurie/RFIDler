@@ -2167,7 +2167,11 @@ BYTE ProcessSerialCommand(char *command)
     if (strcmp(command, "VERSION") == 0)
     {
         commandok= command_ack(DATA);
+#ifdef RFIDLER_DEBUG
+        UserMessageNum("%04d-beta (debug)\r\n", VERSION);
+#else
         UserMessageNum("%04d-beta\r\n", VERSION);
+#endif
         eod();
     }
 

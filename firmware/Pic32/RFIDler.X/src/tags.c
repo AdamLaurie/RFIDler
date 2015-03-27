@@ -549,7 +549,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= 100;
+            RFIDlerConfig.PotHigh= 150;
             RFIDlerConfig.DataRate= 64;
             RFIDlerConfig.DataBits= 64;
             RFIDlerConfig.TagType= tag;

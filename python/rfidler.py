@@ -383,14 +383,14 @@ while current < len(sys.argv):
         continue
 
     if command == 'FLASH' or command == 'FLASHP':
-        if not os.path.exists('/dev/hidraw1'):
+        if not os.path.exists('/dev/RFIDlerBL'):
             result, reason = rfidler.command('BL')
             if not result:
                 print 'could not set bootloader mode!'
                 exit(True)
         rfidler.disconnect()
         time.sleep(1)
-        if os.path.exists('/dev/hidraw1'):
+        if os.path.exists('/dev/RFIDlerBL'):
             print 'bootloader mode - flashing...'
             os.system('mphidflash -r -w %s' % sys.argv[current])
         else:
@@ -424,7 +424,7 @@ while current < len(sys.argv):
                     if result:
                         break
                 rfidler.disconnect()
-                if os.path.exists('/dev/hidraw1'):
+                if os.path.exists('/dev/RFIDlerBL'):
                     break
             current -= 1
             continue
@@ -472,7 +472,7 @@ while current < len(sys.argv):
                 result, reason = rfidler.connect(port)
                 if result:
                     break
-                if os.path.exists('/dev/hidraw1'):
+                if os.path.exists('/dev/RFIDlerBL'):
                     print 'bootloader mode - flashing...'
                     os.system(
                         'mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')

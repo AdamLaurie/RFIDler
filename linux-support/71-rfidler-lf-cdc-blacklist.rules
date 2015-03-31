@@ -1,6 +1,10 @@
 # place this file in /etc/udev/rules.d and run 'sudo udevadm control --reload-rules'
 
 ACTION!="add|change", GOTO="mm_usb_device_blacklist_end"
+
+# bootloader mode (microchip ID)
+ATTRS{idVendor}=="04d8" ATTRS{idProduct}=="003c" MODE:="0666" SYMLINK+="RFIDlerBL"
+
 SUBSYSTEM!="tty", GOTO="mm_ignore"
 
 # openmoko issued id for rfidler-lf

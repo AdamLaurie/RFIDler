@@ -464,7 +464,7 @@ void DeviceTracker::Initialize()
 
     DeviceInfo::SetDeviceTracker(this);
 
-    // enable tooltips, full row select
+    // enable tooltips, in all display views, also full row select
     ListView_SetExtendedListViewStyle(mHWndListView, LVS_EX_INFOTIP  | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT);
 
     // load & prepare icon with different counts of 'lit LEDs'

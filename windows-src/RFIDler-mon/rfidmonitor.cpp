@@ -50,13 +50,16 @@
 #pragma comment(lib, "ComCtl32.lib")
 #pragma comment(lib, "SetupAPI.lib")
 #pragma comment(lib, "uxtheme.lib")
+#pragma comment(lib, "version.lib")
+#if (ENABLE_BOOTLOADER_FLASH || _DEBUG)
 // todo review
 #pragma comment(lib, "hid.lib")
+#endif
 
 /* proclaim support for "Visual Styles" / i.e. Windows Vista Themes
  Ensure we only run on Windows XP with Common Control v6 installed,
- or later Windows version. This gives us the Tile View and glowing
- colour effects.
+ or later Windows version. This gives e.g. Tile View and glowing focus
+ effects.
 */
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
@@ -462,6 +465,7 @@ BOOL CALLBACK MonitorDlgProc (
                 minmax->ptMinTrackSize.y = KMinimiumWindowSize.cy;
             }
         }
+        handled++;
         break;
 
     case WM_COMMAND: // handle button, menu selections, ...
@@ -476,11 +480,11 @@ BOOL CALLBACK MonitorDlgProc (
                 handled++;
                 break;
 
-                // handle different ListView views
+                // change type of view
             case ID_VIEW_LARGE_ICONS:
             case ID_VIEW_SMALL_ICONS:
             case ID_VIEW_DETAILS:
-            case ID_VIEW_TILES: // Tiles view okay as we specify comctrl32 DLL v6.0 in manifest
+            case ID_VIEW_TILES: // Tile view must be supported, as we specify comctrl32 DLL v6.0 in manifest
                 {
                     int currentView = DevTracker->GetOptions().GetViewStyleButton();
                     if (wID != currentView) {
@@ -537,16 +541,17 @@ BOOL CALLBACK MonitorDlgProc (
 
             case LVN_ITEMACTIVATE:
                 LVItemDoubleClick(hInst, hWnd, (LPNMITEMACTIVATE)lParam, &DevTracker->GetOptions());
+                handled++;
                 break;
 
             case LVN_GETEMPTYMARKUP:
-                // bug: documented way of setting empty ListView text, no apparent effect on Windows 7
+                // bug: documented way of setting empty ListView text, not working for me (Windows 7)
                 LVEmptyViewTest((NMLVEMPTYMARKUP *) lParam);
                 handled++;
                 break;
 
             case (LVN_FIRST-61):
-                // LVN_GETEMPTYTEXTW undocumented way of setting empty ListView text, no apparent effect on Windows 7
+                // LVN_GETEMPTYTEXTW undocumented way of setting empty ListView text, not working for me (Windows 7)
                 {
                     NMLVDISPINFO *nm = (NMLVDISPINFO *)lParam;
                     if (nm->item.mask == LVIF_TEXT && nm->item.pszText) {
@@ -558,7 +563,7 @@ BOOL CALLBACK MonitorDlgProc (
 
 #ifdef _DEBUG
             case LVN_GETDISPINFOW:
-                {
+                {   // no action seems to be needed
                     NMLVDISPINFO* pdi = (NMLVDISPINFO*) lParam;
 
                     PrintDebugStatus(_T("WM_NOTIFY ListView hdr.code = LVN_GETDISPINFOW, iItem %u, mask = 0x%x\n"),
@@ -566,7 +571,7 @@ BOOL CALLBACK MonitorDlgProc (
                 }
                 break;
 
-            case LVN_ITEMCHANGING: // notifications we want to ignore (not on Debug build
+            case LVN_ITEMCHANGING: // notifications we don't want Debug prints for
             case LVN_ITEMCHANGED:
             case LVN_INSERTITEM: 
             case LVN_DELETEITEM:
@@ -1319,10 +1324,42 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
     switch (iMsg) {
     case WM_INITDIALOG:
         {
-            unsigned x = 1, y = 0, z = 3;
+            TCHAR *fname = NULL;
+            BOOL gotfileversion = FALSE;
 
             // TODO get version number from exe
-            StringCchPrintf(dialogTitle, KTitleSize, helpTitle, x, y, z);
+            if (GetProgramFilename(&fname)) {
+                DWORD verSize = GetFileVersionInfoSize(fname, NULL);
+                if (verSize > 0) {
+                    void *buffer = calloc(1, verSize);
+
+                    if (buffer) {
+                        void *fInfo = NULL;
+                        UINT rxInfoSize = 0;
+
+                        if (GetFileVersionInfo(fname, 0, verSize, buffer) && 
+                                VerQueryValue(buffer, _T("\\"), &fInfo, &rxInfoSize) && fInfo && rxInfoSize) {
+                            VS_FIXEDFILEINFO *info = (VS_FIXEDFILEINFO *) fInfo;
+
+                            if (info->dwSignature == 0xfeef04bd) {
+                                StringCchPrintf(dialogTitle, KTitleSize, helpTitle,
+                                    LOWORD(info->dwProductVersionMS),
+                                    HIWORD(info->dwProductVersionLS),
+                                    LOWORD(info->dwProductVersionLS));
+                                gotfileversion = TRUE;
+                            }
+                        }
+  
+                        free(buffer);
+                    }
+                }
+                free(fname);
+            }
+
+            if (!gotfileversion) {
+                // at least at 1.0.3
+                StringCchPrintf(dialogTitle, KTitleSize, helpTitle, 1, 0, 3);
+            }
             SetWindowText(hDlg, dialogTitle);
 
             SetWindowText(GetDlgItem(hDlg, IDC_HELP_TEXT), helpText);

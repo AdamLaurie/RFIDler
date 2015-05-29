@@ -15,11 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rfidinstall.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -33,5 +28,19 @@
     <None Include="rfidinstall.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="rfidinst.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="rfidinstall2.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="rfidler256.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rfidinstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

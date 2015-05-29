@@ -149,7 +149,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="rfidinstall.c" />
+    <ClCompile Include="rfidinstall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -158,7 +158,10 @@
     <ResourceCompile Include="rfidler-install.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="rfidinst.ico" />
     <None Include="rfidinstall.ico" />
+    <None Include="rfidinstall2.ico" />
+    <None Include="rfidler256.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

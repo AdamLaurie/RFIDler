@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -26,12 +26,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="rfidinstall.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="rfidinst.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="rfidinstall2.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="rfidler256.ico">

@@ -1,5 +1,5 @@
 /*
-    Project: Windows RFIDler Driver Install v0.2
+    Project: Windows RFIDler Driver Install v0.21
              Graphical interface to install driver .inf & .cat files
              for Aperture Labs RFIDler LF.
 
@@ -142,6 +142,12 @@ static const TCHAR *szRfidlerHardwareId = _T("USB\\VID_1D50&PID_6098");
 #define RFIDLER_INSTALLER64_NAME    _T("rfidlerinstall-x64.exe")
 static const TCHAR *szRfidlerInstallerX64 = RFIDLER_INSTALLER64_NAME;
 
+// install update messages
+enum installUpdates {
+    UPDATE_COPIED,
+    UPDATE_CONNECTED,
+    UPDATE_PREVIOUS
+};
 
 // action for each enumerated RFIDler
 enum UpdateAction {
@@ -166,10 +172,17 @@ typedef struct {
     BOOL    devConnected;
 } InstallInfo;
 
+enum ProgBarState {
+    PROG_START,
+    PROG_ERROR,
+    PROG_COMPLETE,
+    PROG_HIDE,
+    PROG_MAX            // for test button
+};
 
 static void MoveMainWindow(HWND hWnd, HINSTANCE hInst);
 static INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, BOOL bStart, ITaskbarList3* pTbList, BOOL bFail);
+static void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState);
 static void EnableAndFocusOnFinishButton(HWND hWnd);
 static INT_PTR CALLBACK AboutDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam);
@@ -416,7 +429,8 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                 _T("2. wait for driver install to fail,\n")
                 _T("3. find the RFIDler in the Windows Device Manager\n")
                 _T("4. update the driver there.\n")
-                _T("(Install can fail due to security policy settings.)"),
+                _T("(Install can fail due to Signed Driver policy settings,")
+                _T("see Help About text for more details.)"),
 
                 isAMD64 ? _T("For AMD or Intel x64 sytems you can run ") RFIDLER_INSTALLER64_NAME _T(" instead.\n\nAlternatively w")
                 : _T("W") );
@@ -487,7 +501,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                                     _T("Uninstalling, this will take a few moments ...") );
                                 CloseHandle(hThread);
                                 // enable/show progress bar
-                                StartOrStopProgressMarquee(hWnd, hWndProg, TRUE, pTbList, FALSE);
+                                StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, PROG_START);
                                 EnableWindow (GetDlgItem(hWnd, IDC_INSTALL), FALSE);
                                 EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALL), FALSE);
                                 EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
@@ -549,14 +563,13 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                             }
                         }
 
+                        // toggle marquee progress bar, & for Win >= 7 the progress bar on the icon
+                        StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, ProgBarState (testCount % PROG_MAX));
+
                         if (testCount++ == 1) {
                             ShowWindow(hRebootButton, SW_SHOWNORMAL);
                             EnableWindow(hRebootButton, TRUE);
                         }
-
-                        marquee = !marquee;
-                        // toggle marquee progress bar, & for Win >= 7 the progress bar on the icon
-                        StartOrStopProgressMarquee(hWnd, hWndProg, marquee, pTbList, FALSE);
                     }
                     handled++;
                     break;
@@ -574,10 +587,16 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
         break;
 
     case WM_PRIVATE_DRIVER_UPDATE_PROGRESS:
-        // wParam should indicate how the .inf file was copied
-        ReportStatus(hWndStatus,
-            wParam ? _T("%s copied by Windows ...") : _T("%s installed for connected RFIDlers ..."),
-            szRfidlerInfName);
+        // wParam should indicate how the .inf file was copied, message to display
+        {
+            const TCHAR *updateMessage [] = {
+                _T("%s copied by Windows for unconnected RFIDlers"),
+                _T("%s installed for connected RFIDlers ..."),
+                _T("updating previously installed RFIDlers"),
+            };
+
+            ReportStatus(hWndStatus, updateMessage[wParam], szRfidlerInfName);
+        }
         handled++;
         break;
 
@@ -587,8 +606,8 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
             free(insInfo.infpath);
             insInfo.infpath = NULL;
         }
-        /* notification from installer thread */
-        StartOrStopProgressMarquee(hWnd, hWndProg, FALSE, pTbList, (wParam == 0));
+        /* notification from installer thread: install success (or previously installed) => Complete, otherwise error */
+        StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (wParam != 0) ? PROG_COMPLETE : PROG_ERROR);
 
         EnableAndFocusOnFinishButton(hWnd);
 
@@ -598,7 +617,8 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                 ShowWindow(hRebootButton, SW_SHOWNORMAL);
                 EnableWindow(hRebootButton, TRUE);
             } else {
-                ReportStatus(hWndStatus, _T("Driver install complete"));
+                ReportStatus(hWndStatus,
+                    (insInfo.insError == ERROR_SUCCESS) ? _T("Driver install complete") : _T("Driver already installed"));
                 if (!insInfo.devConnected) {
                     ReportStatus(hWndStatus, _T("Connect your RFIDler LF now"));
                 }
@@ -613,10 +633,6 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
             case ERROR_IN_WOW64:
                 errmsg = _T("Error: x86 installer failed on 64-bit Windows");
                 break;
-            case ERROR_NO_MORE_ITEMS:
-            case ERROR_FILE_EXISTS:
-                errmsg = _T("Driver already installed");
-                break;
             default:
                 errmsg = _T("Error: driver install failed (error = %X)");
                 break;
@@ -630,7 +646,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
     case WM_PRIVATE_DRIVER_UNINSTALL_COMPLETE:
         installing = FALSE;
 
-        StartOrStopProgressMarquee(hWnd, hWndProg, FALSE, pTbList, (insInfo.insError != NO_ERROR));
+        StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (insInfo.insError == NO_ERROR) ? PROG_COMPLETE : PROG_ERROR);
 
         EnableAndFocusOnFinishButton(hWnd);
 
@@ -689,29 +705,61 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
 }   /* InstallerDlgProc() */
 
 
-void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, BOOL bStart, ITaskbarList3* pTbList, BOOL bFail)
+void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState)
 {
     // comctrl32 v6 required; set & show or clear & hide progress bar in marquee mode
-    SendMessage(hWndProgBar, PBM_SETMARQUEE, bStart, 0);
-    ShowWindow(hWndProgBar, bStart ? SW_NORMAL : SW_HIDE);
+    // also for Windows >= 7, start/stop marquee progress bar on the icon
+    static BOOL marquee = FALSE;
 
-    if (pTbList) {
-        // Windows >= 7, start/stop marquee progress bar on the icon
-        TBPFLAG tbFlags = TBPF_INDETERMINATE; // start marquee
+    switch (pbState)
+    {
+    case PROG_START: // start marquee
+        ShowWindow(hWndProgBar, SW_NORMAL);
+        if (!marquee) {
+            LONG style = GetWindowLong(hWndProgBar, GWL_STYLE);
+            if (! (style & PBS_MARQUEE)) {
+                SetWindowLong(hWndProgBar, GWL_STYLE, style | PBS_MARQUEE);
+            }
 
-        // stop marquee instead?
-        if (!bStart) {
-            if (!bFail) {
-                // remove marquee
-                tbFlags = TBPF_NOPROGRESS;
-            } else {
-                // set progress (default is 0, so red hardly shows)
-                pTbList->SetProgressValue(hWnd, 80, 100);
-                // stop marquee & display as red
-                tbFlags = TBPF_ERROR;
+            SendMessage(hWndProgBar, PBM_SETMARQUEE, TRUE, 0);
+            marquee = TRUE;
+        
+            if (pTbList) {
+                pTbList->SetProgressState(hWnd, TBPF_INDETERMINATE);
             }
         }
-        pTbList->SetProgressState(hWnd, tbFlags);
+        break;
+    case PROG_ERROR: // stop marquee at 100% & display as red
+    case PROG_COMPLETE:
+        if (marquee) {
+            LONG style = GetWindowLong(hWndProgBar, GWL_STYLE);
+            if (style & PBS_MARQUEE) {
+                SetWindowLong(hWndProgBar, GWL_STYLE, style & ~PBS_MARQUEE);
+                SendMessage(hWndProgBar, PBM_SETMARQUEE, FALSE, 0);
+            }
+            marquee = FALSE;
+        }
+        SendMessage(hWndProgBar, PBM_SETRANGE32, 0, 100);
+        SendMessage(hWndProgBar, PBM_SETPOS, 100, 0);
+        SendMessage(hWndProgBar, PBM_SETSTATE, (PROG_COMPLETE == pbState) ? PBST_NORMAL : PBST_ERROR, 0);
+        if (pTbList) {
+            // set progress (default is 0, so e.g. red hardly shows)
+            pTbList->SetProgressState(hWnd, (PROG_COMPLETE == pbState) ? TBPF_NORMAL : TBPF_ERROR);
+            pTbList->SetProgressValue(hWnd, 100, 100);
+        }
+        break;
+    case PROG_HIDE:
+    default:
+        // remove marquee
+        if (marquee) {
+            SendMessage(hWndProgBar, PBM_SETMARQUEE, FALSE, 0);
+            marquee = FALSE;
+        }
+        ShowWindow(hWndProgBar, SW_HIDE);
+        if (pTbList) {
+            pTbList->SetProgressState(hWnd, TBPF_NOPROGRESS);
+        }
+        break;
     }
 }
 
@@ -727,28 +775,37 @@ void EnableAndFocusOnFinishButton(HWND hWnd)
 
 
 // program description and decide copyright licensing info
-static const TCHAR *helpTitle = _T("Help About RFIDLer LF Driver Installer v0.2");
+static const TCHAR *helpTitle = _T("Help About RFIDLer LF Driver Installer v0.21");
 static const TCHAR *helpText =
+    _T("This installer is Copyright (c) 2014-2015 Anthony Naggs, all rights reserved.\r\n")
+    _T("Limited rights are assigned through BSD 2-Clause License, see bottom of text.\r\n")
+    _T("\r\n")
     _T("RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n")
     _T("Windows driver for USB serial ports, usbser.sys.\r\n")
     _T("\r\n")
     _T("A simple driver information file (") RFIDLER_INF_NAME _T(") tells Windows which driver to use, and \r\n")
     _T("such details as manufacturer (Aperture Labs Ltd) and product names (RFIDler LF).\r\n")
     _T("\r\n")
-    _T("This installer provides a simple interface to install or uninstall this file. (Note that \r\n")
-    _T("complete uninstall only works on Windows XP, as Windows Vista & 7 keep a private \r\n")
-    _T("copy.)\r\n")
+    _T("IMPORTANT: Although ") RFIDLER_INF_NAME _T("simply tells Windows to use the standard USB\r\n")
+    _T("serial port driver Windows wants the .inf file to be signed as valid. This is unfortunately\r\n")
+    _T("expensive. Therefore this install will only work if Windows is configured not to enforce\r\n")
+    _T("signing of drivers.\r\n")
+    _T("\r\n")
+    _T("This installer provides a simple interface to install or uninstall (1) installed RFIDler\r\n")
+    _T("devices or (2) RFIDler devices and this .inf file. (Note that complete uninstall only\r\n")
+    _T("works on Windows XP.)\r\n")
     _T("\r\n")
     _T("Alternatively to using the installer you can connect your RFIDler LF, find it in Windows \r\n")
     _T("Device Manager (via the Control Panel) and update the driver there. This program \r\n")
     _T("needs to run as local Administrator in order to copy files to, or remove files from, \r\n")
     _T("Windows protected directories.\r\n")
     _T("\r\n")
-    _T("Two versions of the installer are supplied: rfidlerinstall-x86.exe for 32-bit versions of \r\n")
-    _T("Windows XP to Windows 7, and rfidlerinstall-x64.exe for 64-bit versions of Windows \r\n")
-    _T("on x64 CPUs.\r\n")
+    _T("Two versions of the installer are supplied:\r\n")
+    _T("* rfidlerinstall-x86.exe for 32-bit versions of Windows XP to Windows 7, and\r\n")
+    _T("* rfidlerinstall-x64.exe for 64-bit versions of Windows on AMD64 CPUs.\r\n")
     _T("\r\n")
-    _T("Copyright (c) 2014-2015 Anthony Naggs, all rights reserved.\r\n")
+    _T(".....................................................\r\n\r\n")
+    _T("More copyright information below ...\r\n")
     _T("\r\n")
     _T("Limited assignment of rights under the 'BSD 2-Clause License':\r\n")
     _T("\r\n")
@@ -774,6 +831,11 @@ static const TCHAR *helpText =
     _T("(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE \r\n")
     _T("OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.");
 
+/*
+    Notes:
+    On Windows XP it is to check/change driver signing checks:
+    Windows Control Panel select System -> Hardware -> Driver Signing
+*/
 
 INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1244,22 +1306,21 @@ DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter)
 
     pInsInfo->insError = ERROR_SUCCESS;
 
-
     driverInstalled = UpdateDriverForPlugAndPlayDevices(pInsInfo->hWnd, szRfidlerHardwareId,
         pInsInfo->infpath, 0, &pInsInfo->rebootRequired);
 
     if (driverInstalled) {
         pInsInfo->devConnected = TRUE;
-        // update progress reporting
-        PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, 0, 0);
+        // update progress reporting, installed for connected devices
+        PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_CONNECTED, 0);
     } else {
-        // some issue means driver not installed
+        // some issue means driver not fully installed
         pInsInfo->insError = GetLastError();
 
         /* ERROR_NO_SUCH_DEVINST (0xE000020B) indicates no currently connected RFIDlers
             and therefore .inf was not installed.
             */
-        if (pInsInfo->insError == ERROR_NO_SUCH_DEVINST) {
+        if (ERROR_NO_SUCH_DEVINST== pInsInfo->insError) {
             // install .inf file anyway
             driverInstalled = SetupCopyOEMInfW(pInsInfo->infpath, NULL, SPOST_PATH,
                 SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
@@ -1267,16 +1328,26 @@ DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter)
             if (!driverInstalled) {
                 // failed
                 pInsInfo->insError = GetLastError();
+                switch (pInsInfo->insError)
+                {
+                case ERROR_FILE_EXISTS:
+                case ERROR_NO_MORE_ITEMS:
+                    driverInstalled = TRUE;
+                    break;
+                default: // no action
+                    break;
+                }
             } else {
                 pInsInfo->insError = ERROR_SUCCESS;
                 // update progress reporting
-                PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, 1, 0);
+                PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_COPIED, 0);
             }
         }
     }
 
     if (driverInstalled) {
         // iterate thru not present devices, ensure they are updated to the new driver on next connect
+        PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_PREVIOUS, 0);
         UpdateDriverWithAction(pInsInfo, NULL, MarkNonPresentForReinstall);
     }
 

@@ -135,6 +135,11 @@
 #define HARDWARE_PROFILE_UBW32_H
 
 #include "plib.h"
+
+
+#ifndef __PIC32MX__
+    #define __PIC32MX__
+#endif
   
 #define GetSystemClock()            (80000000ul)
 #define GetPeripheralClock()        (GetSystemClock()) 

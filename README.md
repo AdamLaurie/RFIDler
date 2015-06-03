@@ -18,14 +18,14 @@ The project was developed in Mplab-X IDE V2.20 under Linux, but can also be buil
 
   http://www.microchip.com/pagehandler/en-us/family/mplabx/
 
-The compiler used was the free version of Microchip's XC32 V1.33:
+The compiler used was the free version of Microchip's XC32 V1.34:
 
   http://www.microchip.com/pagehandler/en-us/devtools/mplabxc/home.html
 
 USB stack and peripheral support is provided by Microchip Application Library v2013-06-15:
 
 * [Linux](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run)
-  - Install to '/microchip_solutions_v2013-06-15'
+  - Install to '/opt/microchip/microchip_solutions_v2013-06-15'
 * [Windows](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-windows-installer.exe)
   - Install to installer default location
 * [Mac](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-osx-installer.dmg)
@@ -37,7 +37,7 @@ Example setup Linux x64:
 	#Get Mplab-X
 	wget http://ww1.microchip.com/downloads/en/DeviceDoc/MPLABX-v2.26-linux-installer.sh
 	# Get compiler
-	wget http://ww1.microchip.com/downloads/en/DeviceDoc/xc32-v1.33-full-install-linux-installer.run
+	wget http://ww1.microchip.com/downloads/en/DeviceDoc/xc32-v1.34-full-install-linux-installer.run
 	# Get USB support
 	wget http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run
 	# Install IDE
@@ -46,8 +46,8 @@ Example setup Linux x64:
 	64 Bit, check libraries
 	Check for 32 Bit libraries
 	Verifying archive integrity... All good.
-	chmod +x xc32-v1.33-full-install-linux-installer.run 
-	sudo ./xc32-v1.33-full-install-linux-installer.run
+	chmod +x xc32-v1.34-full-install-linux-installer.run 
+	sudo ./xc32-v1.34-full-install-linux-installer.run
 	chmod +x microchip-libraries-for-applications-v2013-06-15-linux-installer.run
 	sudo ./microchip-libraries-for-applications-v2013-06-15-linux-installer.run
 
@@ -85,10 +85,10 @@ Clone this repo to your local hard disk.
 If you are running Windows, you will need to change the default Linux library to the local Windows version:
 
 1. In the 'Projects' window, expand RFIDler/Libraries
-2. Highlight the only entry (/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and right-click
+2. Highlight the only entry (/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and right-click
 3. Select 'Remove'
 4. Copy the libmchp_peripheral_32MX795F512L.a file:
-  from your local XC32 installation (normally 'Program Files (x86)/Microchip/xc32') and drill down to v1.33/pic32mx/lib/
+  from your local XC32 installation (normally 'Program Files (x86)/Microchip/xc32') and drill down to v1.34/pic32mx/lib/
   to your RFIDler.X project directory.
 5. Select 'Libraries' and right-click
 6. Select 'Add Library/Object file'
@@ -102,11 +102,11 @@ and the default install path on Windows contains spaces so making the copy is th
 If you are running Mac OS X, you will need to change the default Linux library to the local Mac version:
 
 1. In the 'Projects' window, expand RFIDler/Libraries
-2. Highlight the only entry (/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and ctrl-click
+2. Highlight the only entry (/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and ctrl-click
 3. Select 'Remove'
 4. Select 'Libraries' and ctrl-click
 5. Select 'Add Library/Object file'
-6. Browse to your xc32 installation directory (default is /Applications/microchip/xc32) and drill down to v1.33/pic32mx/lib/
+6. Browse to your xc32 installation directory (default is /Applications/microchip/xc32) and drill down to v1.34/pic32mx/lib/
          select libmchp_peripheral_32MX795F512L.a
 7. In the projects window, highlight 'RFIDler' and ctl-click
 8. Select 'Properties'

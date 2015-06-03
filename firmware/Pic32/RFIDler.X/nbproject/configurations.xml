@@ -67,16 +67,16 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="f3" displayName="Microchip SD Card" projectFiles="true">
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c</itemPath>
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/MDD File System/FSIO.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/MDD File System/SD-SPI.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Microchip Smartcard" projectFiles="true">
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c</itemPath>
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Smart Card/SClib.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Smart Card/SCpic32.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="Microchip USB Stack" projectFiles="true">
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c</itemPath>
-        <itemPath>/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/USB/CDC Device Driver/usb_function_cdc.c</itemPath>
+        <itemPath>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/USB/usb_device.c</itemPath>
       </logicalFolder>
       <itemPath>src/indala.c</itemPath>
       <itemPath>src/main.c</itemPath>
@@ -137,6 +137,9 @@
     <Elem>.</Elem>
     <Elem>../windows driver</Elem>
     <Elem>../../../datasheets</Elem>
+    <Elem>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/MDD File System</Elem>
+    <Elem>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Smart Card</Elem>
+    <Elem>/opt/microchip/microchip_solutions_v2013-06-15/Microchip/USB</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -148,7 +151,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PK3OBPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>1.33</languageToolchainVersion>
+        <languageToolchainVersion>1.34</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
@@ -182,7 +185,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value="/microchip_solutions_v2013-06-15/Microchip/Include;/microchip_solutions_v2013-06-15/Microchip/Include/USB;/opt/microchip/xc32/v1.21/pic32-libs/include;./include"/>
+                  value="/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Include;/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Include/USB;/opt/microchip/xc32/v1.21/pic32-libs/include;./include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
@@ -302,6 +305,7 @@
         <property key="memories.userotp" value="true"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="false"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x1d0001ff"/>
@@ -415,7 +419,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value="/microchip_solutions_v2013-06-15/Microchip/Include;/microchip_solutions_v2013-06-15/Microchip/Include/USB;/opt/microchip/xc32/v1.21/pic32-libs/include;./include"/>
+                  value="/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Include;/opt/microchip/microchip_solutions_v2013-06-15/Microchip/Include/USB;/opt/microchip/xc32/v1.21/pic32-libs/include;./include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
@@ -527,7 +531,6 @@
         <property key="COMPARATOR" value="true"/>
         <property key="DMA" value="true"/>
         <property key="ETHERNET CONTROLLER" value="true"/>
-        <property key="Freeze All Other Peripherals" value="true"/>
         <property key="I2C1" value="true"/>
         <property key="I2C2" value="true"/>
         <property key="I2C3" value="true"/>
@@ -569,25 +572,32 @@
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
+        <property key="memories.configurationmemory2" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>
         <property key="memories.flashdata" value="true"/>
         <property key="memories.id" value="true"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0x1d07ffff"/>
+        <property key="memories.programmemory.partition2" value="true"/>
+        <property key="memories.programmemory.partition2.end"
+                  value="${memories.programmemory.partition2.end.value}"/>
+        <property key="memories.programmemory.partition2.start"
+                  value="${memories.programmemory.partition2.start.value}"/>
         <property key="memories.programmemory.start" value="0x1d000000"/>
-        <property key="memories.userotp" value="false"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preserveeeprom" value="false"/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveprogramrange.end" value="0x1d07ffff"/>
         <property key="programoptions.preserveprogramrange.start" value="0x1d000000"/>
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VPPFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>

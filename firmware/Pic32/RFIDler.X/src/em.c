@@ -182,10 +182,9 @@ BOOL hex_to_em4x02_bin(unsigned char *em, unsigned char *hex)
 
 // convert 16 hex digit/64 bit EM4X02 ID to 40 bit raw UID
 // safe to do in-place as we use a scratchpad
-// todo: check parity
 BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em)
 {
-    unsigned char i;
+    unsigned char i, j, colparity[4]= {0,0,0,0};
 
     if(!hextobinarray(TmpBits, em))
         return FALSE;
@@ -195,9 +194,22 @@ BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em)
         if(TmpBits[i] != 0x01)
             return FALSE;
 
-    // skip 9 bit header and strip parity bits - every 5th bit
+    // skip 9 bit header and strip/check parity bits - every 5th bit
     for(i= 0 ; i < 10 ; ++i)
+    {
         memcpy(bin + i * 4, (TmpBits + 9) + i * 5, 4);
+        if(parity(bin + i * 4, EVEN, 4) != TmpBits[9 + i * 5 + 4])
+            return FALSE;
+    }
+
+    // check column parity
+    for(i= 0 ; i < 10 ; ++i)
+        for(j= 0; j < 4 ; ++j)
+            colparity[j] += bin[i * 4 + j];
+    for(i= 0 ; i < 4 ; ++i)
+        if(colparity[i] % 2 != TmpBits[9 + 50 + i])
+            return FALSE;
+
     return TRUE;
 }
 

@@ -319,6 +319,7 @@ BOOL fsk_raw_hex_to_uid(BYTE *response, BYTE *hex)
 BOOL read_FSK_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, unsigned int bits, unsigned int timeout_us)
 {
     unsigned int gaplength;
+    BYTE tries;
 
     // point globals at data for ISR
     EMU_Data= data;
@@ -368,7 +369,8 @@ BOOL read_FSK_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, unsi
     gaplength= GetTimer_us(RESET);
     
     // now look for a gap that doesn't match
-    while(42)
+    tries= 20;
+    while(tries--)
     {
         while(READER_DATA)
             if(timeout_us)

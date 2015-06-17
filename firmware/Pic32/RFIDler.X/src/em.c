@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -134,8 +134,13 @@
 #include "HardwareProfile.h"
 #include "rfidler.h"
 #include "ask.h"
+#include "clock.h"
 #include "em.h"
 #include "util.h"
+
+// em4205 return values
+const BYTE EM4205_Preamble[8]=  {0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00};   // "00001010"
+const BYTE EM4205_Error[8]= { 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01};       // "00000001"
 
 // support routines for EM tags
 //
@@ -210,6 +215,10 @@ BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em)
         if(colparity[i] % 2 != TmpBits[9 + 50 + i])
             return FALSE;
 
+    // check terminating stop bit
+    if(TmpBits[63] != 0x00)
+        return FALSE;
+
     return TRUE;
 }
 
@@ -241,5 +250,214 @@ void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin)
         *em= colparity[i] % 2;
 
     // output stop bit
-    *(em++)= 0x00;
+    *em= 0x00;
+}
+
+// em4x05 - comms as per em4469
+
+// em4205 doesn't use PWM for reader->tag comms, so hard code it
+BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response)
+{
+    // 5 bit command + 6 bit address + parity + null = 13
+    // return value 8 bit PREAMBLE + 45 bit OTA + null = 54
+    // max command is 5 + 6 + 1 + 45 + 1 = 58
+    BYTE tmp[58], tmp2[33], *p, rlen;
+
+    // create command buffer
+    strcpy(tmp, command);
+
+    if(address != NO_ADDRESS)
+    {
+        // convert address to 4 bit binary array
+        inttobinarray(tmp2, (unsigned int) address, 4);
+        // convert to LSB
+        string_reverse(tmp2, 4);
+        // add reserved two bits
+        tmp2[4]= 0x00;
+        tmp2[5]= 0x00;
+        // add parity
+        tmp2[6]= parity(tmp2, EVEN, 6);
+        // add to command string
+        binarraytobinstring(tmp + strlen(command), tmp2, 7);
+    }
+
+    if(send_data)
+    {
+        // convert data to 32 bit array
+        ulongtobinarray(tmp2, data, 32);
+        // convert to LSB
+        string_reverse(tmp2, 32);
+        // add to command string
+        rlen= strlen(tmp);
+        bin_to_em4205_ota(tmp + rlen, tmp2);
+        // convert to human readable
+        binarraytobinstring(tmp + rlen, tmp + rlen, 45);
+    }
+
+    // debug
+    //UserMessage("\r\nsending: %s\r\n", tmp);
+
+    // start clock if not already running
+    if(!mGetLED_Clock() == mLED_ON)
+    {
+        InitHWReaderClock(OC_TOGGLE_PULSE, RFIDlerConfig.FrameClock / 2L, RFIDlerConfig.FrameClock, RWD_STATE_ACTIVE);
+
+        // give reader time to wake up and settle
+        Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100L);
+    }
+
+    // send to tag
+    if(!em4205_forward_link(tmp))
+        return FALSE;
+
+    // return should be 8 bit PREAMBLE + 45 bit OTA formatted data
+    if(get_response)
+        rlen= 53;
+    else
+        rlen= 8;
+    if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, rlen, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == rlen)
+    {
+        // debug
+        //UserMessage("got: ", "");
+        //printbinarray(tmp, 8);
+        // check preamble
+        if(memcmp(tmp, EM4205_Preamble, 8) != 0x00)
+            return FALSE;
+        // extract OTA data
+        if(get_response)
+            return em4205_ota_to_bin(response, tmp + 8);
+        else
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL em4205_forward_link(BYTE *data)
+{
+    // wait for a rising edge from TAG so we start talking while tag is modulating
+    GetTimer_us(RESET);
+    while(READER_DATA)
+        if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
+            return FALSE;
+    while(!READER_DATA)
+        if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
+            return FALSE;
+
+    // send First Field Stop
+    pause_HW_clock_FC(RFIDlerConfig.RWD_Gap_Period);
+
+    // send data
+    // to send a 1, leave coil running for a full bit period
+    // to send a 0, switch off for 1st half of bit period (after 4 FCs), back on for 2nd half
+    while(*data)
+    {
+        // TAG will modulate for 1st half of each bit period, so we can sync to that
+        GetTimer_us(RESET);
+        while(!READER_DATA)
+            if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
+                return FALSE;
+        if(*data == '1')
+        {
+            TimerWait_FC(RFIDlerConfig.RWD_One_Period);
+        }
+        else
+        {
+            TimerWait_FC(4);
+            pause_HW_clock_FC(RFIDlerConfig.RWD_Zero_Period - 4);
+            TimerWait_FC(RFIDlerConfig.RWD_Zero_Period);
+        }
+        ++data;
+    }
+
+    TimerWait_FC(RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+}
+
+BOOL em4205_get_uid(BYTE *response)
+{
+    // 32 bit UID + null
+    BYTE tmp[33];
+
+    // debug
+    //em4205_disable();
+    //return FALSE;
+
+    // UID is stored in block 1
+    if(!em4205_read_word(tmp, 1))
+        return FALSE;
+
+    binarraytohex(response, tmp, 32);
+    return TRUE;
+}
+
+// shut down TAG until next power up
+BOOL em4205_disable(void)
+{
+    return em4205_send_command(EM4205_DISABLE, NO_ADDRESS, TRUE, 0xFFFFFFFFL, FALSE, NULL);
+}
+
+BOOL em4205_read_word(BYTE *response, BYTE word)
+{
+    // hard reset
+    stop_HW_clock();
+
+    // delay for sleep period
+    Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Sleep_Period) / 100);
+
+    return em4205_send_command(EM4205_READ_WORD, word, FALSE, 0L, TRUE, response);
+}
+
+// convert 32 bit binary data to 45 bit EM4205 OTA format
+// The 32 bit data field has an even parity bit inserted every 8 data bits, data is terminated with 8 column parity bits and a 0.
+void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin)
+{
+    unsigned char i, j, parity, colparity[8]= {0,0,0,0,0,0,0,0};
+
+    //  output 4 blocks of 8 bits plus parity for each block
+    for(i= 0 ; i < 4 ; ++i, ++ota)
+    {
+        for(j= parity= 0 ; j < 8 ; ++j, ++bin, ++ota)
+        {
+            *ota= *bin;
+            parity += *bin;
+            // calculate column parity for later
+            colparity[j] += *bin;
+        }
+        // output parity
+        *ota= parity % 2;
+    }
+
+    // output column parity
+    for(i= 0 ; i < 8 ; ++i, ++ota)
+        *ota= colparity[i] % 2;
+
+    //output stop bit
+    *ota= 0x00;
+}
+
+// convert EM4205 OTA format to 32 bit binary
+BOOL em4205_ota_to_bin(unsigned char *bin, unsigned char *ota)
+{
+    unsigned char i, j, colparity[8]= {0,0,0,0,0,0,0,0};
+
+    // strip/check parity bits - 4 blocks, every 9th bit
+    for(i= 0 ; i < 4 ; ++i)
+    {
+        memcpy(bin + i * 8, ota + i * 9, 8);
+        if(parity(bin + i * 8, EVEN, 8) != ota[i * 9 + 8])
+            return FALSE;
+    }
+
+    // check column parity
+    for(i= 0 ; i < 4 ; ++i)
+        for(j= 0; j < 8 ; ++j)
+            colparity[j] += bin[i * 8 + j];
+    for(i= 0 ; i < 8 ; ++i)
+        if(colparity[i] % 2 != ota[36 + i])
+            return FALSE;
+
+    // check terminating stop bit
+    if(ota[44] != 0x00)
+        return FALSE;
+
+    return TRUE;
 }

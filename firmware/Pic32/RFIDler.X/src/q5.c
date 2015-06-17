@@ -160,7 +160,7 @@ BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOO
             return FALSE;
 
     // skip leading '0'
-    HW_Skip_Bits= 1;  // 2 primative 'bits' manchester encoded, but we lose 1/2 a bit due to ASK startup delay, so skip 1 less
+    HW_Skip_Bits= 1;  // 2 primitive 'bits' manchester encoded, but we lose 1/2 a bit due to ASK startup delay, so skip 1 less
 
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
 //    DEBUG_PIN_4= !DEBUG_PIN_4;

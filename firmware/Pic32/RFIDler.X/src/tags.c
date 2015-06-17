@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -167,6 +167,7 @@ const BYTE *TagTypes[]= {
     "FDXB",
     "T55X7",
     "AWID26",
+    "EM4X05",
     NULL
 };
 
@@ -217,6 +218,9 @@ unsigned int tag_get_blocksize(BYTE tag)
         case TAG_TYPE_PSK3_RAW:
             return tag_get_blocksize(RFIDlerVTag.TagType);
 
+        case TAG_TYPE_EM4X05:
+            return EM4205_BLOCKSIZE;
+
         case TAG_TYPE_HITAG1:
             return HITAG1_BLOCKSIZE;
 
@@ -246,6 +250,9 @@ unsigned int tag_get_datablocks(BYTE tag)
         case TAG_TYPE_PSK2_RAW:
         case TAG_TYPE_PSK3_RAW:
             return RFIDlerConfig.DataBits / tag_get_blocksize(RFIDlerVTag.TagType);
+
+        case TAG_TYPE_EM4X05:
+            return EM4205_DATABLOCKS;
 
        case TAG_TYPE_HITAG1:
             return HITAG1_DATABLOCKS;
@@ -278,6 +285,9 @@ unsigned int tag_get_databits(BYTE tag)
 
         case TAG_TYPE_EM4X02:
             return EM4X02_DATABITS;
+
+        case TAG_TYPE_EM4X05:
+            return EM4205_DATABLOCKS * EM4205_BLOCKSIZE;
             
         case TAG_TYPE_HID_26:
             return HID26_DATABITS;
@@ -335,6 +345,9 @@ BYTE auto_detect_tag_type(void)
 BOOL tag_set(BYTE tag)
 {
     // reset everything, then set what needs to be changed
+    // most timings are in FCs unless otherwise specified
+    // FrameClock itself is in us/100 (i.e. 800 is 8us == 125KHz)
+    // Timeout is in us
     RFIDlerConfig.FrameClock= 0;
     RFIDlerConfig.BiPhase= FALSE;
     RFIDlerConfig.Manchester= FALSE;
@@ -397,6 +410,28 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Sync[3]= 0x00;
             RFIDlerConfig.SyncBits= 18;
             RFIDlerConfig.RWD_Wake_Period= 1000;
+            break;
+
+        // DEBUG: work in progress!
+        case TAG_TYPE_EM4X05:
+            RFIDlerConfig.FrameClock= 800; // 125 KHz
+            RFIDlerConfig.Manchester= TRUE;
+            RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
+            RFIDlerConfig.PotHigh= 130;
+            RFIDlerConfig.DataRate= 64;
+            RFIDlerConfig.DataBits= 53; // 45 bit OTA format + 8 bit preamble
+            RFIDlerConfig.DataBlocks= EM4205_DATABLOCKS;
+            RFIDlerConfig.BlockSize= EM4205_BLOCKSIZE;
+            RFIDlerConfig.TagType= tag;
+            RFIDlerConfig.Repeat= 20;
+            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
+            RFIDlerConfig.RWD_Wake_Period= 1000; // docco says max 3 ms, but round up a bit
+            RFIDlerConfig.RWD_Gap_Period= 55; // First Field Stop
+            RFIDlerConfig.RWD_Sleep_Period= 2000;
+            RFIDlerConfig.RWD_Zero_Period= 16; // em4205 uses it's own scheme, not PWM
+            RFIDlerConfig.RWD_One_Period= 32; // see em.c for details
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 1000; // doc says 544us, + 6.7 ms eeprom write, so round up to 1000 FCs
+            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 80; // docs say 544, so about 68 fcs
             break;
 
        case TAG_TYPE_FDXB:
@@ -478,11 +513,11 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.RWD_Gap_Period= 5; // 4 - 10
+            RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Wake_Period= 500; // documentations says ~3ms, so round up a bit
             RFIDlerConfig.RWD_Zero_Period= 18; // 18 - 22
-            RFIDlerConfig.RWD_One_Period= 32; // 26 - 32
+            RFIDlerConfig.RWD_One_Period= 26; // 26 - 32
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 180; // docs say 204, so stop a little earlier so we catch leading edge
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 120; // docs say 96, so give it a bit longer t0 be safe!
             RFIDlerConfig.SyncBits= 0;
@@ -504,11 +539,11 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.RWD_Gap_Period= 4; // 4 - 10 (4)
-            RFIDlerConfig.RWD_Sleep_Period= 2000;
+            RFIDlerConfig.RWD_Gap_Period= 3; // 4 - 10 (we use 3 to allow for sloppiness in RWD timings)
+            RFIDlerConfig.RWD_Sleep_Period= 2000;  // 2000;
             RFIDlerConfig.RWD_Wake_Period= 525; // (was 450) must be > 312.5 but less than 544 to allow reset of user modes
-            RFIDlerConfig.RWD_Zero_Period= 19; //18; // 18 - 22
-            RFIDlerConfig.RWD_One_Period= 27; //26; // 26 - 32
+            RFIDlerConfig.RWD_Zero_Period= 18; // 18 - 22
+            RFIDlerConfig.RWD_One_Period= 26; // 26 - 32
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 199;
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 90;
             RFIDlerConfig.Sync[0]= 0xF8;
@@ -670,16 +705,17 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
 {
     switch(tagtype)
     {
-       case TAG_TYPE_ASK_RAW:
-       case TAG_TYPE_FSK1_RAW:
-       case TAG_TYPE_FSK2_RAW:
-       case TAG_TYPE_PSK1_RAW:
-       case TAG_TYPE_PSK2_RAW:
-       case TAG_TYPE_PSK3_RAW:
-           memcpy(hex, uid, strlen(uid));
-           return TRUE;
+        case TAG_TYPE_ASK_RAW:
+        case TAG_TYPE_EM4X05:
+        case TAG_TYPE_FSK1_RAW:
+        case TAG_TYPE_FSK2_RAW:
+        case TAG_TYPE_PSK1_RAW:
+        case TAG_TYPE_PSK2_RAW:
+        case TAG_TYPE_PSK3_RAW:
+            memcpy(hex, uid, strlen(uid));
+            return TRUE;
 
-       case TAG_TYPE_AWID_26:
+        case TAG_TYPE_AWID_26:
             if(!bcd_to_awid26_hex(hex, uid))
                 return FALSE;
             return TRUE;

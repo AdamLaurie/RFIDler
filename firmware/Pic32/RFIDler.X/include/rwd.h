@@ -133,6 +133,6 @@
 
 
 void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int wait_txrx, unsigned int wait_rxtx);
-BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait);
+BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned int fc, unsigned int sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait);
 void rwd_test(BYTE *pass);
 

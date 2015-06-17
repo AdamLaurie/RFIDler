@@ -138,10 +138,12 @@
 #include "comms.h"
 
 unsigned long HW_Bits;
-BYTE HW_Skip_Bits;                   // skip arbitrary number of leading bits (externally adjusted for manchester/biphase)
+BYTE HW_Skip_Bits;                      // skip arbitrary number of leading bits (externally adjusted for manchester/biphase)
 unsigned int PSK_Min_Pulse;
 BOOL PSK_Read_Error= FALSE;
 BOOL Manchester_Error= FALSE;
+unsigned int Clock_Tick_Counter;        // provide external routines with accurate count of ticks
+BOOL Clock_Tick_Counter_Reset= TRUE;    // provide external routines with means to reset tick counter
 
 // Interrupt Service Routines
 //
@@ -150,12 +152,17 @@ BOOL Manchester_Error= FALSE;
 // also process RWD commands while we toggle clock line
 void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
 {
-    static unsigned int count= 0;
+    static unsigned int count; // internal tick counter in case we interfere with external timers
 
     // Clear interrupt flag
     mOC5ClearIntFlag();
-    
+
     mLED_Clock_On();
+
+    // update tick counter for external FC timer routines
+    if(Clock_Tick_Counter_Reset)
+        Clock_Tick_Counter= Clock_Tick_Counter_Reset= 0;
+    Clock_Tick_Counter++;
 
     // process RWD commands (if any)
     switch (RWD_State)
@@ -170,81 +177,67 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // initial shutdown of coil to restart tag
             READER_CLOCK_ENABLE_OFF();
-            // time small amounts with ticks, large with uS
-            if(RWD_Sleep_Period > MAX_TIMER5_TICKS)
-                Delay_us(CONVERT_TICKS_TO_US(RWD_Sleep_Period));
-            else
-            {
-                WriteTimer5(0);
-                while(GetTimer_ticks(NO_RESET) < RWD_Sleep_Period)
-                    ;
-            }
+            // use our own clock ticks to time delay
             count= 0;
-            RWD_State= RWD_STATE_WAKING;
+            RWD_State= RWD_STATE_SLEEPING;
+            break;
+
+        case RWD_STATE_SLEEPING:
+            if(count++ < RWD_Sleep_Period)
+                break;
             // restart clock only if we have a wake period
             if(RWD_Wake_Period)
                 READER_CLOCK_ENABLE_ON();
+            count= 0;
+            RWD_State= RWD_STATE_WAKING;
             break;
 
         case RWD_STATE_WAKING:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // leave coil running for wakeup period
-            if(count == RWD_Wake_Period)
-            {
-                count= 0;
-                if(*RWD_Command_ThisBit != '*')
-                    RWD_State= RWD_STATE_START_SEND;
-                else
-                    RWD_State= RWD_STATE_ACTIVE;
-            }
+            if(count++ < RWD_Wake_Period)
+                break;
+            if(*RWD_Command_ThisBit != '*')
+                RWD_State= RWD_STATE_START_SEND;
             else
-                count++;
+                RWD_State= RWD_STATE_ACTIVE;
             break;
 
         case RWD_STATE_START_SEND:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // send initial gap
-            // stop modulation of coil and wait
             READER_CLOCK_ENABLE_OFF();
-            // time small amounts with ticks, large with uS
-            if(RWD_Gap_Period > MAX_TIMER5_TICKS)
-                Delay_us(CONVERT_TICKS_TO_US(RWD_Gap_Period));
-            else
-            {
-                WriteTimer5(0);
-                while(GetTimer_ticks(NO_RESET) < RWD_Gap_Period)
-                    ;
-            }
+            count= 0;
+            RWD_State= RWD_STATE_SENDING_GAP;
+            break;
+
+        case RWD_STATE_SENDING_GAP:
+            if(count++ < RWD_Gap_Period)
+                break;
+            // gap over, switch clock back on
+            READER_CLOCK_ENABLE_ON();
             count= 0;
             RWD_State= RWD_STATE_SENDING_BIT;
             //DEBUG_PIN_4= !DEBUG_PIN_4;
-            // restart clock
-            READER_CLOCK_ENABLE_ON();
             break;
 
         case RWD_STATE_SENDING_BIT:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
+            if(*RWD_Command_ThisBit == '*')
+            {
+                RWD_State= RWD_STATE_POST_WAIT;
+                count= 0;
+                break;
+            }
             // clock running for bit period, then wait for gap period
             if((*RWD_Command_ThisBit && count == RWD_One_Period) || (!*RWD_Command_ThisBit && count == RWD_Zero_Period))
             {
-                // stop modulation of coil and wait
+                // start sending gap
                 READER_CLOCK_ENABLE_OFF();
-                if(RWD_Gap_Period > MAX_TIMER5_TICKS)
-                    Delay_us(CONVERT_TICKS_TO_US(RWD_Gap_Period));
-                else
-                {
-                    WriteTimer5(0);
-                    while(GetTimer_ticks(NO_RESET) < RWD_Gap_Period)
-                        ;
-                }
                 ++RWD_Command_ThisBit;
                 count= 0;
-                if(*RWD_Command_ThisBit == '*')
-                    RWD_State= RWD_STATE_POST_WAIT;
-                else
-                    RWD_State= RWD_STATE_SENDING_BIT;
-                // restart clock
-               READER_CLOCK_ENABLE_ON();
+                RWD_State= RWD_STATE_SENDING_GAP;
+                break;
             }
             else
                 count++;
@@ -253,13 +246,10 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
         case RWD_STATE_POST_WAIT:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // coil running for forced post-command wait period
-            if(count == RWD_Post_Wait)
-            {
-                count= 0;
-                RWD_State= RWD_STATE_ACTIVE;
-            }
-            else
-                count++;
+            if(count++ < RWD_Post_Wait)
+                break;
+            count= 0;
+            RWD_State= RWD_STATE_ACTIVE;
             break;
 
         default:
@@ -533,7 +523,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             }
 
             // read only 2nd half of bit if manchester
-            if (RFIDlerConfig.Manchester && count % 2L)
+            if(RFIDlerConfig.Manchester && count % 2L)
             {
                 //DEBUG_PIN_1= out;
                 // always invert as we are now reading 2nd half bit, so opposite value

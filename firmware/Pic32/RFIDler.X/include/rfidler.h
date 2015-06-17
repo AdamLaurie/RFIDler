@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -168,11 +168,11 @@ extern BYTE             Password[9];                        // 32 bits as HEX st
 
 // RWD (read/write device) coil state
 extern BYTE             RWD_State;                              // current state of RWD coil
-extern unsigned long    RWD_Fc;                                 // field clock in uS
-extern unsigned long    RWD_Gap_Period;                         // length of command gaps in SYSTEM ticks
+extern unsigned int     RWD_Fc;                                 // field clock in uS
+extern unsigned int     RWD_Gap_Period;                         // length of command gaps in OC5 ticks
 extern unsigned int     RWD_Zero_Period;                        // length of '0' in OC5 ticks
 extern unsigned int     RWD_One_Period;                         // length of '1' in OC5 ticks
-extern unsigned long    RWD_Sleep_Period;                       // length of initial sleep to reset tag in system ticks
+extern unsigned int     RWD_Sleep_Period;                       // length of initial sleep to reset tag in OC5 ticks
 extern unsigned int     RWD_Wake_Period;                        // length required for tag to restart in OC5 ticks
 extern unsigned int     RWD_Wait_Switch_TX_RX;                  // length to wait when switching from TX to RX in OC5 ticks
 extern unsigned int     RWD_Wait_Switch_RX_TX;                  // length to wait when switching from RX to TX in OC5 ticks
@@ -195,7 +195,7 @@ typedef struct {
     unsigned int    Wiegand_Pulse;
     unsigned int    Wiegand_Gap;
     BOOL            Wiegand_IdleState;
-    unsigned long   FrameClock;
+    unsigned int    FrameClock;
     unsigned char   Modulation;
     unsigned int    DataRate;
     unsigned int    DataRateSub0;
@@ -249,6 +249,8 @@ extern unsigned int PSK_Min_Pulse;
 extern BOOL PSK_Read_Error;
 extern BOOL Manchester_Error;
 extern BOOL SnifferMode;
+extern unsigned int Clock_Tick_Counter;
+extern BOOL Clock_Tick_Counter_Reset;
 
 // smart card lib
 #define MAX_ATR_LEN			(BYTE)33
@@ -268,11 +270,13 @@ extern rtccDate	RTC_date;			// date structure
 // RWD/clock states
 #define                 RWD_STATE_INACTIVE              0       // RWD not in use
 #define                 RWD_STATE_GO_TO_SLEEP           1       // RWD coil shutdown request
-#define                 RWD_STATE_WAKING                2       // RWD active for pre-determined period after reset
-#define                 RWD_STATE_START_SEND            3       // RWD start send of data
-#define                 RWD_STATE_SENDING_BIT           4       // RWD sending a data bit & gap
-#define                 RWD_STATE_POST_WAIT             5       // RWD finished sending data, now in forced wait period
-#define                 RWD_STATE_ACTIVE                6       // RWD finished, now just clocking a carrier
+#define                 RWD_STATE_SLEEPING              2       // RWD coil shutdown for sleep period
+#define                 RWD_STATE_WAKING                3       // RWD active for pre-determined period after reset
+#define                 RWD_STATE_START_SEND            4       // RWD starting send of data
+#define                 RWD_STATE_SENDING_GAP           5       // RWD sending a gap
+#define                 RWD_STATE_SENDING_BIT           6       // RWD sending a data bit
+#define                 RWD_STATE_POST_WAIT             7       // RWD finished sending data, now in forced wait period
+#define                 RWD_STATE_ACTIVE                8       // RWD finished, now just clocking a carrier
 
 // reader ISR states
 #define                 READER_STOPPED                  0       // reader not in use
@@ -322,11 +326,14 @@ extern rtccDate	RTC_date;			// date structure
 #define TAG_TYPE_FDXB                   15
 #define TAG_TYPE_T55X7                  16      // same as Q5 but different timings and no modulation-defeat
 #define TAG_TYPE_AWID_26                17
+#define TAG_TYPE_EM4X05                 18
 
 // various
 
 #define BINARY                          0
 #define HEX                             1
+
+#define NO_ADDRESS                      -1
 
 #define ACK                             TRUE
 #define NO_ACK                          FALSE

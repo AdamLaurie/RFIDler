@@ -176,13 +176,10 @@ void bytestohex(unsigned char *target, unsigned char *source, unsigned int lengt
 unsigned int manchester_encode(unsigned char *target, unsigned char *source, unsigned int length);
 unsigned int manchester_decode(unsigned char *target, unsigned char *source, unsigned int length);
 char * strip_newline(char *buff);
-unsigned int GetTimer_us(BYTE reset);
-unsigned long GetTimer_ticks(BYTE reset);
 BOOL command_ack(BOOL data);
 BOOL command_nack(BYTE *reason);
 BOOL command_unknown(void);
 void ToUpper(char *string);
-void TimerWait(unsigned long ticks);
 void string_reverse(unsigned char *string, unsigned int length);
 BOOL string_byteswap(unsigned char *string, unsigned int length);
 BYTE parity(unsigned char *string, BYTE type, unsigned int length);

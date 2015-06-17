@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -129,10 +129,31 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
+// em4x02
 #define EM4X02_DATABITS         64
+
+// em4205/4305 (em4469 compatible command set)
+#define EM4205_DATABITS         512
+#define EM4205_BLOCKSIZE        32
+#define EM4205_DATABLOCKS       16
+
+// em4205 commands (leading 0 + 3 bits + even parity)
+#define EM4205_LOGIN            "00011"
+#define EM4205_WRITE_WORD       "00101"
+#define EM4205_READ_WORD        "01001"
+#define EM4205_PROTECT          "01100"
+#define EM4205_DISABLE          "01010"
 
 BOOL em4x02_get_uid(BYTE *response);
 BOOL em4x02_hex_to_uid(BYTE *response, BYTE *hex);
 BOOL hex_to_em4x02_bin(unsigned char *em, unsigned char *hex);
 BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em);
 void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin);
+
+BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response);
+BOOL em4205_forward_link(BYTE *data);
+BOOL em4205_get_uid(BYTE *response);
+BOOL em4205_disable(void);
+BOOL em4205_read_word(BYTE *response, BYTE word);
+void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin);
+BOOL em4205_ota_to_bin(unsigned char *bin, unsigned char *ota);

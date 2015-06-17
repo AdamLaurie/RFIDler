@@ -138,11 +138,6 @@
 #include "USB/usb_function_cdc.h"
 #include "comms.h"
 
-
-//const unsigned int TimeScaler= (GetSystemClock() / US_TO_TICKS);
-const unsigned int TimeScaler= (GetSystemClock() / TIMER5_PRESCALER) / 1000000; // compensate for pre-scaler
-const unsigned long TimeScaler2= (GetSystemClock() / 10000000L);
-
 // rtc
 rtccTime	RTC_time;			// time structure
 rtccDate	RTC_date;			// date structure
@@ -598,30 +593,6 @@ char * strip_newline(char *buff)
     return buff;
 }
 
-// low level pulse timer
-unsigned int GetTimer_us(BYTE reset)
-{
-    unsigned int time;
-    
-    time= ReadTimer5();
-
-    if(reset)
-       WriteTimer5(0L);
-    return time / TimeScaler;
-}
-
-// low level pulse timer - return prescaled ticks converted back to a long
-unsigned long GetTimer_ticks(BYTE reset)
-{
-    unsigned long time;
-
-    time= ReadTimer5();
-
-    if(reset)
-       WriteTimer5(0);
-    return time * TIMER5_PRESCALER;
-}
-
 // command ACK when in API mode
 // '.' for command complete
 // '+' for data to follow
@@ -675,26 +646,6 @@ void ToUpper(char *string)
 
     while(string[strlen(string) - 1] == ' ')
         string[strlen(string) - 1]= '\0';
-}
-
-
-// raw timer wait - for things that don't want any delays...
-// 1us == x timer ticks where x is what MHz chip is running at (e.g. 80 for 80MHz)
-// note that we reset on the way out to ensure external code action is included in
-// the timing.
-void TimerWait(unsigned long ticks)
-{
-    while (ReadTimer5() < ticks)
-        ;
-    WriteTimer5(0);
-}
-
-void Delay_us(unsigned long us)
-{
-    unsigned long ticks= us * TimeScaler2;
-
-    while (ticks--)
-        ;
 }
 
 // reverse a string in place

@@ -150,20 +150,18 @@ void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsig
 }
 
 // this routine accepts either binary arrays or binary strings
-BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait)
+BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL block, BYTE initial_state, unsigned int fc, unsigned int sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int post_wait)
 {
     unsigned int i;
 
     RWD_Fc= fc;
 
-    // convert FCs to system ticks
-    RWD_Sleep_Period= CONVERT_TO_TICKS(sleep * fc);
-    RWD_Gap_Period= CONVERT_TO_TICKS(gap * fc);
-
     // convert FCs to OCM ticks
+    RWD_Sleep_Period= sleep * 2;
     RWD_Wake_Period= wake * 2;
     RWD_Zero_Period= pw0 * 2;
     RWD_One_Period= pw1 * 2;
+    RWD_Gap_Period= gap * 2;
     RWD_Post_Wait= post_wait * 2;
     
     if(!RWD_Zero_Period || !RWD_One_Period || !RWD_Gap_Period)
@@ -213,7 +211,7 @@ void rwd_test(BYTE *pass)
             break;
 
         case TAG_TYPE_HITAG2:
-            hitag2_test_rwd(4, 10, 18, 22, 26, 32, pass);
+            hitag2_test_rwd(1, 10, 18, 22, 26, 32, pass);
             break;
 
         case TAG_TYPE_T55X7:

@@ -135,7 +135,12 @@
 #include "rfidler.h"
 #include "clock.h"
 #include "USB/usb.h"
+#include "clock.h"
 #include "comms.h"
+
+//const unsigned int TimeScaler= (GetSystemClock() / US_TO_TICKS);
+const unsigned int TimeScaler= (GetSystemClock() / TIMER5_PRESCALER) / 1000000; // compensate for pre-scaler
+const unsigned long TimeScaler2= (GetSystemClock() / 10000000L);
 
 // inialise OCM for H/W reader clock
 // clock will be toggled by the OCM
@@ -202,6 +207,34 @@ void InitHWReaderISR(unsigned long time, BOOL immediate)
         IFS0bits.T4IF= TRUE;
 }
 
+// temporarily pause carrier - specify period in FCs
+// we use clock counter in ISR to create very precise timing
+void pause_HW_clock_FC(unsigned long fc)
+{
+    Clock_Tick_Counter_Reset= TRUE;
+    // wait for reset
+    while(Clock_Tick_Counter_Reset)
+        ;
+
+    READER_CLOCK_ENABLE_OFF();
+    fc *= 2L; // two ticks per FC
+    while(Clock_Tick_Counter <= fc)
+        ;
+
+    READER_CLOCK_ENABLE_ON();
+}
+
+void TimerWait_FC(unsigned long fc)
+{
+    Clock_Tick_Counter_Reset= TRUE;
+    // wait for reset
+    while(Clock_Tick_Counter_Reset)
+        ;
+    fc *= 2L; // two ticks per FC
+    while(Clock_Tick_Counter <= fc)
+        ;
+}
+
 // shutdown reader coil
 void stop_HW_clock(void)
 {
@@ -237,7 +270,7 @@ void clock_test()
     Delay_us(1);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n1 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -246,7 +279,7 @@ void clock_test()
     Delay_us(10);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n10 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -255,7 +288,7 @@ void clock_test()
     Delay_us(100);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n100 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -264,7 +297,7 @@ void clock_test()
     Delay_us(1000);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n1000 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -273,7 +306,7 @@ void clock_test()
     Delay_us(10000);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n10,000 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -282,7 +315,7 @@ void clock_test()
     Delay_us(100000);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n100,000 us: %d", test);
     UserMessage("%s", "\r\n");
 
@@ -291,8 +324,58 @@ void clock_test()
     Delay_us(1000000);
     //DEBUG_PIN_4= !DEBUG_PIN_4;
     test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks());
+    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
     UserMessageNum("\r\n1,000,000 us: %d", test);
     UserMessage("%s", "\r\n");
 }
+
+// low level pulse timer
+unsigned int GetTimer_us(BYTE reset)
+{
+    unsigned int time;
+
+    time= ReadTimer5();
+
+    if(reset)
+       WriteTimer5(0L);
+    return time / TimeScaler;
+}
+
+// low level pulse timer - return prescaled ticks converted back to a long
+unsigned long GetTimer_ticks(BYTE reset)
+{
+    unsigned long time;
+
+    time= ReadTimer5();
+
+    if(reset)
+       WriteTimer5(0);
+    return time * TIMER5_PRESCALER;
+}
+
+// bad stuff happens if this gets optimised!
+#pragma GCC optimize("O0")
+
+// raw timer wait - for things that don't want any delays...
+// tuned by eye with logic analyser!
+// 1us == x/2 timer ticks where x is what MHz chip is running at (e.g. 4 for 80MHz)
+void TimerWait(unsigned long ticks)
+{
+    // deduct 2 for processing time
+    ticks -= 2;
+    WriteTimer5(0);
+    while (ReadTimer5() < ticks)
+        ;
+}
+
+void Delay_us(unsigned long us)
+{
+    unsigned long ticks= us * TimeScaler2;
+
+    while (ticks--)
+        ;
+}
+
+// end optimisation
+#pragma GCC reset_options
 

@@ -156,6 +156,9 @@ BOOL get_tag_uid(BYTE *response)
         case TAG_TYPE_AWID_26:
             return awid26_get_uid(response);
 
+        case TAG_TYPE_EM4X05:
+            return em4205_get_uid(response);
+
         case TAG_TYPE_EM4X02:
             return em4x02_get_uid(response);
 
@@ -213,6 +216,10 @@ BOOL interpret_uid(BYTE *response, BYTE *hex, BYTE tagtype)
 
         case TAG_TYPE_AWID_26:
             return awid26_hex_to_uid(response, hex);
+
+        case TAG_TYPE_EM4X05:
+            strcpy(response, hex);
+            return TRUE;
 
         case TAG_TYPE_EM4X02:
             return em4x02_hex_to_uid(response, hex);

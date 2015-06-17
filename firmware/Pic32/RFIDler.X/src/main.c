@@ -194,11 +194,11 @@ BYTE Password[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0};  // 32 bits as HEX string set wit
 
 // globals for RWD commands
 BYTE             RWD_State= RWD_STATE_INACTIVE;
-unsigned long    RWD_Fc= 0;                                     // field clock in uS
-unsigned long    RWD_Gap_Period= 0;                             // length of command gaps in SYSTEM ticks
+unsigned int     RWD_Fc= 0;                                     // field clock in uS
+unsigned int     RWD_Gap_Period= 0;                             // length of command gaps in OC5 ticks
 unsigned int     RWD_Zero_Period= 0;                            // length of '0' in OC5 ticks
 unsigned int     RWD_One_Period= 0;                             // length of '1' in OC5 ticks
-unsigned long    RWD_Sleep_Period= 0;                           // length of initial sleep to reset tag in uS
+unsigned int     RWD_Sleep_Period= 0;                           // length of initial sleep to reset tag in OC5 ticks
 unsigned int     RWD_Wake_Period= 0;                            // length required for tag to restart OC5 ticks
 unsigned int     RWD_Wait_Switch_TX_RX= 0;                      // length to wait when switching from TX to RX in OC5 ticks
 unsigned int     RWD_Wait_Switch_RX_TX= 0;                      // length to wait when switching from RX to TX in OC5 ticks

@@ -133,11 +133,12 @@
 
 #include "HardwareProfile.h"
 #include "rfidler.h"
-#include "sniff.h"
 #include "clock.h"
-#include "hitag.h"
-#include "util.h"
 #include "comms.h"
+#include "hitag.h"
+#include "q5.h"
+#include "sniff.h"
+#include "util.h"
 
 // watch external clock for PWM messages
 // specify minimum gap to look for in us
@@ -206,7 +207,12 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
         case TAG_TYPE_HITAG2:
             hitag2_decode_pwm(pulses, gaps, count);
             break;
-            
+
+        case TAG_TYPE_Q5:
+        case TAG_TYPE_T55X7:
+            q5_decode_pwm(pulses, gaps, count);
+            break;
+
         default:
             for(i= 0 ; i < count ; ++i)
             {

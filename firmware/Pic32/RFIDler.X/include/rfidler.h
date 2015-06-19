@@ -144,7 +144,7 @@
 
 #define COMMS_BUFFER_SIZE   128
 
-#define DETECT_BUFFER_SIZE  128
+#define DETECT_BUFFER_SIZE  512
 
 #define SAMPLEMASK          ~(BIT_1 | BIT_0)    // mask to remove two bottom bits from analogue sample - we will then use those for reader & bit period
 

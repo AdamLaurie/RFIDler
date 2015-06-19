@@ -494,3 +494,38 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
             return FALSE;
     }
 }
+
+// decode externally sniffed PWM
+BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
+{
+    BYTE    i;
+    BOOL    decoded= FALSE, sequence= FALSE;
+
+    for(i= 0 ; i < count ; ++i)
+    {
+        // gap is between 8 & 50 FCs, so 64 and 400 uSec
+        // pulses can be between 16 and 63 FCs, so max 504 uSec
+        // but in practice our gaps will appear smaller due to time for energy to decay
+        // so allow everything to be a lot smaller
+        if(gaps[i] >= 20 && gaps[i] <= 500)
+        {
+            if(pulses[i] <= 512)
+            {
+                // max 24 FCs for a 0
+                if(pulses[i] <= 200)
+                    UserMessage("%s", "0");
+                else
+                    UserMessage("%s", "1");
+                decoded= TRUE;
+                sequence= TRUE;
+            }
+            else
+                if(sequence)
+                {
+                   sequence= FALSE;
+                   UserMessage("%s", "\r\n");
+                }
+        }
+    }
+    return decoded;
+}

@@ -735,5 +735,40 @@ BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype)
     }
 }
 
+// decode externally sniffed PWM
+BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
+{
+    BYTE    i;
+    BOOL    decoded= FALSE, sequence= FALSE;
+
+    for(i= 0 ; i < count ; ++i)
+    {
+        // gap is between 4 & 10 FCs, so 32 and 80 uSec
+        // pulses can be between 18 and 32 FCs, so max 256 uSec
+        // but in practice our gaps will appear smaller due to time for energy to decay
+        // so allow everything to be a lot smaller
+        if(gaps[i] >= 10 && gaps[i] <= 80)
+        {
+            if(pulses[i] <= 256)
+            {
+                // max 22 FCs for a 0
+                if(pulses[i] <= 160)
+                    UserMessage("%s", "0");
+                else
+                    UserMessage("%s", "1");
+                decoded= TRUE;
+                sequence= TRUE;
+            }
+            else
+                if(sequence)
+                {
+                   sequence= FALSE;
+                   UserMessage("%s", "\r\n");
+                }
+        }
+    }
+    return decoded;
+}
+
 // end optimisation
 #pragma GCC reset_options

@@ -129,6 +129,4 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
-
 void detect_external_clock(void);

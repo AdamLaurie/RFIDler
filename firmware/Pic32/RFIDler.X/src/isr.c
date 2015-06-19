@@ -176,7 +176,7 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // initial shutdown of coil to restart tag
-            READER_CLOCK_ENABLE_OFF();
+            READER_CLOCK_ENABLE_OFF(LOW);
             // use our own clock ticks to time delay
             count= 0;
             RWD_State= RWD_STATE_SLEEPING;
@@ -206,7 +206,7 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
         case RWD_STATE_START_SEND:
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // send initial gap
-            READER_CLOCK_ENABLE_OFF();
+            READER_CLOCK_ENABLE_OFF(LOW);
             count= 0;
             RWD_State= RWD_STATE_SENDING_GAP;
             break;
@@ -233,7 +233,7 @@ void __ISR(_OUTPUT_COMPARE_5_VECTOR, ipl6auto) reader_clock_tick (void)
             if((*RWD_Command_ThisBit && count == RWD_One_Period) || (!*RWD_Command_ThisBit && count == RWD_Zero_Period))
             {
                 // start sending gap
-                READER_CLOCK_ENABLE_OFF();
+                READER_CLOCK_ENABLE_OFF(LOW);
                 ++RWD_Command_ThisBit;
                 count= 0;
                 RWD_State= RWD_STATE_SENDING_GAP;

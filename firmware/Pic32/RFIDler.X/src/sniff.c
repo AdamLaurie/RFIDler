@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -133,249 +133,87 @@
 
 #include "HardwareProfile.h"
 #include "rfidler.h"
+#include "sniff.h"
 #include "clock.h"
-#include "USB/usb.h"
-#include "clock.h"
+#include "hitag.h"
+#include "util.h"
 #include "comms.h"
 
-//const unsigned int TimeScaler= (GetSystemClock() / US_TO_TICKS);
-const unsigned int TimeScaler= (GetSystemClock() / TIMER5_PRESCALER) / 1000000; // compensate for pre-scaler
-const unsigned long TimeScaler2= (GetSystemClock() / 10000000L);
-
-// inialise OCM for H/W reader clock
-// clock will be toggled by the OCM
-// OCM ISR will process RWD commands
-// user timer3 so timer2 can be used simultaneously by SmartCard or SD Card
-// width/period in uS/100 (will be rounded to uS/10 (as accurate as we can get on a 80MHz pic))
-void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYTE initial_state)
+// watch external clock for PWM messages
+// specify minimum gap to look for in us
+void sniff_pwm(unsigned int min)
 {
-    // reader mode
+    BYTE            toggle, i;
+    BOOL            abort= FALSE;
+    unsigned long   count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    
+    // make sure local clock isn't running & switch to input
+    stop_HW_clock();
+
     COIL_MODE_READER();
-
-    // disable timer2 interrupts
-    mT3IntEnable(0);
-    CloseTimer3();
-    mT3ClearIntFlag();
-
-    CloseOC5();
-    // some strange behaviour when switching from pulse to toggle. double open seems to fix it!
-    OpenOC5( OC_ON | OC_TIMER3_SRC | OC_TIMER_MODE16 | OC_TOGGLE_PULSE, CONVERT_TO_TICKS(period) / 8L, CONVERT_TO_TICKS(period) / 8L);
-    CloseOC5();
-    
-    // clear error led
-    mLED_Error_Off();
-
-    // in sniff mode we don't use our own clock!
-    if (SnifferMode)
-    {
-        READER_CLOCK_ENABLE_OFF(LOW);
-        return;
-    }
-
-    // enable tri-state
-    READER_CLOCK_ENABLE_ON();
-
-    // set clock state & command parameters
-    RWD_State= initial_state;
-    RWD_OC5_config= (OC_ON | OC_TIMER3_SRC | OC_TIMER_MODE16 | type);
-    RWD_OC5_rs= RWD_OC5_r= CONVERT_TO_TICKS(period / (period / width) / 2L);
-
-    OpenOC5(RWD_OC5_config, RWD_OC5_rs, RWD_OC5_r);
-    OpenTimer3(T3_ON | T3_PS_1_1 | T3_SOURCE_INT, CONVERT_TO_TICKS(period / 2L) - 1L);
-    mOC5SetIntPriority(5);
-    mOC5ClearIntFlag();
-    mOC5IntEnable(1);           // enable OC5 interrupts
-}
-
-// use timer4 to allow timers 2/3 to be linked to OCMs for other functions
-void InitHWReaderISR(unsigned long time, BOOL immediate)
-{
-    mT4SetIntPriority(6);
-    // start timer4 to read data - ISR will do the actual read
-    mT4IntEnable(1);
-    OpenTimer4( T4_ON | T4_PS_1_1 | T4_SOURCE_INT | T4_32BIT_MODE_OFF, time);
-
-    // switch on reader LED
-    // this is also a semaphore so the rest of the code knows we're running
-    mLED_Read_On();
-
-    // clear error led
-    mLED_Error_Off();
-    
-    // force an immediate interrupt so we read this bit
-    if(immediate)
-        IFS0bits.T4IF= TRUE;
-}
-
-// temporarily pause carrier - specify period in FCs
-// we use clock counter in ISR to create very precise timing
-void pause_HW_clock_FC(unsigned long fc, BYTE state)
-{
-    Clock_Tick_Counter_Reset= TRUE;
-    // wait for reset
-    while(Clock_Tick_Counter_Reset)
-        ;
-
-    READER_CLOCK_ENABLE_OFF(state);
-    fc *= 2L; // two ticks per FC
-    while(Clock_Tick_Counter <= fc)
-        ;
-
-    READER_CLOCK_ENABLE_ON();
-}
-
-void TimerWait_FC(unsigned long fc)
-{
-    Clock_Tick_Counter_Reset= TRUE;
-    // wait for reset
-    while(Clock_Tick_Counter_Reset)
-        ;
-    fc *= 2L; // two ticks per FC
-    while(Clock_Tick_Counter <= fc)
-        ;
-}
-
-// shutdown reader coil
-void stop_HW_clock(void)
-{
-    mT3IntEnable(0);
-    CloseTimer3();
-    CloseOC5();
-    mLED_Clock_Off();
-    mLED_Emulate_Off();
-
-    // tri-state-off
     READER_CLOCK_ENABLE_OFF(LOW);
-
-    // usb back on
-    USBUnmaskInterrupts();
     
-    stop_HW_reader_ISR();
-}
-
-// shutdown reader ISR
-void stop_HW_reader_ISR(void)
-{
-    mT4IntEnable(0);
-    CloseTimer4();
-    mLED_Read_Off();
-}
-
-void clock_test()
+    toggle= SNIFFER_COIL;
+    
+    // wait for 100 ticks to make sure we're settled
+    toggle= SNIFFER_COIL;
+    while(count < 100)
     {
-    unsigned int test;
-
+        while(SNIFFER_COIL == toggle)
+            // check for user abort
+            if(get_user_abort())
+                return;
+        ++count;
+        toggle= !toggle;
+    }
+    
+    // watch for gaps / pulses
+    i= 0;
     GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(1);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n1 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(10);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n10 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(100);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n100 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(1000);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n1000 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(10000);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n10,000 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(100000);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n100,000 us: %d", test);
-    UserMessage("%s", "\r\n");
-
-    GetTimer_us(RESET);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    Delay_us(1000000);
-    //DEBUG_PIN_4= !DEBUG_PIN_4;
-    test= GetTimer_us(NO_RESET);
-    UserMessageNum("\r\nticks %ld", GetTimer_ticks(NO_RESET));
-    UserMessageNum("\r\n1,000,000 us: %d", test);
-    UserMessage("%s", "\r\n");
+    while(!abort)
+    {
+        while(SNIFFER_COIL == toggle)
+            // check for user abort
+            if((abort= get_user_abort()))
+                break;
+        toggle= !toggle;
+        count= GetTimer_us(RESET);
+        // check if it was a gap
+        if(count > min)
+        {
+            pulses[i]= pulsecount;
+            gaps[i++]= count;
+            pulsecount= 0L;
+        }
+        else
+            pulsecount += count;
+        if(i == DETECT_BUFFER_SIZE)
+        {
+            decode_pwm(pulses, gaps, i);
+            i= 0;
+        }
+    }
+    
+    decode_pwm(pulses, gaps, i);
 }
 
-// low level pulse timer
-unsigned int GetTimer_us(BYTE reset)
+void decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
 {
-    unsigned int time;
-
-    time= ReadTimer5();
-
-    if(reset)
-       WriteTimer5(0L);
-    return time / TimeScaler;
+    BYTE i;
+    
+    switch(RFIDlerConfig.TagType)
+    {
+        case TAG_TYPE_HITAG2:
+            hitag2_decode_pwm(pulses, gaps, count);
+            break;
+            
+        default:
+            for(i= 0 ; i < count ; ++i)
+            {
+                UserMessageNum("\r\nPulse: %d ", pulses[i]);
+                UserMessageNum("Gap: %d", gaps[i]);
+            }
+            break;
+    }
+    UserMessage("\r\n","");
 }
-
-// low level pulse timer - return prescaled ticks converted back to a long
-unsigned long GetTimer_ticks(BYTE reset)
-{
-    unsigned long time;
-
-    time= ReadTimer5();
-
-    if(reset)
-       WriteTimer5(0);
-    return time * TIMER5_PRESCALER;
-}
-
-// bad stuff happens if this gets optimised!
-#pragma GCC optimize("O0")
-
-// raw timer wait - for things that don't want any delays...
-// tuned by eye with logic analyser!
-// 1us == x/2 timer ticks where x is what MHz chip is running at (e.g. 4 for 80MHz)
-void TimerWait(unsigned long ticks)
-{
-    // deduct 2 for processing time
-    ticks -= 2;
-    WriteTimer5(0);
-    while (ReadTimer5() < ticks)
-        ;
-}
-
-void Delay_us(unsigned long us)
-{
-    unsigned long ticks= us * TimeScaler2;
-
-    while (ticks--)
-        ;
-}
-
-// end optimisation
-#pragma GCC reset_options
-

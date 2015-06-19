@@ -264,6 +264,9 @@
 #define LOW                         FALSE
 #define HIGH                        TRUE
 
+#define CLOCK_ON                    LOW
+#define CLOCK_OFF                   HIGH
+
 // output coil control - select between reader/emulator circuits
 #define COIL_MODE                  LATBbits.LATB4
 #define COIL_MODE_READER()         COIL_MODE= LOW
@@ -354,8 +357,8 @@
 
 // connect/disconnect reader clock from coil - used to send RWD signals by creating gaps in carrier
 #define READER_CLOCK_ENABLE         LATEbits.LATE9
-#define READER_CLOCK_ENABLE_ON()    READER_CLOCK_ENABLE=0
-#define READER_CLOCK_ENABLE_OFF()   READER_CLOCK_ENABLE=1
+#define READER_CLOCK_ENABLE_ON()    READER_CLOCK_ENABLE=CLOCK_ON
+#define READER_CLOCK_ENABLE_OFF(x)  {READER_CLOCK_ENABLE=CLOCK_OFF; COIL_OUT=x;}
 
 // these input pins must NEVER bet set to output or they will cause short circuits!
 // they can be used to see data from reader before it goes into or gate

@@ -901,10 +901,11 @@ void show_usage(char *command)
         "SET SUB0 <RATE>                                              Set Sub Carrier 0 data rate in RF/n (FC/bit)\r\n",
         "SET SUB1 <RATE>                                              Set Sub Carrier 1 data rate in RF/n (FC/bit)\r\n",
         "SET SYNCBITS <BITS>                                          Set number of SYNC bits\r\n",
-        "SET SYNC[0-3] <HEX>                                          Set SYNC byte 0-3\r\n",
+        "SET SYNC<0-3> <HEX>                                          Set SYNC byte 0-3\r\n",
         "SET TAG <TYPE>                                               Set parameters appropriate for TAG TYPE\r\n",
         "SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n",
         "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
+        "SNIFF-PWM [MIN GAP]                                          Sniff PWM on external clock with READER coil. MIN GAP in uS (default 12).\r\n",
         "STOP                                                         Stop any running clocks\r\n",
         "TAGS                                                         Show known TAG TYPES\r\n",
         "TCONFIG                                                      Show TAG's config block\r\n",
@@ -1967,6 +1968,17 @@ BYTE ProcessSerialCommand(char *command)
        SnifferMode= FALSE;
     }
 
+    if (strncmp(command, "SNIFF-PWM", 9) == 0)
+    {
+        // default min gap
+        tmpint= 12;
+        sscanf(command + 9, " %d", &tmpint);
+        commandok= command_ack(DATA);
+        UserMessage("%s", "Waiting for PWM (hit any key to abort/report)...\r\n");
+        sniff_pwm(tmpint);
+        eod();
+    }
+
     if (strcmp(command, "STOP") == 0)
     {
         commandok= command_ack(NO_DATA);
@@ -2119,7 +2131,7 @@ BYTE ProcessSerialCommand(char *command)
     if (strcmp(command, "TRISTATE OFF") == 0)
     {
         commandok= command_ack(NO_DATA);
-        READER_CLOCK_ENABLE_OFF();
+        READER_CLOCK_ENABLE_OFF(LOW);
     }
 
     if (strcmp(command, "TRISTATE ON") == 0)

@@ -134,7 +134,7 @@
 //void shutdown_clock(void);
 void InitHWClock(BYTE type, unsigned long width, unsigned long period, BYTE initial_state);
 void InitHWReaderISR(unsigned long time, BOOL immediate);
-void pause_HW_clock_FC(unsigned long fc);
+void pause_HW_clock_FC(unsigned long fc, BYTE state);
 void stop_HW_clock(void);
 void stop_HW_reader_ISR(void);
 void clock_test();

@@ -148,7 +148,7 @@ void detect_external_clock(void)
     stop_HW_clock();
 
     COIL_MODE_READER();
-    READER_CLOCK_ENABLE_OFF();
+    READER_CLOCK_ENABLE_OFF(LOW);
 
     // wait for 100 ticks to make sure we're settled
     toggle= SNIFFER_COIL;

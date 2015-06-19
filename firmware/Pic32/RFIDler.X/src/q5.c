@@ -498,8 +498,26 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 // decode externally sniffed PWM
 BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
 {
-    BYTE    i;
-    BOOL    decoded= FALSE, sequence= FALSE;
+    BYTE            i;
+    unsigned int    zero, one;
+    BOOL            decoded= FALSE, sequence= FALSE;
+    
+    // first try to detect size of one and zero blocks
+    // short block is a zero, long is a one
+    for(i= 0, zero= 999, one= 0 ; i < count ; ++i)
+    {
+        if(gaps[i] >= 20 && gaps[i] <= 500 && pulses[i] > 0 && pulses[i] <= 512)
+        {
+            if(pulses[i] > one)
+                one= pulses[i];
+            if(pulses[i] < zero)
+                zero= pulses[i];
+        }
+    }
+    
+    // debug
+    //UserMessageNum("\r\nzero = %d", zero);
+    //UserMessageNum("\r\none = %d\r\n", one);
 
     for(i= 0 ; i < count ; ++i)
     {
@@ -512,7 +530,7 @@ BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
             if(pulses[i] <= 512)
             {
                 // max 24 FCs for a 0
-                if(pulses[i] <= 200)
+                if(approx(pulses[i], zero, 20))
                     UserMessage("%s", "0");
                 else
                     UserMessage("%s", "1");

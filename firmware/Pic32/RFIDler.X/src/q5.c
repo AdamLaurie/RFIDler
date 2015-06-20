@@ -496,10 +496,9 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 }
 
 // decode externally sniffed PWM
-BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
+BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    BYTE            i;
-    unsigned int    zero, one;
+    unsigned int    i, zero, one;
     BOOL            decoded= FALSE, sequence= FALSE;
     
     // first try to detect size of one and zero blocks

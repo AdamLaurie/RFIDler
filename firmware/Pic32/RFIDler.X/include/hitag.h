@@ -204,5 +204,5 @@ void hitag2_binarray_crypt(BYTE *target, BYTE *source, unsigned int length);
 unsigned long hitag2_crypt(unsigned long source, BYTE length);
 unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
 BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
-BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count);
+BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
 

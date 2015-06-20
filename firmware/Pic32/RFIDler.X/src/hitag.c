@@ -134,13 +134,14 @@
 #pragma GCC optimize("O1")
 
 #include "HardwareProfile.h"
-#include "rfidler.h"
-#include "hitag.h"
-#include "rwd.h"
 #include "ask.h"
-#include "util.h"
-#include "hitagcrypto.h"
 #include "comms.h"
+#include "hitagcrypto.h"
+#include "hitag.h"
+#include "rfidler.h"
+#include "rwd.h"
+#include "sniff.h"
+#include "util.h"
 
 // sync/ack checking
 const BYTE Hitag2Sync[5]= {0x01, 0x01, 0x01, 0x01, 0x01};
@@ -736,11 +737,11 @@ BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype)
 }
 
 // decode externally sniffed PWM
-BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
+BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    BYTE            i;
-    unsigned int    zero, one;
+    unsigned int    i, zero, one;
     BOOL            decoded= FALSE, sequence= FALSE;
+    BYTE            out[65]; // max response from hitag2 is 64 bits
 
     // first try to detect size of one and zero blocks
     // short block is a zero, long is a one

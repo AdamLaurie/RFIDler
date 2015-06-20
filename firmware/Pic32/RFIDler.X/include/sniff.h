@@ -130,4 +130,5 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 void sniff_pwm(unsigned int min);
-void decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count);
+void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count);

@@ -144,9 +144,9 @@
 // specify minimum gap to look for in us
 void sniff_pwm(unsigned int min)
 {
-    BYTE            toggle, i;
+    BOOL            toggle;
     BOOL            abort= FALSE;
-    unsigned long   count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned long   i, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
     
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
@@ -198,9 +198,9 @@ void sniff_pwm(unsigned int min)
     decode_pwm(pulses, gaps, i);
 }
 
-void decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
+void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    BYTE i;
+    unsigned int i;
     
     switch(RFIDlerConfig.TagType)
     {
@@ -223,4 +223,51 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], BYTE count)
             break;
     }
     UserMessage("\r\n","");
+}
+
+// convert pwm array to human readable binary
+// terminates at end of first sequence and returns number of samples processed 
+BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
+{
+    unsigned int    one, zero, i;
+    BOOL            sequence= FALSE;
+    
+    // first try to detect size of one and zero blocks
+    // short block is a zero, long is a one
+    for(i= 0, zero= 65535, one= 0 ; i < count ; ++i)
+    {
+        if(gaps[i] >= mingap && gaps[i] <= maxgap && pulses[i] > minpulse && pulses[i] <= maxpulse)
+        if(pulses[i] > one)
+            one= pulses[i];
+        if(pulses[i] < zero)
+            zero= pulses[i];
+    }
+    
+    // decode and return the first sequence
+    for(i= 0 ; i < count ; ++i)
+    {
+        if(gaps[i] >= mingap && gaps[i] <= maxgap)
+        {
+            if(pulses[i] <= maxpulse)
+            {
+                if(approx(pulses[i], zero, 20))
+                    *(result++)= '0';
+                else
+                    *(result++)= '1';
+                sequence= TRUE;
+            }
+            else
+                if(sequence)
+                {
+                   *result= '\0';
+                   return i + 1;
+                }
+        }
+    }
+    
+    if(!sequence)
+        return 0;
+    
+    *result= '\0';
+    return i;
 }

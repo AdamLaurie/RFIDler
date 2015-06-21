@@ -446,8 +446,7 @@ BOOL hitag2_crypto_auth(BYTE *response, BYTE *hexkey)
     key= hexreversetoulonglong(hexkey);
 
     // generate 32 bit PRN for challenge
-    seed= (int) GetTimer_ticks(NO_RESET);
-    srand(seed);
+    srand(Led_Count);
     initvec= rand();
     initvec <<= 16;
     initvec += rand();
@@ -739,52 +738,91 @@ BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype)
 // decode externally sniffed PWM
 BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    unsigned int    i, zero, one;
-    BOOL            decoded= FALSE, sequence= FALSE;
-    BYTE            out[65]; // max response from hitag2 is 64 bits
-
-    // first try to detect size of one and zero blocks
-    // short block is a zero, long is a one
-    for(i= 0, zero= 999, one= 0 ; i < count ; ++i)
-    {
-        if(gaps[i] >= 10 && gaps[i] <= 80 && pulses[i] > 0 && pulses[i] <= 256 )
-        {
-            if(pulses[i] > one)
-                one= pulses[i];
-            if(pulses[i] < zero)
-                zero= pulses[i];
-        }
-    }
+    unsigned int    i, j;
+    BOOL            decoded= FALSE, encrypted= FALSE, auth= FALSE;
+    BYTE            out[65], tmp[33], x; // max response from hitag2 is 64 bits
     
-    // debug
-    //UserMessageNum("\r\nzero = %d", zero);
-    //UserMessageNum("\r\none = %d\r\n", one);
-    
-    for(i= 0 ; i < count ; ++i)
+    j= 0;
+    while(j < count)
     {
-        // gap is between 4 & 10 FCs, so 32 and 80 uSec
-        // pulses can be between 18 and 32 FCs, so max 256 uSec
-        // but in practice our gaps will appear smaller due to time for energy to decay
-        // so allow everything to be a lot smaller
-        if(gaps[i] >= 10 && gaps[i] <= 80)
+        i= generic_decode_pwm(out, &pulses[j], 10, 256, &gaps[j], 10, 80, count - j);
+        if(i)
         {
-            if(pulses[i] <= 256)
+            // there are only 4 message sizes, so decode accordingly
+            switch(strlen(out))
             {
-                if(approx(pulses[i], zero, 20))
-                    UserMessage("%s", "0");
-                else
-                    UserMessage("%s", "1");
-                decoded= TRUE;
-                sequence= TRUE;
+                // start_auth
+                case 5:
+                    auth= FALSE;
+                    if(memcmp(out, HITAG2_START_AUTH, 5) == 0)
+                    {
+                        UserMessage("\r\n%s, START_AUTH", out);
+                        auth= TRUE;
+                    }
+                    else
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                    encrypted= FALSE; 
+                    break;
+                    
+                // read/write/halt
+                case 10:
+                    auth= FALSE;
+                    if(encrypted)
+                    {
+                        UserMessage("\r\n%s, CMD_ENCRYPTED", out);
+                        break;
+                    }
+                    if(memcmp(out, HITAG2_HALT, 2) == 0)
+                    {
+                        UserMessage("\r\n%s, HALT", out);
+                        break;
+                    }
+                    if(memcmp(out, HITAG2_READ_PAGE, 2) == 0)
+                        UserMessage("\r\n%s, READ_PAGE:", out);
+                    if(memcmp(out, HITAG2_READ_PAGE_INVERTED, 2) == 0)
+                        UserMessage("\r\n%s, READ_PAGE_INVERTED:", out);
+                    if(memcmp(out, HITAG2_WRITE_PAGE, 2) == 0)
+                        UserMessage("\r\n%s, WRITE_PAGE:", out);
+                    binstringtobyte(&x, &out[2], 3);
+                    UserMessageNum("%d", x);
+                    break;
+                
+                // password
+                case 32:
+                    if(auth)
+                        UserMessage("\r\n%s, PWD:", out);
+                    else
+                        UserMessage("\r\n%s, DATA:", out);
+                    binstringtohex(out, out);
+                    UserMessage("%s", out);
+                    auth= FALSE;
+                    break;
+                 
+                // crypto handshake
+                case 64:
+                    UserMessage("\r\n%s, PRN:", out);
+                    memcpy(tmp, out, 32);
+                    tmp[32]= '\0';
+                    binstringtohex(out, tmp);
+                    UserMessage("%s: SECRET:", out);
+                    binstringtohex(out, out + 32);
+                    UserMessage("%s", out);
+                    encrypted= TRUE;
+                    auth= FALSE;
+                    break;
+                    
+                default:
+                    UserMessage("\r\n%s,?INVALID?", out);
             }
-            else
-                if(sequence)
-                {
-                   sequence= FALSE;
-                   UserMessage("%s", "\r\n");
-                }
+            decoded= TRUE;
+            j += i;
         }
+        else
+            break;
     }
+    
+    UserMessage("%s", "\r\n");
+    
     return decoded;
 }
 

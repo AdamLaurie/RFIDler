@@ -144,6 +144,9 @@
 #include "uart3.h"
 #include "comms.h"
 
+// counter used by comms status as a global so external routines can use it for rudimentary entropy
+unsigned int Led_Count= 0;
+
 // master user messaging - this routine will message to current I/O method
 // (USB or UART)
 void UserMessage(BYTE *format, BYTE *message)
@@ -293,16 +296,15 @@ BYTE get_prompt(unsigned char *prompt)
 // Comms solid - comms currently over UART
 void BlinkCommsStatus(void)
 {
-    static unsigned int led_count=0;
 
-    if(led_count == 0)
-        led_count = 65535;
+    if(Led_Count == 0)
+        Led_Count = 65535;
 
-    led_count--;
+    Led_Count--;
 
     if(USBSuspendControl == 1)
     {
-        if(led_count==0)
+        if(Led_Count == 0)
         {
             mLED_USB_Toggle();
             if(mGetLED_USB())
@@ -335,7 +337,7 @@ void BlinkCommsStatus(void)
         }
         else if(USBDeviceState == ADDRESS_STATE)
         {
-            if(led_count == 0)
+            if(Led_Count == 0)
             {
                 mLED_USB_Toggle();
                 mLED_Comms_Off();
@@ -343,7 +345,7 @@ void BlinkCommsStatus(void)
         }
         else if(USBDeviceState == CONFIGURED_STATE)
         {
-            if(led_count==0)
+            if(Led_Count == 0)
             {
                 mLED_USB_Toggle();
                 if(mGetLED_USB() ^ Interface)

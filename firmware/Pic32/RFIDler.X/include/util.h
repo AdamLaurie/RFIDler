@@ -166,6 +166,7 @@ unsigned int binarraytohex(unsigned char *target, unsigned char *source, unsigne
 void hexprintbinarray(BYTE *bin, unsigned int length);
 unsigned int binstringtohex(unsigned char *target, unsigned char *source);
 unsigned int binstringtobinarray(BYTE *target, BYTE *source);
+void binstringtobyte(BYTE *target, unsigned char *source, BYTE length);
 void binarraytobinstring(BYTE *target, BYTE *source, unsigned int length);
 void printhexasbin(unsigned char *hex);
 void printbinashex(unsigned char *bin);

@@ -237,11 +237,16 @@ BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpu
     for(i= 0, zero= 65535, one= 0 ; i < count ; ++i)
     {
         if(gaps[i] >= mingap && gaps[i] <= maxgap && pulses[i] > minpulse && pulses[i] <= maxpulse)
-        if(pulses[i] > one)
-            one= pulses[i];
-        if(pulses[i] < zero)
-            zero= pulses[i];
+        {
+            if(pulses[i] > one)
+                one= pulses[i];
+            if(pulses[i] < zero)
+                zero= pulses[i];
+        }
     }
+    
+    if(zero == 65535 || one == 0)
+        return 0;
     
     // decode and return the first sequence
     for(i= 0 ; i < count ; ++i)

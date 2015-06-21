@@ -453,6 +453,20 @@ unsigned int binstringtohex(unsigned char *target, unsigned char *source)
     return length;
 }
 
+// convert human readable bin string to unsigned char
+void binstringtobyte(BYTE *target, unsigned char *source, BYTE length)
+{
+    BYTE shift= 0;
+    
+    *target= 0;
+    while(length)
+    {
+        *target += (source[length - 1] - '0') << shift;
+        length--;
+        shift++;
+    }
+}
+
 // get a specified bit
 unsigned char getbit(unsigned char byte, unsigned char bit)
 {

@@ -167,6 +167,7 @@ extern BYTE             CommsChannel;                       // user comms channe
 extern BOOL             FakeRead;                           // flag for analogue sampler to signal it wants access to buffers during read
 extern BOOL             PWD_Mode;                           // is this tag password protected?
 extern BYTE             Password[9];                        // 32 bits as HEX string set with LOGIN
+extern unsigned int     Led_Count;                          // LED status counter, also used for entropy
 
 // RWD (read/write device) coil state
 extern BYTE             RWD_State;                              // current state of RWD coil

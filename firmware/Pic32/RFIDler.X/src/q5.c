@@ -498,51 +498,26 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 // decode externally sniffed PWM
 BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    unsigned int    i, zero, one;
-    BOOL            decoded= FALSE, sequence= FALSE;
+    unsigned int    i, j;
+    BOOL            decoded= FALSE;
+    BYTE            out[65]; // max response from hitag2 is 64 bits
     
-    // first try to detect size of one and zero blocks
-    // short block is a zero, long is a one
-    for(i= 0, zero= 999, one= 0 ; i < count ; ++i)
+    j= 0;
+    while(j < count)
     {
-        if(gaps[i] >= 20 && gaps[i] <= 500 && pulses[i] > 0 && pulses[i] <= 512)
+        i= generic_decode_pwm(out, &pulses[j], 10, 512, &gaps[j], 20, 500, count - j);
+        if(i)
         {
-            if(pulses[i] > one)
-                one= pulses[i];
-            if(pulses[i] < zero)
-                zero= pulses[i];
+            decoded= TRUE;
+            UserMessage("\r\n%s", out);
+            j += i;
         }
+        else
+            break;
     }
     
-    // debug
-    //UserMessageNum("\r\nzero = %d", zero);
-    //UserMessageNum("\r\none = %d\r\n", one);
-
-    for(i= 0 ; i < count ; ++i)
-    {
-        // gap is between 8 & 50 FCs, so 64 and 400 uSec
-        // pulses can be between 16 and 63 FCs, so max 504 uSec
-        // but in practice our gaps will appear smaller due to time for energy to decay
-        // so allow everything to be a lot smaller
-        if(gaps[i] >= 20 && gaps[i] <= 500)
-        {
-            if(pulses[i] <= 512)
-            {
-                // max 24 FCs for a 0
-                if(approx(pulses[i], zero, 20))
-                    UserMessage("%s", "0");
-                else
-                    UserMessage("%s", "1");
-                decoded= TRUE;
-                sequence= TRUE;
-            }
-            else
-                if(sequence)
-                {
-                   sequence= FALSE;
-                   UserMessage("%s", "\r\n");
-                }
-        }
-    }
+    UserMessage("%s", "\r\n");
+    
     return decoded;
 }
+

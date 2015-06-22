@@ -315,10 +315,11 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
         rlen= 53;
     else
         rlen= 8;
+
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, rlen, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == rlen)
     {
         // debug
-        //UserMessage("got: ", "");
+        //UserMessage("\r\ngot: ", "");
         //printbinarray(tmp, 8);
         // check preamble
         if(memcmp(tmp, EM4205_Preamble, 8) != 0x00)
@@ -344,7 +345,13 @@ BOOL em4205_forward_link(BYTE *data)
             return FALSE;
 
     // send First Field Stop
-    pause_HW_clock_FC(RFIDlerConfig.RWD_Gap_Period);
+    //pause_HW_clock_FC(RFIDlerConfig.RWD_Gap_Period, LOW);
+    READER_CLOCK_ENABLE_OFF(LOW);
+    
+    // wait for falling edge so we know FFS has been detected
+    while(READER_DATA)
+        if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
+            return FALSE;
 
     // send data
     // to send a 1, leave coil running for a full bit period
@@ -363,7 +370,7 @@ BOOL em4205_forward_link(BYTE *data)
         else
         {
             TimerWait_FC(4);
-            pause_HW_clock_FC(RFIDlerConfig.RWD_Zero_Period - 4);
+            pause_HW_clock_FC(RFIDlerConfig.RWD_Zero_Period - 4, LOW);
             TimerWait_FC(RFIDlerConfig.RWD_Zero_Period);
         }
         ++data;
@@ -378,8 +385,8 @@ BOOL em4205_get_uid(BYTE *response)
     BYTE tmp[33];
 
     // debug
-    //em4205_disable();
-    //return FALSE;
+//    em4205_disable();
+//    return FALSE;
 
     // UID is stored in block 1
     if(!em4205_read_word(tmp, 1))

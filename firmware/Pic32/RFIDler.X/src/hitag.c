@@ -428,7 +428,6 @@ BOOL hitag2_pwd_auth(BYTE *response, BYTE *pwd)
 BOOL hitag2_crypto_auth(BYTE *response, BYTE *hexkey)
 {
     BYTE tmp[65], tmphex[9];
-    int seed;
     unsigned long long key;
     unsigned long uid;
     unsigned long initvec;

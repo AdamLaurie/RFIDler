@@ -322,7 +322,7 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
 //        UserMessage("\r\ngot: ", "");
 //        printbinarray(tmp, rlen);
         // check preamble (allowing for missing bit)
-        if(memcmp(tmp, &EM4205_Preamble, 8) != 0x00)
+        if(memcmp(tmp, EM4205_Preamble, 8) != 0x00)
             return FALSE;
         // debug
         //UserMessage("\r\ngood preamble", "");

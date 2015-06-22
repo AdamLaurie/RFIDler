@@ -160,7 +160,7 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
             return FALSE;
 
     // skip 4 bit Sequence Terminator pattern and leading '0'
-    HW_Skip_Bits= 9; // 10 primative 'bits' manchester encoded, but we lose 1/2 a bit due to ASK startup delay, so skip 1 less
+    HW_Skip_Bits= 10; // 10 primitive 'bits' manchester encoded
 
 //    DEBUG_PIN_4= !DEBUG_PIN_4;
 //    DEBUG_PIN_4= !DEBUG_PIN_4;

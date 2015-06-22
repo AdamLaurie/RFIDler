@@ -130,6 +130,7 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 #include "HardwareProfile.h"
+#include "em.h"
 #include "rfidler.h"
 #include "read.h"
 #include "hitag.h"
@@ -147,6 +148,11 @@ BOOL read_tag(BYTE *data, unsigned int startblock, unsigned int endblock)
     {
         switch(RFIDlerConfig.TagType)
         {
+            case TAG_TYPE_EM4X05:
+                if(!em4205_read_word(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
+                    return FALSE;
+                break;
+                
             case TAG_TYPE_HITAG1:
                 if (!hitag1_read_page(data + p * HEXDIGITS(RFIDlerConfig.BlockSize), (BYTE) i))
                     return FALSE;

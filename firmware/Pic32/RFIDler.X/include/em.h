@@ -156,4 +156,4 @@ BOOL em4205_get_uid(BYTE *response);
 BOOL em4205_disable(void);
 BOOL em4205_read_word(BYTE *response, BYTE word);
 void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin);
-BOOL em4205_ota_to_bin(unsigned char *bin, unsigned char *ota);
+BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota);

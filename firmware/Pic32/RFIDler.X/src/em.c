@@ -295,7 +295,7 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
     }
 
     // debug
-    //UserMessage("\r\nsending: %s\r\n", tmp);
+//    UserMessage("\r\nsending: %s\r\n", tmp);
 
     // start clock if not already running
     if(!mGetLED_Clock() == mLED_ON)
@@ -319,14 +319,16 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, rlen, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == rlen)
     {
         // debug
-        //UserMessage("\r\ngot: ", "");
-        //printbinarray(tmp, 8);
-        // check preamble
-        if(memcmp(tmp, EM4205_Preamble, 8) != 0x00)
+//        UserMessage("\r\ngot: ", "");
+//        printbinarray(tmp, rlen);
+        // check preamble (allowing for missing bit)
+        if(memcmp(tmp, &EM4205_Preamble, 8) != 0x00)
             return FALSE;
+        // debug
+        //UserMessage("\r\ngood preamble", "");
         // extract OTA data
         if(get_response)
-            return em4205_ota_to_bin(response, tmp + 8);
+            return em4205_ota_to_hex(response, tmp + 8);
         else
             return TRUE;
     }
@@ -345,24 +347,16 @@ BOOL em4205_forward_link(BYTE *data)
             return FALSE;
 
     // send First Field Stop
-    //pause_HW_clock_FC(RFIDlerConfig.RWD_Gap_Period, LOW);
-    READER_CLOCK_ENABLE_OFF(LOW);
+    pause_HW_clock_FC(RFIDlerConfig.RWD_Gap_Period, HIGH);
     
-    // wait for falling edge so we know FFS has been detected
-    while(READER_DATA)
-        if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
-            return FALSE;
+    // run clock for 1/2 bit period
+    TimerWait_FC(RFIDlerConfig.RWD_Zero_Period);
 
     // send data
     // to send a 1, leave coil running for a full bit period
     // to send a 0, switch off for 1st half of bit period (after 4 FCs), back on for 2nd half
     while(*data)
     {
-        // TAG will modulate for 1st half of each bit period, so we can sync to that
-        GetTimer_us(RESET);
-        while(!READER_DATA)
-            if (GetTimer_us(NO_RESET) > RFIDlerConfig.Timeout)
-                return FALSE;
         if(*data == '1')
         {
             TimerWait_FC(RFIDlerConfig.RWD_One_Period);
@@ -370,7 +364,7 @@ BOOL em4205_forward_link(BYTE *data)
         else
         {
             TimerWait_FC(4);
-            pause_HW_clock_FC(RFIDlerConfig.RWD_Zero_Period - 4, LOW);
+            pause_HW_clock_FC(RFIDlerConfig.RWD_Zero_Period - 4, HIGH);
             TimerWait_FC(RFIDlerConfig.RWD_Zero_Period);
         }
         ++data;
@@ -381,19 +375,8 @@ BOOL em4205_forward_link(BYTE *data)
 
 BOOL em4205_get_uid(BYTE *response)
 {
-    // 32 bit UID + null
-    BYTE tmp[33];
-
-    // debug
-//    em4205_disable();
-//    return FALSE;
-
     // UID is stored in block 1
-    if(!em4205_read_word(tmp, 1))
-        return FALSE;
-
-    binarraytohex(response, tmp, 32);
-    return TRUE;
+    return em4205_read_word(response, 1);
 }
 
 // shut down TAG until next power up
@@ -441,23 +424,23 @@ void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin)
     *ota= 0x00;
 }
 
-// convert EM4205 OTA format to 32 bit binary
-BOOL em4205_ota_to_bin(unsigned char *bin, unsigned char *ota)
+// convert EM4205 OTA format to 32 bit hex 
+BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota)
 {
-    unsigned char i, j, colparity[8]= {0,0,0,0,0,0,0,0};
+    unsigned char i, j, colparity[8]= {0,0,0,0,0,0,0,0}, tmp[32];
 
     // strip/check parity bits - 4 blocks, every 9th bit
     for(i= 0 ; i < 4 ; ++i)
     {
-        memcpy(bin + i * 8, ota + i * 9, 8);
-        if(parity(bin + i * 8, EVEN, 8) != ota[i * 9 + 8])
+        memcpy(tmp + i * 8, ota + i * 9, 8);
+        if(parity(tmp + i * 8, EVEN, 8) != ota[i * 9 + 8])
             return FALSE;
     }
 
     // check column parity
     for(i= 0 ; i < 4 ; ++i)
         for(j= 0; j < 8 ; ++j)
-            colparity[j] += bin[i * 8 + j];
+            colparity[j] += tmp[i * 8 + j];
     for(i= 0 ; i < 8 ; ++i)
         if(colparity[i] % 2 != ota[36 + i])
             return FALSE;
@@ -465,6 +448,8 @@ BOOL em4205_ota_to_bin(unsigned char *bin, unsigned char *ota)
     // check terminating stop bit
     if(ota[44] != 0x00)
         return FALSE;
+    
+    binarraytohex(hex, tmp, 32);
 
     return TRUE;
 }

@@ -428,9 +428,9 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_Wake_Period= 1000; // docco says max 3 ms, but round up a bit
             RFIDlerConfig.RWD_Gap_Period= 55; // First Field Stop
             RFIDlerConfig.RWD_Sleep_Period= 2000;
-            RFIDlerConfig.RWD_Zero_Period= 16; // em4205 uses it's own scheme, not PWM
+            RFIDlerConfig.RWD_Zero_Period= 16; // note that em4x05 uses it's own PWM scheme
             RFIDlerConfig.RWD_One_Period= 32; // see em.c for details
-            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 1000; // doc says 544us, + 6.7 ms eeprom write, so round up to 1000 FCs
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 60; // doc says 544us, (+ 6.7 ms when eeprom write), but tests are much shorter!
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 80; // docs say 544, so about 68 fcs
             break;
 
@@ -553,32 +553,6 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.SyncBits= 5;
             break;
 
-        case TAG_TYPE_Q5:
-            RFIDlerConfig.FrameClock= 800;
-            RFIDlerConfig.Manchester= TRUE;
-            RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= 160;
-            RFIDlerConfig.DataRate= 64;
-            RFIDlerConfig.DataBits= 64;
-            RFIDlerConfig.DataBlocks= Q5_DATABLOCKS;
-            RFIDlerConfig.BlockSize= Q5_BLOCKSIZE;
-            RFIDlerConfig.TagType= tag;
-            RFIDlerConfig.Repeat= 20;
-            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.Sync[0]= 0xFF;
-            RFIDlerConfig.Sync[1]= 0xFF;
-            RFIDlerConfig.Sync[2]= 0x00;
-            RFIDlerConfig.Sync[3]= 0x00;
-            RFIDlerConfig.SyncBits= 9;
-            RFIDlerConfig.RWD_Sleep_Period= 13000;
-            RFIDlerConfig.RWD_Wake_Period= 4000; // must be more than 3ms, but play it safe
-            RFIDlerConfig.RWD_Gap_Period= 50; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
-            RFIDlerConfig.RWD_Zero_Period= 16; //24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
-            RFIDlerConfig.RWD_One_Period= 48; //54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
-            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 48; //64; // q5 will exit downlink mode after 64 but may not yet be damped!
-            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192; // the longer the better!
-            break;
-
         case TAG_TYPE_EM4X02:
         case TAG_TYPE_UNIQUE:
             RFIDlerConfig.FrameClock= 800;
@@ -651,6 +625,32 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
             RFIDlerConfig.PSK_Quality= 4L;
             RFIDlerConfig.RWD_Wake_Period= 1000;
+            break;
+
+        case TAG_TYPE_Q5:
+            RFIDlerConfig.FrameClock= 800;
+            RFIDlerConfig.Manchester= TRUE;
+            RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
+            RFIDlerConfig.PotHigh= 160;
+            RFIDlerConfig.DataRate= 64;
+            RFIDlerConfig.DataBits= 64;
+            RFIDlerConfig.DataBlocks= Q5_DATABLOCKS;
+            RFIDlerConfig.BlockSize= Q5_BLOCKSIZE;
+            RFIDlerConfig.TagType= tag;
+            RFIDlerConfig.Repeat= 20;
+            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
+            RFIDlerConfig.Sync[0]= 0xFF;
+            RFIDlerConfig.Sync[1]= 0xFF;
+            RFIDlerConfig.Sync[2]= 0x00;
+            RFIDlerConfig.Sync[3]= 0x00;
+            RFIDlerConfig.SyncBits= 9;
+            RFIDlerConfig.RWD_Sleep_Period= 13000;
+            RFIDlerConfig.RWD_Wake_Period= 4000; // must be more than 3ms, but play it safe
+            RFIDlerConfig.RWD_Gap_Period= 50; // 14 nominal, 8 - 50 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Zero_Period= 16; //24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
+            RFIDlerConfig.RWD_One_Period= 48; //54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 48; //64; // q5 will exit downlink mode after 64 but may not yet be damped!
+            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192; // the longer the better!
             break;
 
         case TAG_TYPE_T55X7:

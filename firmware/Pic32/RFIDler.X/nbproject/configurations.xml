@@ -159,7 +159,7 @@
       <compileType>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibFileItem>/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a</linkerLibFileItem>
+            <linkerLibFileItem>/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -197,7 +197,7 @@
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
         <property key="preprocessor-macros"
-                  value="VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1"/>
+                  value="VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1;_DISABLE_OPENADC10_CONFIGPORT_WARNING"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="use-cci" value="false"/>
@@ -339,13 +339,13 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>1.33</languageToolchainVersion>
+        <languageToolchainVersion>1.34</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibFileItem>/opt/microchip/xc32/v1.33/pic32mx/lib/libmchp_peripheral_32MX795F512L.a</linkerLibFileItem>
+            <linkerLibFileItem>/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -431,7 +431,7 @@
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
         <property key="preprocessor-macros"
-                  value="RFIDLER_DEBUG;VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1"/>
+                  value="RFIDLER_DEBUG;VERSION=`git rev-list HEAD --count`;_SUPPRESS_PLIB_WARNING=1;_DISABLE_OPENADC10_CONFIGPORT_WARNING"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="use-cci" value="false"/>

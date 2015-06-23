@@ -185,6 +185,25 @@
 #define HITAG2_EM4X02_CONFIG_BLOCK  "02AA4854"      // public-mode a
 #define HITAG2_MODEC_CONFIG_BLOCK   "04AA4854"      // public-mode c - PCF793X
 
+// config block masks
+
+#define HITAG2_MASK_PAGE_1_2_OTP_PROTECT    0b10000000000000000000000000000000
+#define HITAG2_MASK_PAGE_3_OTP_PROTECT      0b01000000000000000000000000000000
+#define HITAG2_MASK_PAGE_4_5_PROTECT        0b00100000000000000000000000000000
+#define HITAG2_MASK_PAGE_6_7_PROTECT        0b00010000000000000000000000000000
+#define HITAG2_MASK_SECURITY                0b00001000000000000000000000000000
+#define HITAG2_MASK_MODE                    0b00000110000000000000000000000000
+#define HITAG2_MASK_MODULATION              0b00000001000000000000000000000000
+
+// config block bit shifts
+#define HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT   31
+#define HITAG2_SHIFT_PAGE_3_OTP_PROTECT     30
+#define HITAG2_SHIFT_PAGE_4_5_PROTECT       29
+#define HITAG2_SHIFT_PAGE_6_7_PROTECT       28
+#define HITAG2_SHIFT_SECURITY               27
+#define HITAG2_SHIFT_MODE                   25
+#define HITAG2_SHIFT_MODULATION             24
+
 BOOL hitag1_get_uid(BYTE *response);
 BOOL hitag1_hex_to_uid(BYTE *response, BYTE *hex);
 BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack);
@@ -205,4 +224,5 @@ unsigned long hitag2_crypt(unsigned long source, BYTE length);
 unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
 BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
 BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BOOL hitag2_config_block_show(BYTE *config, BYTE *password);
 

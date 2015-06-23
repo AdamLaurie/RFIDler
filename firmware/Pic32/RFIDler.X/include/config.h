@@ -135,7 +135,10 @@
 #define SET_CONFIG(config, mask, shift, setting)  ((config & ~mask) | ((setting << shift) & mask))
 
 BOOL config_block_number(unsigned int *block, BYTE tagtype);
+BOOL pw_block_number(unsigned int *block, BYTE tagtype);
 BOOL config_user_block(unsigned int *block, BYTE tagtype);
 BOOL get_config_block(BYTE *out, BYTE tagtype);
+BOOL get_pw_block(BYTE *out, BYTE tagtype);
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype);
-BOOL tag_show_config_block(BYTE tagtype);
+BOOL config_block_show(BYTE *config, BYTE *password, BYTE tagtype);
+

@@ -284,37 +284,7 @@ BOOL t55x7_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify)
 
     return TRUE;
 }
-//
-//// set password and mode, and return UID
-//BOOL q5_login(BYTE *response, BYTE *pass)
-//{
-//    BYTE tmp[35];
-//
-//    // check we need password - if we can get UID without, then we don't
-//    if(q5_get_uid(tmp))
-//        return FALSE;
-//
-//    if(strlen(pass) == 0)
-//        pass= Q5_DEFAULT_PWD;
-//
-//    memcpy(tmp, Q5_AOR, 2);
-//    hextobinstring(tmp + 2, pass);
-//    tmp[34]= '\0';
-//
-//    // send password
-//    if (!q5_send_command(response, tmp, strlen(tmp), RESET, NO_SYNC, 0))
-//        return FALSE;
-//
-//    // see if we can now get UID
-//    if(!q5_get_uid(tmp))
-//        return FALSE;
-//
-//    PWD_Mode= TRUE;
-//    strcpy(Password, pass);
-//    strcpy(response, pass);
-//    return TRUE;
-//}
-//
+
 // try to find values that correctly transmit all commands to t55x7
 // so that a GET_UID command will return a true value
 BOOL t55x7_rwd_test(BYTE *pattern)
@@ -345,13 +315,13 @@ BOOL t55x7_rwd_test(BYTE *pattern)
     return found;
 }
 
-BOOL t55x7_config_block_show(BYTE *config)
+BOOL t55x7_config_block_show(BYTE *config, BYTE *password)
 {
     uint32_t    value= hextoulong(config);
     BOOL        xmode;
 
-    UserMessage("  Config Block: %.8s\r\n", config);
-    UserMessageNum("    Master Key: %d  = ", GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY));
+    UserMessage("  Config Block (0): %.8s\r\n\r\n", config);
+    UserMessageNum("        Master Key: %d  = ", GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY));
     if(GET_CONFIG(value, T55X7_MASK_MASTER_KEY, T55X7_SHIFT_MASTER_KEY) == T55X7_COMPAT_MODE)
         UserMessage("%s\r\n", "Compatibility Mode");
     else
@@ -360,14 +330,14 @@ BOOL t55x7_config_block_show(BYTE *config)
         else
             UserMessage("%s\r\n", "Undefined Mode");
     xmode= GET_CONFIG(value, T55X7_MASK_XMODE, T55X7_SHIFT_XMODE);
-    UserMessage("        X-Mode: %s\r\n", xmode ? "True" : "False");
+    UserMessage("            X-Mode: %s\r\n", xmode ? "True" : "False");
 
     // display additional/alternate fields if in xmode
     if(xmode)
     {
-        UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
+        UserMessageNum("         Data Rate: %02d = ", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
         UserMessageNum("%d * FC\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE) * 2 + 2);
-        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        UserMessageNum("        Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
         if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
         {
             if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)== T55X7_MOD_BIPHASE_50)
@@ -380,13 +350,13 @@ BOOL t55x7_config_block_show(BYTE *config)
         }
         else
             UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
-       UserMessage("          SST: %s\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_SST, T55X7_SHIFT_ST_SST) ? "True" : "False");
+       UserMessage("              SST: %s\r\n", GET_CONFIG(value, T55X7_XMODE_MASK_SST, T55X7_SHIFT_ST_SST) ? "True" : "False");
     }
     else
     {
-        UserMessageNum("     Data Rate: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
+        UserMessageNum("         Data Rate: %02d = ", GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE));
         UserMessageNum("%d * FC\r\n", T55x7_Compat_Data_Rates[GET_CONFIG(value, T55X7_COMPAT_MASK_DATA_BIT_RATE, T55X7_SHIFT_DATA_BIT_RATE)]);
-        UserMessageNum("    Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
+        UserMessageNum("        Modulation: %02d = ", GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION));
         if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION) > 8)
         {
             if(GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)== 16)
@@ -396,22 +366,25 @@ BOOL t55x7_config_block_show(BYTE *config)
         }
         else
             UserMessage("%s\r\n", (BYTE *) T55x7_Compat_Modulation[GET_CONFIG(value, T55X7_MASK_MODULATION, T55X7_SHIFT_MODULATION)]);
-        UserMessage("            ST: %s\r\n", GET_CONFIG(value, T55X7_COMPAT_MASK_ST, T55X7_SHIFT_ST_SST) ? "True" : "False");
+        UserMessage("                ST: %s\r\n", GET_CONFIG(value, T55X7_COMPAT_MASK_ST, T55X7_SHIFT_ST_SST) ? "True" : "False");
     }
     // display common fields
-    UserMessageNum("   PSK Carrier: %d = ", GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ));
+    UserMessageNum("       PSK Carrier: %d = ", GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ));
     if(GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ) > 2)
         UserMessage("%s\r\n", "Reserved");
     else
         UserMessageNum("%d * FC\r\n", GET_CONFIG(value, T55X7_MASK_PSK_CARRIER_FREQ, T55X7_SHIFT_PSK_CARRIER_FREQ) * 2 + 2);
-    UserMessageNum("      Maxblock: %d\r\n", GET_CONFIG(value, T55X7_MASK_MAX_BLOCK, T55X7_SHIFT_MAX_BLOCK));
-    UserMessage("           AOR: %s\r\n", GET_CONFIG(value, T55X7_MASK_AOR, T55X7_SHIFT_AOR) ? "True" : "False");
-    UserMessage("           OTP: %s\r\n", GET_CONFIG(value, T55X7_MASK_OTP, T55X7_SHIFT_OTP) ? "True" : "False");
-    UserMessage("           PWD: %s\r\n", GET_CONFIG(value, T55X7_MASK_PWD, T55X7_SHIFT_PWD) ? "True" : "False");
-    UserMessage("    Fast Write: %s\r\n", GET_CONFIG(value, T55X7_MASK_FAST_WRITE, T55X7_SHIFT_FAST_WRITE) ? "True" : "False");
-    UserMessage("  Inverse Data: %s\r\n", GET_CONFIG(value, T55X7_MASK_INVERSE_DATA, T55X7_SHIFT_INVERSE_DATA) ? "True" : "False");
-    UserMessage("     POR Delay: %s\r\n", GET_CONFIG(value, T55X7_MASK_POR_DELAY, T55X7_SHIFT_POR_DELAY) ? "True" : "False");
+    UserMessageNum("          Maxblock: %d\r\n", GET_CONFIG(value, T55X7_MASK_MAX_BLOCK, T55X7_SHIFT_MAX_BLOCK));
+    UserMessage("               AOR: %s\r\n", GET_CONFIG(value, T55X7_MASK_AOR, T55X7_SHIFT_AOR) ? "True" : "False");
+    UserMessage("               OTP: %s\r\n", GET_CONFIG(value, T55X7_MASK_OTP, T55X7_SHIFT_OTP) ? "True" : "False");
+    UserMessage("               PWD: %s\r\n", GET_CONFIG(value, T55X7_MASK_PWD, T55X7_SHIFT_PWD) ? "True" : "False");
+    UserMessage("        Fast Write: %s\r\n", GET_CONFIG(value, T55X7_MASK_FAST_WRITE, T55X7_SHIFT_FAST_WRITE) ? "True" : "False");
+    UserMessage("      Inverse Data: %s\r\n", GET_CONFIG(value, T55X7_MASK_INVERSE_DATA, T55X7_SHIFT_INVERSE_DATA) ? "True" : "False");
+    UserMessage("         POR Delay: %s\r\n", GET_CONFIG(value, T55X7_MASK_POR_DELAY, T55X7_SHIFT_POR_DELAY) ? "True" : "False");
 
+    UserMessage("\r\n     PWD Block (7): %.8s    ", password);
+    printhexreadable(password);
+    UserMessage("%s", "\r\n");
     return TRUE;
 }
 

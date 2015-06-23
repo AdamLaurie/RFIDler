@@ -191,7 +191,7 @@ BOOL config_user_block(unsigned int *block, BYTE tagtype)
 }
 
 // get the password block number
-BOOL config_pw_block(unsigned int *block, BYTE tagtype)
+BOOL pw_block_number(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
@@ -222,6 +222,17 @@ BOOL get_config_block(BYTE *out, BYTE tagtype)
     return FALSE;
 }
 
+// get current password block from tag
+BOOL get_pw_block(BYTE *out, BYTE tagtype)
+{
+    int block;
+
+    if(pw_block_number(&block, tagtype))
+        return read_tag(out, block, block);
+    
+    return FALSE;
+}
+
 // get a config block suitable for emulating
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 {
@@ -242,14 +253,19 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 }
 
 // display contents of tag config block if present
-BOOL config_block_show(BYTE *config, BYTE tagtype)
+BOOL config_block_show(BYTE *config, BYTE *password, BYTE tagtype)
 {
     switch(tagtype)
     {
+        case TAG_TYPE_HITAG2:
+            return hitag2_config_block_show(config, password);
+            
         case TAG_TYPE_Q5:
-            return q5_config_block_show(config);
+            return q5_config_block_show(config, password);
+            
         case TAG_TYPE_T55X7:
-            return t55x7_config_block_show(config);
+            return t55x7_config_block_show(config, password);
+            
         default:
             return FALSE;
     }

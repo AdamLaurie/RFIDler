@@ -227,9 +227,7 @@ BOOL t55x7_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, 
 BOOL t55x7_get_uid(BYTE *response);
 BOOL t55x7_read_block(BYTE *response, BYTE block);
 BOOL t55x7_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify);
-//BOOL q5_get_config(BYTE *response);
-//BOOL q5_login(BYTE *response, BYTE *pass);
 BOOL t55x7_rwd_test(BYTE *pattern);
-BOOL t55x7_config_block_show(BYTE *config);
+BOOL t55x7_config_block_show(BYTE *config, BYTE *password);
 BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype);
 BOOL t55x7_create_config_block(BYTE *config);

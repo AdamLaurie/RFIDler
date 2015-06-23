@@ -140,27 +140,28 @@
 
 #include "uart3.h"
 
-#include "rfidler.h"
-#include "indala.h"
-#include "ask.h"
-#include "emulate.h"
-#include "clock.h"
-#include "rwd.h"
-#include "detect.h"
-#include "hitagcrypto.h"
-#include "comms.h"
-#include "tags.h"
-#include "util.h"
-#include "auto.h"
-#include "uid.h"
-#include "login.h"
-#include "auth.h"
-#include "q5.h"
-#include "vtag.h"
-#include "sc_config.h"
-#include "wiegand.h"
 #include "analogue.h"
+#include "ask.h"
+#include "auth.h"
+#include "auto.h"
+#include "clock.h"
+#include "comms.h"
+#include "config.h"
+#include "detect.h"
+#include "emulate.h"
+#include "hitagcrypto.h"
+#include "indala.h"
 #include "iso_7816.h"
+#include "login.h"
+#include "q5.h"
+#include "rfidler.h"
+#include "rwd.h"
+#include "sc_config.h"
+#include "tags.h"
+#include "uid.h"
+#include "util.h"
+#include "vtag.h"
+#include "wiegand.h"
 #include "write.h"
 
 // low level config
@@ -2004,8 +2005,9 @@ BYTE ProcessSerialCommand(char *command)
             {
                 if (get_config_block(local_tmp, RFIDlerConfig.TagType))
                     {
+                        get_pw_block(local_tmp1, RFIDlerConfig.TagType);
                         commandok= command_ack(DATA);
-                        config_block_show(local_tmp, RFIDlerConfig.TagType);
+                        config_block_show(local_tmp, local_tmp1, RFIDlerConfig.TagType);
                         eod();
                     }
                 else

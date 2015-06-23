@@ -271,6 +271,21 @@ BYTE hextobyte(BYTE *hex)
     return (BYTE) ret;
 }
 
+// print readable (ascii) characters from HEX string
+void printhexreadable(BYTE *hex)
+{
+    BYTE    x[2]= {'\0', '\0'};
+    
+    while(*hex)
+    {
+        x[0]= hextobyte(hex);
+        if(x[0] < 0x20 || x[0] > 0x7e)
+            x[0]= '.';
+        UserMessage("%s", x);
+        hex += 2;
+    }
+}
+
 // convert 8 digit hex to unsigned long
 unsigned long hextoulong(BYTE *hex)
 {

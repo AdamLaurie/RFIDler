@@ -136,6 +136,7 @@
 #include "HardwareProfile.h"
 #include "ask.h"
 #include "comms.h"
+#include "config.h"
 #include "hitagcrypto.h"
 #include "hitag.h"
 #include "rfidler.h"
@@ -146,6 +147,8 @@
 // sync/ack checking
 const BYTE Hitag2Sync[5]= {0x01, 0x01, 0x01, 0x01, 0x01};
 const BYTE Hitag1ACK[3]= {0x01, 0x00, 0x01};
+
+const BYTE *Hitag2_Modes[]= {"Public Mode B", "Public Mode A", "Public Mode C", "Hitag2"};
 
 // crypto globals
 Hitag_State Hitag_Crypto_State;
@@ -835,6 +838,37 @@ BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned in
     UserMessage("%s", "\r\n");
     
     return decoded;
+}
+
+BOOL hitag2_config_block_show(BYTE *config, BYTE *password)
+{
+    uint32_t    value= hextoulong(config);
+
+    UserMessage("  Config Block (3): %.8s\r\n\r\n", config);
+    UserMessageNum("        Page 1 & 2: %d = ", GET_CONFIG(value, HITAG2_MASK_PAGE_1_2_OTP_PROTECT, HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT));
+    if(GET_CONFIG(value, HITAG2_MASK_SECURITY, HITAG2_SHIFT_SECURITY))
+        UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_PAGE_1_2_OTP_PROTECT, HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT) ? "No Read / No Write" : "Read / Write");
+    else
+        UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_PAGE_1_2_OTP_PROTECT, HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT) ? "Page 1: No Read / No Write, Page 2: Read Only" : "Read / Write");
+    UserMessageNum("            Page 3: %d = ", GET_CONFIG(value, HITAG2_MASK_PAGE_3_OTP_PROTECT, HITAG2_SHIFT_PAGE_3_OTP_PROTECT));
+    UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_PAGE_3_OTP_PROTECT, HITAG2_SHIFT_PAGE_3_OTP_PROTECT) ? "Read Only" : "Read / Write");
+    UserMessageNum("        Page 4 & 5: %d = ", GET_CONFIG(value, HITAG2_MASK_PAGE_4_5_PROTECT, HITAG2_SHIFT_PAGE_4_5_PROTECT));
+    UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_PAGE_4_5_PROTECT, HITAG2_SHIFT_PAGE_4_5_PROTECT) ? "Read Only" : "Read / Write");
+    UserMessageNum("        Page 6 & 7: %d = ", GET_CONFIG(value, HITAG2_MASK_PAGE_6_7_PROTECT, HITAG2_SHIFT_PAGE_6_7_PROTECT));
+    UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_PAGE_6_7_PROTECT, HITAG2_SHIFT_PAGE_6_7_PROTECT) ? "Read Only" : "Read / Write");
+    UserMessageNum("          Security: %d = ", GET_CONFIG(value, HITAG2_MASK_SECURITY, HITAG2_SHIFT_SECURITY));
+    UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_SECURITY, HITAG2_SHIFT_SECURITY) ? "Crypto" : "Password");
+    UserMessageNum("              Mode: %d = ", GET_CONFIG(value, HITAG2_MASK_MODE, HITAG2_SHIFT_MODE));
+    UserMessage("%s\r\n", (BYTE *) Hitag2_Modes[GET_CONFIG(value, HITAG2_MASK_MODE, HITAG2_SHIFT_MODE)]);
+    UserMessageNum("        Modulation: %d = ", GET_CONFIG(value, HITAG2_MASK_MODULATION, HITAG2_SHIFT_MODULATION));
+    UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_MODULATION, HITAG2_SHIFT_MODULATION) ? "BiPhase" : "Manchester");
+
+    UserMessage("\r\n     PWD Block (3): %.6s      ", config + 2);
+    printhexreadable(config + 2);
+    UserMessage("\r\n     PWD Block (7): %.8s    ", password);
+    printhexreadable(password);
+    UserMessage("%s", "\r\n");
+    return TRUE;
 }
 
 // end optimisation

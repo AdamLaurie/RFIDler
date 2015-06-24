@@ -383,7 +383,7 @@ BOOL t55x7_config_block_show(BYTE *config, BYTE *password)
     UserMessage("         POR Delay: %s\r\n", GET_CONFIG(value, T55X7_MASK_POR_DELAY, T55X7_SHIFT_POR_DELAY) ? "True" : "False");
 
     UserMessage("\r\n     PWD Block (7): %.8s    ", password);
-    printhexreadable(password);
+    printhexreadable(password, 4);
     UserMessage("%s", "\r\n");
     return TRUE;
 }

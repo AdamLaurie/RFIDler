@@ -155,7 +155,7 @@ unsigned int binarraytoint(BYTE *bin, BYTE length);
 unsigned long long binarraytolonglong(BYTE *bin, BYTE length);
 unsigned long binarraytoulong(BYTE *bin, BYTE length);
 BYTE hextobyte(BYTE *hex);
-void printhexreadable(BYTE *hex);
+void printhexreadable(BYTE *hex, BYTE maxlength);
 unsigned long hextoulong(BYTE *hex);
 unsigned long hexreversetoulong(BYTE *hex);
 unsigned long long hextoulonglong(BYTE *hex);

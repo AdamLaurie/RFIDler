@@ -272,11 +272,12 @@ BYTE hextobyte(BYTE *hex)
 }
 
 // print readable (ascii) characters from HEX string
-void printhexreadable(BYTE *hex)
+// mxlength specified in BYTEs, not HEX digits
+void printhexreadable(BYTE *hex, BYTE maxlength)
 {
     BYTE    x[2]= {'\0', '\0'};
     
-    while(*hex)
+    while(*hex && maxlength--)
     {
         x[0]= hextobyte(hex);
         if(x[0] < 0x20 || x[0] > 0x7e)

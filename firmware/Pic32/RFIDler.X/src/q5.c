@@ -387,7 +387,7 @@ BOOL q5_config_block_show(BYTE *config, BYTE *password)
     UserMessage("                ST: %s\r\n", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST) ? "True" : "False");
     
     UserMessage("\r\n     PWD Block (7): %.8s    ", password);
-    printhexreadable(password);
+    printhexreadable(password, 4);
     UserMessage("%s", "\r\n");
     return TRUE;
 }

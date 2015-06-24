@@ -842,7 +842,7 @@ BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned in
 
 BOOL hitag2_config_block_show(BYTE *config, BYTE *password)
 {
-    uint32_t    value= hextoulong(config);
+    BYTE    value= hextobyte(config); // first byte only used as config
 
     UserMessage("  Config Block (3): %.8s\r\n\r\n", config);
     UserMessageNum("        Page 1 & 2: %d = ", GET_CONFIG(value, HITAG2_MASK_PAGE_1_2_OTP_PROTECT, HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT));
@@ -864,9 +864,9 @@ BOOL hitag2_config_block_show(BYTE *config, BYTE *password)
     UserMessage("%s\r\n", GET_CONFIG(value, HITAG2_MASK_MODULATION, HITAG2_SHIFT_MODULATION) ? "BiPhase" : "Manchester");
 
     UserMessage("\r\n     PWD Block (3): %.6s      ", config + 2);
-    printhexreadable(config + 2);
-    UserMessage("\r\n     PWD Block (7): %.8s    ", password);
-    printhexreadable(password);
+    printhexreadable(config + 2, 3);
+    UserMessage("\r\n     PWD Block (1): %.8s    ", password);
+    printhexreadable(password, 4);
     UserMessage("%s", "\r\n");
     return TRUE;
 }

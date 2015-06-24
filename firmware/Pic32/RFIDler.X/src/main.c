@@ -971,7 +971,7 @@ BYTE ProcessSerialCommand(char *command)
     double tmpfloat;
     unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3,  tmpint4, tmpint5, tmpint6, tmpint7;
     static unsigned long tmplong;
-    static char local_tmp[256], local_tmp1[256];
+    static char local_tmp[256], local_tmp1[256], local_tmp2[256];
     BYTE *ccprompt= "";
     static BYTE *prompt= "RFIDler"; // main prompt
     BYTE *prompt_2= "> ";
@@ -2006,8 +2006,9 @@ BYTE ProcessSerialCommand(char *command)
                 if (get_config_block(local_tmp, RFIDlerConfig.TagType))
                     {
                         get_pw_block(local_tmp1, RFIDlerConfig.TagType);
+                        get_info_block(local_tmp2, RFIDlerConfig.TagType);
                         commandok= command_ack(DATA);
-                        config_block_show(local_tmp, local_tmp1, RFIDlerConfig.TagType);
+                        config_block_show(local_tmp, local_tmp1, local_tmp2, RFIDlerConfig.TagType);
                         eod();
                     }
                 else

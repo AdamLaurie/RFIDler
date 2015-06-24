@@ -136,9 +136,11 @@
 
 BOOL config_block_number(unsigned int *block, BYTE tagtype);
 BOOL pw_block_number(unsigned int *block, BYTE tagtype);
+BOOL info_block_number(unsigned int *block, BYTE tagtype);
 BOOL config_user_block(unsigned int *block, BYTE tagtype);
 BOOL get_config_block(BYTE *out, BYTE tagtype);
 BOOL get_pw_block(BYTE *out, BYTE tagtype);
+BOOL get_info_block(BYTE *out, BYTE tagtype);
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype);
-BOOL config_block_show(BYTE *config, BYTE *password, BYTE tagtype);
+BOOL config_block_show(BYTE *config, BYTE *password, BYTE *info, BYTE tagtype);
 

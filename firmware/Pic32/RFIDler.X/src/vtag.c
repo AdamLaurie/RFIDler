@@ -150,7 +150,7 @@ void vtag_wipe(void)
 void vtag_dump(void)
 {
     BYTE tmp[MAXBLOCKSIZE + 1], interpret;
-    unsigned int i, j;
+    unsigned int i, j, k;
 
     UserMessage("              Type: %s", (BYTE *) TagTypes[RFIDlerVTag.TagType]);
 
@@ -171,7 +171,9 @@ void vtag_dump(void)
         UserMessage("%s","\r\n\r\n");
         j= 0;
         pw_block_number(&j, RFIDlerVTag.TagType);
-        config_block_show(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * i)], &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * j)], RFIDlerVTag.TagType);
+        k= 0;
+        info_block_number(&k, RFIDlerVTag.TagType);
+        config_block_show(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * i)], &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * j)], &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * k)], RFIDlerVTag.TagType);
     }
 
     if(RFIDlerVTag.DataBlocks == 0)

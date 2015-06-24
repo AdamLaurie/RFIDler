@@ -144,6 +144,8 @@ BOOL PSK_Read_Error= FALSE;
 BOOL Manchester_Error= FALSE;
 unsigned int Clock_Tick_Counter;        // provide external routines with accurate count of ticks
 BOOL Clock_Tick_Counter_Reset= TRUE;    // provide external routines with means to reset tick counter
+unsigned long Reader_Bit_Count= 0L;     // make this externally visible so init routines can clear it
+char Previous= -1;                      // make this externally visible so init routines can clear it
 
 // Interrupt Service Routines
 //
@@ -416,10 +418,8 @@ void __ISR(_TIMER_3_VECTOR, ipl7auto) emulation_send_bit (void)
 // DATA reading ISR
 void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 {
-    static unsigned long count= 0L;
     unsigned int time;
-    static char out, previous= -1;
-    BYTE i, *p;
+    static char out;
     BOOL fskread= FALSE;
 
     // show trigger moment (you must also set end of routine debugger statement)
@@ -438,6 +438,8 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
     // don't do anything unless we've got data to read - we may have been left running due to higher level error.
     if(!HW_Bits)
     {
+        Reader_Bit_Count= 0L;
+        Previous= -1;
         stop_HW_reader_ISR();
         return;
     }
@@ -466,16 +468,16 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             
             // if manchester/biphase encoded and first bit, then add a half bit that we
             // lost when synchronising
-            if(!count && (RFIDlerConfig.Manchester || RFIDlerConfig.BiPhase))
-                ++count;
+            if(!Reader_Bit_Count && (RFIDlerConfig.Manchester || RFIDlerConfig.BiPhase))
+                ++Reader_Bit_Count;
 
             // check for manchester encoding sync/errors
-            if(RFIDlerConfig.Manchester && count)
+            if(RFIDlerConfig.Manchester && Reader_Bit_Count)
             {
                 // the 2nd half bit may not be equal to the 1st
                 // this error is allowed to occur exactly once, in which case we
                 // are out of sync so we slip timing by half a bit
-                if(count % 2 && out == previous)
+                if(Reader_Bit_Count % 2 && out == Previous)
                 {
                     //DEBUG_PIN_4= !DEBUG_PIN_4;
                     // error LED on
@@ -484,8 +486,8 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                     {
                         //DEBUG_PIN_4= !DEBUG_PIN_4;
                         // 2 strikes and we fail!
-                        count= 0L;
-                        previous= -1;
+                        Reader_Bit_Count= 0L;
+                        Previous= -1;
                         stop_HW_reader_ISR();
                         return;
                     }
@@ -495,8 +497,8 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                         // 1st error - reset data and start again, now offset by a half bit.
                         Manchester_Error= TRUE;
                         //DEBUG_PIN_2= LOW;
-                        EMU_Data -= (count / 2L);
-                        count= 1L;
+                        EMU_Data -= (Reader_Bit_Count / 2L);
+                        Reader_Bit_Count= 1L;
                         // successful read resets timeout
                         WriteTimer5(0);
                         return;
@@ -507,9 +509,9 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             // now set data bit
 
             // biphase is 1 if mid-bit change or 0 if no mid-bit change
-            if(RFIDlerConfig.BiPhase && count % 2L)
+            if(RFIDlerConfig.BiPhase && Reader_Bit_Count % 2L)
             {
-                if(previous == out)
+                if(Previous == out)
                     *(EMU_Data++)= 0x00 ^ RFIDlerConfig.Invert;
                 else
                     *(EMU_Data++)= 0x01 ^ RFIDlerConfig.Invert;
@@ -528,7 +530,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             }
 
             // read only 2nd half of bit if manchester
-            if(RFIDlerConfig.Manchester && count % 2L)
+            if(RFIDlerConfig.Manchester && Reader_Bit_Count % 2L)
             {
                 //DEBUG_PIN_1= out;
                 // always invert as we are now reading 2nd half bit, so opposite value
@@ -537,7 +539,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
                 WriteTimer5(0);
             }
 
-            previous= out;
+            Previous= out;
 
             break;
 
@@ -639,16 +641,16 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             break;
     }
 
-    ++count;
+    ++Reader_Bit_Count;
 
     // debugging - reset output line
     DEBUG_PIN_2= LOW;
 
     // finished?
-    if(count == HW_Bits)
+    if(Reader_Bit_Count == HW_Bits)
     {
-        HW_Bits= count= 0L;
-        previous= -1;
+        HW_Bits= Reader_Bit_Count= 0L;
+        Previous= -1;
         // if only 1 manchester error caught, that's OK
         Manchester_Error= FALSE;
         mLED_Error_Off();

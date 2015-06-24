@@ -136,6 +136,8 @@
 #define EM4205_DATABITS         512
 #define EM4205_BLOCKSIZE        32
 #define EM4205_DATABLOCKS       16
+#define EM4X05_CONFIG_BLOCK_NUM 4
+#define EM4X05_INFO_BLOCK_NUM   0
 
 // em4205 commands (leading 0 + 3 bits + even parity)
 #define EM4205_LOGIN            "00011"
@@ -143,6 +145,57 @@
 #define EM4205_READ_WORD        "01001"
 #define EM4205_PROTECT          "01100"
 #define EM4205_DISABLE          "01010"
+
+// config block masks
+
+#define EM4205_MASK_RESERVED                0b1111100000000000000000000000000
+#define EM4205_MASK_PIGEON                  0b0000010000000000000000000000000
+#define EM4205_MASK_UNUSED_4                0b0000001000000000000000000000000
+#define EM4205_MASK_RTF                     0b0000000100000000000000000000000
+#define EM4205_MASK_DISABLE                 0b0000000010000000000000000000000
+#define EM4205_MASK_UNUSED_3                0b0000000001100000000000000000000
+#define EM4205_MASK_WRITE_LOGIN             0b0000000000010000000000000000000
+#define EM4205_MASK_UNUSED_2                0b0000000000001000000000000000000
+#define EM4205_MASK_READ_LOGIN              0b0000000000000100000000000000000
+#define EM4205_MASK_LWR                     0b0000000000000011110000000000000
+#define EM4205_MASK_DELAYED_ON              0b0000000000000000001100000000000
+#define EM4205_MASK_UNUSED_1                0b0000000000000000000011000000000
+#define EM4205_MASK_ENCODER                 0b0000000000000000000000111100000
+#define EM4205_MASK_DATA_RATE               0b0000000000000000000000000011111
+
+// config block bit shifts
+
+#define EM4205_SHIFT_RESERVED               27
+#define EM4205_SHIFT_PIGEON                 26
+#define EM4205_SHIFT_UNUSED_5               25
+#define EM4205_SHIFT_RTF                    24
+#define EM4205_SHIFT_DISABLE                23
+#define EM4205_SHIFT_UNUSED_4               21
+#define EM4205_SHIFT_WRITE_LOGIN            20
+#define EM4205_SHIFT_UNUSED_3               19
+#define EM4205_SHIFT_READ_LOGIN             18
+#define EM4205_SHIFT_LWR                    14
+#define EM4205_SHIFT_DELAYED_ON             12
+#define EM4205_SHIFT_UNUSED_2               10
+#define EM4205_SHIFT_ENCODER                6
+#define EM4205_SHIFT_DATA_RATE              0
+
+// info block masks
+
+#define EM4205_MASK_CUSTOMER                0b0000000000001111111111000000000
+#define EM4205_MASK_CAPACITOR               0b0000000000000000000000001100000
+#define EM4205_MASK_CHIP                    0b0000000000000000000000000011110
+
+// info block shifts
+#define EM4205_SHIFT_CUSTOMER               9
+#define EM4205_SHIFT_CAPACITOR              5
+#define EM4205_SHIFT_CHIP                   1
+
+// config values
+#define CHIP_TYPE_EM4205                    8
+#define CHIP_TYPE_EM4305                    9
+
+
 
 BOOL em4x02_get_uid(BYTE *response);
 BOOL em4x02_hex_to_uid(BYTE *response, BYTE *hex);
@@ -157,3 +210,4 @@ BOOL em4205_disable(void);
 BOOL em4205_read_word(BYTE *response, BYTE word);
 void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin);
 BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota);
+BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info);

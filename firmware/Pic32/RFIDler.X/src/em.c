@@ -135,13 +135,16 @@
 #include "rfidler.h"
 #include "ask.h"
 #include "clock.h"
+#include "config.h"
 #include "em.h"
 #include "util.h"
 
 // em4205 return values
 const BYTE EM4205_Preamble[8]=  {0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00};   // "00001010"
-const BYTE EM4205_Error[8]= { 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01};       // "00000001"
-
+const BYTE EM4205_Error[8]= {0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01};       // "00000001"
+const BYTE *EM4205_Delays[4]= {"No Delay", "BP/8 (RF/8)", "BP/4 (RF/16)", "No Delay"};
+const BYTE *EM4205_Data_Rates[8]= {"RF/8", "RF/16", "Invalid", "RF/32", "RF/40", "Invalid", "Invalid", "RF/64"};
+const BYTE *EM4205_Capacitors[4]= {"Invalid", "210pF", "250pF", "330pF"};
 // support routines for EM tags
 //
 
@@ -449,7 +452,46 @@ BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota)
     if(ota[44] != 0x00)
         return FALSE;
     
+    // data is sent from tag LSB, so reverse
+    string_reverse(tmp, 32);
     binarraytohex(hex, tmp, 32);
 
+    return TRUE;
+}
+
+BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info)
+{
+    uint32_t    value= hextoulong(info);
+    
+    UserMessage("         Info Block (0): %.8s\r\n\r\n", info);
+    
+    UserMessageNum("          Customer Code: 0x%03x\r\n", GET_CONFIG(value, EM4205_MASK_CUSTOMER, EM4205_SHIFT_CUSTOMER));
+    UserMessageNum("              Capacitor: %d = ", GET_CONFIG(value, EM4205_MASK_CAPACITOR, EM4205_SHIFT_CAPACITOR));
+    UserMessage("%s\r\n", EM4205_Capacitors[GET_CONFIG(value, EM4205_MASK_CAPACITOR, EM4205_SHIFT_CAPACITOR)]);
+    UserMessageNum("              Chip Type: %d = ", GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP));
+    if(GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP) == CHIP_TYPE_EM4205)
+        UserMessage("EM4205\r\n");
+    else
+        if(GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP) == CHIP_TYPE_EM4305)
+            UserMessage("EM4305\r\n");
+        else
+            UserMessage("Invalid\r\n");
+        
+    UserMessage("\r\n          PWD Block (2): %s\r\n\r\n", "Write Only");
+
+    value= hextoulong(config);
+    UserMessage("       Config Block (4): %.8s\r\n\r\n", config);
+    
+    UserMessage("            Pigeon Mode: %s\r\n", GET_CONFIG(value, EM4205_MASK_PIGEON, EM4205_SHIFT_PIGEON) ? "True" : "False");
+    UserMessage("                    RTF: %s\r\n", GET_CONFIG(value, EM4205_MASK_RTF, EM4205_SHIFT_RTF) ? "True" : "False");
+    UserMessage("                Disable: %s\r\n", GET_CONFIG(value, EM4205_MASK_DISABLE, EM4205_SHIFT_DISABLE) ? "True" : "False");
+    UserMessage("            Write Login: %s\r\n", GET_CONFIG(value, EM4205_MASK_WRITE_LOGIN, EM4205_SHIFT_WRITE_LOGIN) ? "True" : "False");
+    UserMessage("             Read Login: %s\r\n", GET_CONFIG(value, EM4205_MASK_READ_LOGIN, EM4205_SHIFT_READ_LOGIN) ? "True" : "False");
+    UserMessageNum("                    LWR: %d\r\n", GET_CONFIG(value, EM4205_MASK_LWR, EM4205_SHIFT_LWR));
+    UserMessage("             Delayed On: %d = ", GET_CONFIG(value, EM4205_MASK_DELAYED_ON, EM4205_SHIFT_DELAYED_ON));
+    UserMessage("%s\r\n", EM4205_Delays[GET_CONFIG(value, EM4205_MASK_LWR, EM4205_SHIFT_LWR)]);
+    UserMessage("              Data Rate: %d = ", GET_CONFIG(value, EM4205_MASK_DATA_RATE, EM4205_SHIFT_DATA_RATE));
+    // ignore lower two bits on data rate which should always be '11' and anything over 7
+    UserMessage("%s\r\n", EM4205_Data_Rates[(GET_CONFIG(value, EM4205_MASK_DATA_RATE, EM4205_SHIFT_DATA_RATE) >> 2) & 0x07]);
     return TRUE;
 }

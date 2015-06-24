@@ -168,6 +168,8 @@ extern BOOL             FakeRead;                           // flag for analogue
 extern BOOL             PWD_Mode;                           // is this tag password protected?
 extern BYTE             Password[9];                        // 32 bits as HEX string set with LOGIN
 extern unsigned int     Led_Count;                          // LED status counter, also used for entropy
+extern unsigned long    Reader_Bit_Count;                   // Reader ISR bit counter
+extern char             Previous;                           // Reader ISR previous bit type
 
 // RWD (read/write device) coil state
 extern BYTE             RWD_State;                              // current state of RWD coil

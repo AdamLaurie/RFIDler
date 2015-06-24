@@ -190,6 +190,10 @@ void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYT
 // use timer4 to allow timers 2/3 to be linked to OCMs for other functions
 void InitHWReaderISR(unsigned long time, BOOL immediate)
 {
+    // clear bit counter && type
+    Reader_Bit_Count= 0L;
+    Previous= -1;
+    
     mT4SetIntPriority(6);
     // start timer4 to read data - ISR will do the actual read
     mT4IntEnable(1);

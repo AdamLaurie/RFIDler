@@ -134,6 +134,7 @@
 #include "HardwareProfile.h"
 #include "rfidler.h"
 #include "config.h"
+#include "em.h"
 #include "read.h"
 #include "hitag.h"
 #include "q5.h"
@@ -144,7 +145,11 @@ BOOL config_block_number(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
-       case TAG_TYPE_HITAG1:
+        case TAG_TYPE_EM4X05:
+            *block= EM4X05_CONFIG_BLOCK_NUM;
+            return TRUE;
+            
+        case TAG_TYPE_HITAG1:
             *block= HITAG1_CONFIG_BLOCK_NUM;
             return TRUE;
 
@@ -195,6 +200,11 @@ BOOL pw_block_number(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
+        // explicitly return FALSE as password block (2) is always Write Only
+        // so any attempt to read it will fail
+        case TAG_TYPE_EM4X05:
+            return FALSE;
+            
         case TAG_TYPE_HITAG2:
             *block= HITAG2_PW_BLOCK_NUM;
             return TRUE;
@@ -205,6 +215,26 @@ BOOL pw_block_number(unsigned int *block, BYTE tagtype)
 
         case TAG_TYPE_T55X7:
             *block= T55X7_PW_BLOCK_NUM;
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
+// get the additional info block number
+BOOL info_block_number(unsigned int *block, BYTE tagtype)
+{
+    switch (tagtype)
+    {
+        // customer code, tag type, capacitor
+        case TAG_TYPE_EM4X05:
+            *block= EM4X05_INFO_BLOCK_NUM;
+            return TRUE;
+            
+        // use this to show crypto key
+        case TAG_TYPE_HITAG2:
+            *block= HITAG2_KEY_BLOCK_NUM;
             return TRUE;
 
         default:
@@ -233,6 +263,17 @@ BOOL get_pw_block(BYTE *out, BYTE tagtype)
     return FALSE;
 }
 
+// get additional info block from tag
+BOOL get_info_block(BYTE *out, BYTE tagtype)
+{
+    int block;
+
+    if(info_block_number(&block, tagtype))
+        return read_tag(out, block, block);
+    
+    return FALSE;
+}
+
 // get a config block suitable for emulating
 BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 {
@@ -253,12 +294,15 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 }
 
 // display contents of tag config block if present
-BOOL config_block_show(BYTE *config, BYTE *password, BYTE tagtype)
+BOOL config_block_show(BYTE *config, BYTE *password, BYTE *info, BYTE tagtype)
 {
     switch(tagtype)
     {
+        case TAG_TYPE_EM4X05:
+            return em4205_config_block_show(config, password, info);
+            
         case TAG_TYPE_HITAG2:
-            return hitag2_config_block_show(config, password);
+            return hitag2_config_block_show(config, password, info);
             
         case TAG_TYPE_Q5:
             return q5_config_block_show(config, password);

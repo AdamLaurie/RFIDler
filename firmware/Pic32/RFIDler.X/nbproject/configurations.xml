@@ -207,24 +207,6 @@
       <C32-AR>
         <property key="additional-options-chop-files" value="false"/>
       </C32-AR>
-      <C32-AS>
-        <property key="assembler-symbols" value=""/>
-        <property key="enable-symbols" value="true"/>
-        <property key="exclude-floating-point-library" value="false"/>
-        <property key="expand-macros" value="false"/>
-        <property key="extra-include-directories-for-assembler" value=""/>
-        <property key="extra-include-directories-for-preprocessor" value=""/>
-        <property key="false-conditionals" value="false"/>
-        <property key="keep-locals" value="false"/>
-        <property key="list-assembly" value="false"/>
-        <property key="list-source" value="false"/>
-        <property key="list-symbols" value="false"/>
-        <property key="oXC32asm-list-to-file" value="false"/>
-        <property key="omit-debug-dirs" value="false"/>
-        <property key="omit-forms" value="false"/>
-        <property key="preprocessor-macros" value=""/>
-        <property key="warning-level" value=""/>
-      </C32-AS>
       <C32-LD>
         <property key="additional-options-use-response-files" value="false"/>
         <property key="enable-check-sections" value="false"/>
@@ -321,8 +303,6 @@
         </C32>
         <C32-AR>
         </C32-AR>
-        <C32-AS>
-        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -372,8 +352,6 @@
         </C32>
         <C32-AR>
         </C32-AR>
-        <C32-AS>
-        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -388,8 +366,6 @@
         </C32>
         <C32-AR>
         </C32-AR>
-        <C32-AS>
-        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -404,8 +380,6 @@
         </C32>
         <C32-AR>
         </C32-AR>
-        <C32-AS>
-        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -441,24 +415,6 @@
       <C32-AR>
         <property key="additional-options-chop-files" value="false"/>
       </C32-AR>
-      <C32-AS>
-        <property key="assembler-symbols" value=""/>
-        <property key="enable-symbols" value="true"/>
-        <property key="exclude-floating-point-library" value="false"/>
-        <property key="expand-macros" value="false"/>
-        <property key="extra-include-directories-for-assembler" value=""/>
-        <property key="extra-include-directories-for-preprocessor" value=""/>
-        <property key="false-conditionals" value="false"/>
-        <property key="keep-locals" value="true"/>
-        <property key="list-assembly" value="false"/>
-        <property key="list-source" value="false"/>
-        <property key="list-symbols" value="false"/>
-        <property key="oXC32asm-list-to-file" value="false"/>
-        <property key="omit-debug-dirs" value="false"/>
-        <property key="omit-forms" value="false"/>
-        <property key="preprocessor-macros" value=""/>
-        <property key="warning-level" value=""/>
-      </C32-AS>
       <C32-LD>
         <property key="additional-options-use-response-files" value="false"/>
         <property key="enable-check-sections" value="false"/>
@@ -610,8 +566,6 @@
         </C32>
         <C32-AR>
         </C32-AR>
-        <C32-AS>
-        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>

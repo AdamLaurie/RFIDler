@@ -169,9 +169,10 @@
 
 #define HITAG2_BLANK_BLOCK          "00000000"
 
+#define HITAG2_PW_BLOCK_NUM         1               // password block number
+#define HITAG2_KEY_BLOCK_NUM        2               // crypto key block number
 #define HITAG2_CONFIG_BLOCK_NUM     3               // hitag2 config block
 #define HITAG2_USER_DATA_BLOCK_NUM  4               // 1st user data block
-#define HITAG2_PW_BLOCK_NUM         1               // password block number
 #define HITAG2_BLOCKSIZE            32              // block size in bits
 #define HITAG2_DATABLOCKS           8               // total number of blocks
 
@@ -224,5 +225,5 @@ unsigned long hitag2_crypt(unsigned long source, BYTE length);
 unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
 BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
 BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
-BOOL hitag2_config_block_show(BYTE *config, BYTE *password);
+BOOL hitag2_config_block_show(BYTE *config, BYTE *password, BYTE *key);
 

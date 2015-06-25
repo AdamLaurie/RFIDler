@@ -149,6 +149,9 @@ const unsigned long TimeScaler2= (GetSystemClock() / 10000000L);
 // width/period in uS/100 (will be rounded to uS/10 (as accurate as we can get on a 80MHz pic))
 void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYTE initial_state)
 {
+    // reader mode
+    COIL_MODE_READER();
+
     stop_HW_clock();
     
     CloseOC5();

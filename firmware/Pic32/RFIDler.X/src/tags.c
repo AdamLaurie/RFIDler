@@ -219,7 +219,7 @@ unsigned int tag_get_blocksize(BYTE tag)
             return tag_get_blocksize(RFIDlerVTag.TagType);
 
         case TAG_TYPE_EM4X05:
-            return EM4205_BLOCKSIZE;
+            return EM4X05_BLOCKSIZE;
 
         case TAG_TYPE_HITAG1:
             return HITAG1_BLOCKSIZE;
@@ -252,7 +252,7 @@ unsigned int tag_get_datablocks(BYTE tag)
             return RFIDlerConfig.DataBits / tag_get_blocksize(RFIDlerVTag.TagType);
 
         case TAG_TYPE_EM4X05:
-            return EM4205_DATABLOCKS;
+            return EM4X05_DATABLOCKS;
 
        case TAG_TYPE_HITAG1:
             return HITAG1_DATABLOCKS;
@@ -287,7 +287,7 @@ unsigned int tag_get_databits(BYTE tag)
             return EM4X02_DATABITS;
 
         case TAG_TYPE_EM4X05:
-            return EM4205_DATABLOCKS * EM4205_BLOCKSIZE;
+            return EM4X05_DATABLOCKS * EM4X05_BLOCKSIZE;
             
         case TAG_TYPE_HID_26:
             return HID26_DATABITS;
@@ -411,6 +411,25 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.SyncBits= 18;
             RFIDlerConfig.RWD_Wake_Period= 1000;
             break;
+              
+        case TAG_TYPE_EM4X02:
+        case TAG_TYPE_UNIQUE:
+            RFIDlerConfig.FrameClock= 800;
+            RFIDlerConfig.Manchester= TRUE;
+            RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
+            RFIDlerConfig.PotHigh= 150;
+            RFIDlerConfig.DataRate= 64;
+            RFIDlerConfig.DataBits= 64;
+            RFIDlerConfig.TagType= tag;
+            RFIDlerConfig.Repeat= 20;
+            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
+            RFIDlerConfig.Sync[0]= 0xFF;
+            RFIDlerConfig.Sync[1]= 0xFF;
+            RFIDlerConfig.Sync[2]= 0x00;
+            RFIDlerConfig.Sync[3]= 0x00;
+            RFIDlerConfig.SyncBits= 9;
+            RFIDlerConfig.RWD_Wake_Period= 1000;
+            break;
 
         // DEBUG: work in progress!
         case TAG_TYPE_EM4X05:
@@ -420,8 +439,8 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.PotHigh= 130;
             RFIDlerConfig.DataRate= 64;
             RFIDlerConfig.DataBits= 53; // 45 bit OTA format + 8 bit preamble
-            RFIDlerConfig.DataBlocks= EM4205_DATABLOCKS;
-            RFIDlerConfig.BlockSize= EM4205_BLOCKSIZE;
+            RFIDlerConfig.DataBlocks= EM4X05_DATABLOCKS;
+            RFIDlerConfig.BlockSize= EM4X05_BLOCKSIZE;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
@@ -430,7 +449,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_Sleep_Period= 2000;
             RFIDlerConfig.RWD_Zero_Period= 16; // note that em4x05 uses it's own PWM scheme
             RFIDlerConfig.RWD_One_Period= 32; // see em.c for details
-            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 60; // doc says 544us, (+ 6.7 ms when eeprom write), but tests are much shorter!
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 60; // doc says 544us, (9.34 + 1.38 ms when eeprom write), but tests are much shorter!
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 80; // docs say 544, so about 68 fcs
             break;
 
@@ -551,25 +570,6 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.Sync[2]= 0x00;
             RFIDlerConfig.Sync[3]= 0x00;
             RFIDlerConfig.SyncBits= 5;
-            break;
-
-        case TAG_TYPE_EM4X02:
-        case TAG_TYPE_UNIQUE:
-            RFIDlerConfig.FrameClock= 800;
-            RFIDlerConfig.Manchester= TRUE;
-            RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
-            RFIDlerConfig.PotHigh= 150;
-            RFIDlerConfig.DataRate= 64;
-            RFIDlerConfig.DataBits= 64;
-            RFIDlerConfig.TagType= tag;
-            RFIDlerConfig.Repeat= 20;
-            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
-            RFIDlerConfig.Sync[0]= 0xFF;
-            RFIDlerConfig.Sync[1]= 0xFF;
-            RFIDlerConfig.Sync[2]= 0x00;
-            RFIDlerConfig.Sync[3]= 0x00;
-            RFIDlerConfig.SyncBits= 9;
-            RFIDlerConfig.RWD_Wake_Period= 1000;
             break;
 
         case TAG_TYPE_INDALA_64:
@@ -757,6 +757,27 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
     return TRUE;
 }
 
+// copy raw UID to data blocks for re-transmission by target tag
+void tag_raw_uid_to_data(BYTE *data, BYTE *uid, BYTE tagtype)
+{
+    BYTE tmp[MAXBLOCKSIZE + 1];
+    
+    switch(tagtype)
+    {
+        // EM4X05 sends everything LSB, so reverse data
+        case TAG_TYPE_EM4X05:
+            hextobinarray(tmp, uid);
+            string_reverse(tmp, strlen(uid) * 4);
+            binarraytohex(data, tmp, strlen(uid) * 4);
+            break;
+            
+        // for most tags a straight copy will do
+        default:
+            strcpy(data, uid);
+            break;
+    }
+}
+
 // reset tag to default by writing config block
 BOOL tag_write_default_config(BYTE tagtype, BYTE *password)
 {
@@ -784,15 +805,17 @@ BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password)
 
     switch(tagtype)
     {
-        case TAG_TYPE_Q5:
-            // write config first so we can verify data block writes
-            if(!tag_write_default_config(tagtype, ""))
+        case TAG_TYPE_EM4X05:
+            if(!tag_write_default_config(tagtype, password))
                 return FALSE;
-            for(i= Q5_USER_DATA_BLOCK_NUM ; i < Q5_DATABLOCKS ; ++i)
-                if(!write_tag(i, Q5_BLANK_BLOCK, VERIFY))
+            for(i= EM4X05_USER_DATA_BLOCK_NUM ; i < EM4X05_DATABLOCKS ; ++i)
+                if(!write_tag(i, EM4X05_BLANK_BLOCK, VERIFY))
                     return FALSE;
+            // write default password
+            if(!write_tag(EM4X05_PW_BLOCK_NUM, EM4X05_PWD_DEFAULT, VERIFY))
+                return FALSE;
             return TRUE;
-
+            
         case TAG_TYPE_HITAG2:
             if(!tag_write_default_config(tagtype, password))
                 return FALSE;
@@ -802,6 +825,15 @@ BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password)
             // write default password
             if(!write_tag(HITAG2_PW_BLOCK_NUM, HITAG2_PWD_DEFAULT, VERIFY))
                 return FALSE;
+            return TRUE;
+            
+        case TAG_TYPE_Q5:
+            // write config first so we can verify data block writes
+            if(!tag_write_default_config(tagtype, ""))
+                return FALSE;
+            for(i= Q5_USER_DATA_BLOCK_NUM ; i < Q5_DATABLOCKS ; ++i)
+                if(!write_tag(i, Q5_BLANK_BLOCK, VERIFY))
+                    return FALSE;
             return TRUE;
             
         case TAG_TYPE_T55X7:

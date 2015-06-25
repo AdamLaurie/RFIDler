@@ -174,6 +174,10 @@ BOOL config_user_block(unsigned int *block, BYTE tagtype)
 {
     switch (tagtype)
     {
+        case TAG_TYPE_EM4X05:
+            *block= EM4X05_USER_DATA_BLOCK_NUM;
+            return TRUE;
+            
         case TAG_TYPE_HITAG1:
             *block= HITAG1_USER_DATA_BLOCK_NUM;
             return TRUE;
@@ -279,6 +283,9 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
 {
     switch (emulator_tagtype)
     {
+        case TAG_TYPE_EM4X05:
+            return em4205_emulate_config_block(config, target_tagtype);
+            
         case TAG_TYPE_HITAG2:
             return hitag2_emulate_config_block(config, target_tagtype);
 

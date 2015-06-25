@@ -146,6 +146,10 @@ BOOL write_tag(unsigned int block, BYTE *data, BOOL verify)
     {
         switch(RFIDlerConfig.TagType)
         {
+            case TAG_TYPE_EM4X05:
+                ret= em4205_write_word((BYTE) block, data);
+                break;
+                
             case TAG_TYPE_HITAG1:
                 ret= hitag1_write_page((BYTE) block, data);
                 break;

@@ -264,7 +264,7 @@ BOOL vtag_create_from_uid(BYTE *target_tagtype, BYTE source_tagtype, BYTE *uid)
 
         // copy raw hex UID to data blocks
         if(config_user_block(&user_block_no, tag))
-            memcpy(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], RFIDlerVTag.UID, strlen(RFIDlerVTag.UID));
+            tag_raw_uid_to_data(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], RFIDlerVTag.UID, RFIDlerVTag.TagType);
     }
 
     return TRUE;
@@ -334,7 +334,7 @@ BOOL vtag_copy_from_tag(BYTE *tagtype, BYTE *pass)
         return FALSE;
 
     // copy raw hex UID to data blocks
-    memcpy(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], RFIDlerVTag.UID, strlen(RFIDlerVTag.UID));
+    tag_raw_uid_to_data(&RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * user_block_no)], RFIDlerVTag.UID, RFIDlerVTag.TagType);
 
     return TRUE;
 }

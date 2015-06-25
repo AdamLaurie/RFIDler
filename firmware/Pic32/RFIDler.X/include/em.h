@@ -133,11 +133,15 @@
 #define EM4X02_DATABITS         64
 
 // em4205/4305 (em4469 compatible command set)
-#define EM4205_DATABITS         512
-#define EM4205_BLOCKSIZE        32
-#define EM4205_DATABLOCKS       16
-#define EM4X05_CONFIG_BLOCK_NUM 4
-#define EM4X05_INFO_BLOCK_NUM   0
+#define EM4X05_DATABITS             512
+#define EM4X05_BLOCKSIZE            32
+#define EM4X05_CONFIG_BLOCK_NUM     4
+#define EM4X05_USER_DATA_BLOCK_NUM  5
+#define EM4X05_PW_BLOCK_NUM         2
+#define EM4X05_DATABLOCKS           14 // note 2 more blocks exist, but can only be written with "protect" command
+#define EM4X05_INFO_BLOCK_NUM       0
+
+#define EM4X05_WRITE_DELAY      1340 // eeprom write in FCs
 
 // em4205 commands (leading 0 + 3 bits + even parity)
 #define EM4205_LOGIN            "00011"
@@ -148,20 +152,20 @@
 
 // config block masks
 
-#define EM4205_MASK_RESERVED                0b1111100000000000000000000000000
-#define EM4205_MASK_PIGEON                  0b0000010000000000000000000000000
-#define EM4205_MASK_UNUSED_4                0b0000001000000000000000000000000
-#define EM4205_MASK_RTF                     0b0000000100000000000000000000000
-#define EM4205_MASK_DISABLE                 0b0000000010000000000000000000000
-#define EM4205_MASK_UNUSED_3                0b0000000001100000000000000000000
-#define EM4205_MASK_WRITE_LOGIN             0b0000000000010000000000000000000
-#define EM4205_MASK_UNUSED_2                0b0000000000001000000000000000000
-#define EM4205_MASK_READ_LOGIN              0b0000000000000100000000000000000
-#define EM4205_MASK_LWR                     0b0000000000000011110000000000000
-#define EM4205_MASK_DELAYED_ON              0b0000000000000000001100000000000
-#define EM4205_MASK_UNUSED_1                0b0000000000000000000011000000000
-#define EM4205_MASK_ENCODER                 0b0000000000000000000000111100000
-#define EM4205_MASK_DATA_RATE               0b0000000000000000000000000011111
+#define EM4205_MASK_RESERVED                0b11111000000000000000000000000000
+#define EM4205_MASK_PIGEON                  0b00000100000000000000000000000000
+#define EM4205_MASK_UNUSED_4                0b00000010000000000000000000000000
+#define EM4205_MASK_RTF                     0b00000001000000000000000000000000
+#define EM4205_MASK_DISABLE                 0b00000000100000000000000000000000
+#define EM4205_MASK_UNUSED_3                0b00000000011000000000000000000000
+#define EM4205_MASK_WRITE_LOGIN             0b00000000000100000000000000000000
+#define EM4205_MASK_UNUSED_2                0b00000000000010000000000000000000
+#define EM4205_MASK_READ_LOGIN              0b00000000000001000000000000000000
+#define EM4205_MASK_LWR                     0b00000000000000111100000000000000
+#define EM4205_MASK_DELAYED_ON              0b00000000000000000011000000000000
+#define EM4205_MASK_UNUSED_1                0b00000000000000000000110000000000
+#define EM4205_MASK_ENCODER                 0b00000000000000000000001111000000
+#define EM4205_MASK_DATA_RATE               0b00000000000000000000000000111111
 
 // config block bit shifts
 
@@ -195,7 +199,14 @@
 #define CHIP_TYPE_EM4205                    8
 #define CHIP_TYPE_EM4305                    9
 
+// config blocks - note when encoding data blocks, remember to reverse bits as EM4X05 delivers data LSB 
+#define EM4X05_DEFAULT_CONFIG_BLOCK     "0002005F"  // everything default to false, Manchester, RF/64
+#define EM4X05_UNIQUE_CONFIG_BLOCK      "0001805F"  // EM4X02/Unique - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
 
+// data blocks
+#define EM4X05_BLANK_BLOCK              "00000000"
+#define EM4X05_PWD_DEFAULT              "00000000"
+                                                    
 
 BOOL em4x02_get_uid(BYTE *response);
 BOOL em4x02_hex_to_uid(BYTE *response, BYTE *hex);
@@ -203,11 +214,13 @@ BOOL hex_to_em4x02_bin(unsigned char *em, unsigned char *hex);
 BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em);
 void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin);
 
-BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response);
+BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay);
 BOOL em4205_forward_link(BYTE *data);
 BOOL em4205_get_uid(BYTE *response);
 BOOL em4205_disable(void);
+BOOL em4205_write_word(BYTE word, BYTE *data);
 BOOL em4205_read_word(BYTE *response, BYTE word);
 void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin);
 BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota);
 BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info);
+BOOL em4205_emulate_config_block(BYTE *config, BYTE target_tagtype);

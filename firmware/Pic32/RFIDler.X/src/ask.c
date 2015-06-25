@@ -195,7 +195,7 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
     unsigned int i= 0, j;
     BOOL found= FALSE;
     BYTE repeat= 0;
-
+    
     // if we're not doing a 1-shot read, we can grab double the data to allow for sync search
     if(oneshot)
         repeat= 1;
@@ -246,7 +246,7 @@ unsigned int read_ask_data(unsigned int period_us, unsigned int ticks, BYTE *dat
         // point at start of sync
         i -= syncbits - 1;
     }
-
+    
     // copy to output buffer
     switch(format)
     {

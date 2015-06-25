@@ -149,14 +149,8 @@ const unsigned long TimeScaler2= (GetSystemClock() / 10000000L);
 // width/period in uS/100 (will be rounded to uS/10 (as accurate as we can get on a 80MHz pic))
 void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYTE initial_state)
 {
-    // reader mode
-    COIL_MODE_READER();
-
-    // disable timer2 interrupts
-    mT3IntEnable(0);
-    CloseTimer3();
-    mT3ClearIntFlag();
-
+    stop_HW_clock();
+    
     CloseOC5();
     // some strange behaviour when switching from pulse to toggle. double open seems to fix it!
     OpenOC5( OC_ON | OC_TIMER3_SRC | OC_TIMER_MODE16 | OC_TOGGLE_PULSE, CONVERT_TO_TICKS(period) / 8L, CONVERT_TO_TICKS(period) / 8L);
@@ -164,6 +158,10 @@ void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYT
     
     // clear error led
     mLED_Error_Off();
+    
+    // clear bit counter && type
+    Reader_Bit_Count= 0L;
+    Previous= -1;
 
     // in sniff mode we don't use our own clock!
     if (SnifferMode)
@@ -184,20 +182,19 @@ void InitHWReaderClock(BYTE type, unsigned long width, unsigned long period, BYT
     OpenTimer3(T3_ON | T3_PS_1_1 | T3_SOURCE_INT, CONVERT_TO_TICKS(period / 2L) - 1L);
     mOC5SetIntPriority(5);
     mOC5ClearIntFlag();
-    mOC5IntEnable(1);           // enable OC5 interrupts
+    mOC5IntEnable(ENABLE);           // enable OC5 interrupts
 }
 
 // use timer4 to allow timers 2/3 to be linked to OCMs for other functions
 void InitHWReaderISR(unsigned long time, BOOL immediate)
 {
-    // clear bit counter && type
-    Reader_Bit_Count= 0L;
-    Previous= -1;
+    // if requested, arm interrupt so we read this bit as soon as we start ISR
+    IFS0bits.T4IF= immediate;
     
     mT4SetIntPriority(6);
     // start timer4 to read data - ISR will do the actual read
-    mT4IntEnable(1);
     OpenTimer4( T4_ON | T4_PS_1_1 | T4_SOURCE_INT | T4_32BIT_MODE_OFF, time);
+    mT4IntEnable(ENABLE);
 
     // switch on reader LED
     // this is also a semaphore so the rest of the code knows we're running
@@ -205,10 +202,6 @@ void InitHWReaderISR(unsigned long time, BOOL immediate)
 
     // clear error led
     mLED_Error_Off();
-    
-    // force an immediate interrupt so we read this bit
-    if(immediate)
-        IFS0bits.T4IF= TRUE;
 }
 
 // temporarily pause carrier - specify period in FCs
@@ -242,7 +235,7 @@ void TimerWait_FC(unsigned long fc)
 // shutdown reader coil
 void stop_HW_clock(void)
 {
-    mT3IntEnable(0);
+    stop_HW_reader_ISR();
     CloseTimer3();
     CloseOC5();
     mLED_Clock_Off();
@@ -253,14 +246,11 @@ void stop_HW_clock(void)
 
     // usb back on
     USBUnmaskInterrupts();
-    
-    stop_HW_reader_ISR();
 }
 
 // shutdown reader ISR
 void stop_HW_reader_ISR(void)
 {
-    mT4IntEnable(0);
     CloseTimer4();
     mLED_Read_Off();
 }

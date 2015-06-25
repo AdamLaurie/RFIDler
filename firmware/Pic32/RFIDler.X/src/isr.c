@@ -416,7 +416,7 @@ void __ISR(_TIMER_3_VECTOR, ipl7auto) emulation_send_bit (void)
 }
 
 // DATA reading ISR
-void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
+void __ISR(_TIMER_4_VECTOR, ipl6auto) HW_read_bit(void)
 {
     unsigned int time;
     static char out;
@@ -424,6 +424,10 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 
     // show trigger moment (you must also set end of routine debugger statement)
     DEBUG_PIN_1= HIGH;
+    
+    // debugging - monitor with a logic analyser
+    // show read period
+    DEBUG_PIN_2= HIGH;
 
     // reset interrupt
     mT4ClearIntFlag();
@@ -433,7 +437,6 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 
     if(FakeRead)
         return;
-
 
     // don't do anything unless we've got data to read - we may have been left running due to higher level error.
     if(!HW_Bits)
@@ -450,12 +453,9 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
         --HW_Skip_Bits;
         return;
     }
-    DEBUG_PIN_1= LOW;
 
-    // debugging - monitor with a logic analyser
-    // show read period
-    DEBUG_PIN_2= HIGH;
-
+     DEBUG_PIN_1= LOW;
+     
     // show data value
     //DEBUG_PIN_3= READER_DATA;
 
@@ -465,7 +465,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
 
             // get current bit value
             out= READER_DATA;
-            
+                        
             // if manchester/biphase encoded and first bit, then add a half bit that we
             // lost when synchronising
             if(!Reader_Bit_Count && (RFIDlerConfig.Manchester || RFIDlerConfig.BiPhase))
@@ -596,7 +596,7 @@ void __ISR(_TIMER_4_VECTOR, ipl7auto) HW_read_bit(void)
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             // successful read resets timeout
             if(fskread)
-                *(EMU_Data++)= GetTimer_us(RESET); // get pulsewidth in uS
+                *(EMU_Data++)= (BYTE) GetTimer_us(RESET); // get pulsewidth in uS
             break;
 
         // TODO: PSK2, PSK3

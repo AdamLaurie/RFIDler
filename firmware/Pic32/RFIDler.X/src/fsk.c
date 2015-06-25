@@ -247,7 +247,7 @@ unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned 
     // reset timer
     if(timeout_us)
         GetTimer_us(RESET);
-
+    
     // wait for semaphore to tell us read has finished
     while(mLED_Read == mLED_ON)
         if(timeout_us)

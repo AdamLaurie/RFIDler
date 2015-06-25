@@ -258,6 +258,9 @@
 #define TRUE                        1
 #define FALSE                       0
 
+#define ENABLE                      1
+#define DISABE                      0
+
 #define EVEN                        0
 #define ODD                         1
 

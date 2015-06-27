@@ -537,11 +537,11 @@ BOOL em4x05_create_config_block(BYTE *config)
     
     // modulation
     if(RFIDlerConfig.Manchester && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
-        SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_MANCHESTER);
+        value= SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_MANCHESTER);
     else
     {
         if(RFIDlerConfig.BiPhase && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
-            SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_BIPHASE);
+            value= SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_BIPHASE);
         else
             return FALSE;
     }

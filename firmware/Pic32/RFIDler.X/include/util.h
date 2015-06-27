@@ -171,6 +171,7 @@ void binstringtobyte(BYTE *target, unsigned char *source, BYTE length);
 void binarraytobinstring(BYTE *target, BYTE *source, unsigned int length);
 void printhexasbin(unsigned char *hex);
 void printbinashex(unsigned char *bin);
+void invertbinarray(BYTE *target, BYTE *source, unsigned int length);
 void invertbinstring(BYTE *target, BYTE *source);
 void printbinarray(unsigned char *bin, unsigned int length);
 unsigned char getbit(unsigned char byte, unsigned char bit);

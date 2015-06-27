@@ -157,7 +157,7 @@ BOOL get_tag_uid(BYTE *response)
             return awid26_get_uid(response);
 
         case TAG_TYPE_EM4X05:
-            return em4205_get_uid(response);
+            return em4x05_get_uid(response);
 
         case TAG_TYPE_EM4X02:
             return em4x02_get_uid(response);

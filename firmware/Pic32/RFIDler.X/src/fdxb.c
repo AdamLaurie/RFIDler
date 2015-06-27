@@ -139,8 +139,6 @@
 
 BOOL fdxb_get_uid(BYTE *response)
 {
-    // skip 1/2 bit to synchronise BiPhase
-    HW_Skip_Bits= 1;
     return ask_raw_get_uid(response);
 }
 

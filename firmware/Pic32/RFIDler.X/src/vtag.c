@@ -314,7 +314,7 @@ BOOL vtag_copy_from_tag(BYTE *tagtype, BYTE *pass)
         for(i= 0 ; i < RFIDlerVTag.DataBlocks ; ++i)
         {
             if (!read_tag(RFIDlerVTag.Data + HEXDIGITS(i * RFIDlerVTag.BlockSize), i, i))
-                UserMessageNum("%d: (fail)\r\n", i);
+                UserMessageNum("\r\n%d: (fail)\r\n", i);
             else
                 copy= TRUE;
         }

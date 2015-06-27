@@ -521,6 +521,13 @@ void binarraytobinstring(BYTE *target, BYTE *source, unsigned int length)
     *target= '\0';
 }
 
+// invert binary array
+void invertbinarray(BYTE *target, BYTE *source, unsigned int length)
+{
+    while(length--)
+        *(target++)= !*(source++);
+}
+
 // invert binary string
 void invertbinstring(BYTE *target, BYTE *source)
 {

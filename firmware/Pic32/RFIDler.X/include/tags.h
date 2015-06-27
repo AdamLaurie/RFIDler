@@ -139,6 +139,6 @@ unsigned int tag_get_datablocks(BYTE tag);
 unsigned int tag_get_databits(BYTE tag);
 BOOL tag_set(BYTE tag);
 BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype);
-void tag_raw_uid_to_data(BYTE *data, BYTE *uid, BYTE tagtype);
+void tag_raw_uid_to_data(BYTE *data, BYTE *uid, BYTE host_tagtype);
 BOOL tag_write_default_config(BYTE tagtype, BYTE *password);
 BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password);

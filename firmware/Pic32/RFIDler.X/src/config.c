@@ -284,7 +284,7 @@ BOOL config_block(BYTE *config, BYTE target_tagtype, BYTE emulator_tagtype)
     switch (emulator_tagtype)
     {
         case TAG_TYPE_EM4X05:
-            return em4205_emulate_config_block(config, target_tagtype);
+            return em4x05_emulate_config_block(config, target_tagtype);
             
         case TAG_TYPE_HITAG2:
             return hitag2_emulate_config_block(config, target_tagtype);
@@ -306,7 +306,7 @@ BOOL config_block_show(BYTE *config, BYTE *password, BYTE *info, BYTE tagtype)
     switch(tagtype)
     {
         case TAG_TYPE_EM4X05:
-            return em4205_config_block_show(config, password, info);
+            return em4x05_config_block_show(config, password, info);
             
         case TAG_TYPE_HITAG2:
             return hitag2_config_block_show(config, password, info);

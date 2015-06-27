@@ -131,20 +131,22 @@
 
 
 #include "HardwareProfile.h"
-#include "rfidler.h"
-#include "tags.h"
-#include "clock.h"
-#include "hitag.h"
-#include "q5.h"
-#include "t55x7.h"
-#include "uid.h"
-#include "fdxb.h"
-#include "comms.h"
-#include "hid.h"
+
 #include "awid.h"
+#include "clock.h"
+#include "comms.h"
 #include "em.h"
+#include "fdxb.h"
+#include "hitag.h"
+#include "hid.h"
 #include "indala.h"
+#include "q5.h"
+#include "rfidler.h"
+#include "t55x7.h"
+#include "tags.h"
+#include "uid.h"
 #include "unique.h"
+#include "util.h"
 #include "write.h"
 
 // tagtype #defines in rfidler.h
@@ -758,17 +760,19 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
 }
 
 // copy raw UID to data blocks for re-transmission by target tag
-void tag_raw_uid_to_data(BYTE *data, BYTE *uid, BYTE tagtype)
+void tag_raw_uid_to_data(BYTE *data, BYTE *uid, BYTE host_tagtype)
 {
-    BYTE tmp[MAXBLOCKSIZE + 1];
+    BYTE            tmp[MAXUID + 1];
+    unsigned int    i;
     
-    switch(tagtype)
+    switch(host_tagtype)
     {
         // EM4X05 sends everything LSB, so reverse data
         case TAG_TYPE_EM4X05:
             hextobinarray(tmp, uid);
-            string_reverse(tmp, strlen(uid) * 4);
-            binarraytohex(data, tmp, strlen(uid) * 4);
+            for(i= 0 ; i < HEXTOBITS(strlen(uid)) ; i += EM4X05_BLOCKSIZE)
+                string_reverse(tmp + i, EM4X05_BLOCKSIZE);
+            binarraytohex(data, tmp, HEXTOBITS(strlen(uid)));
             break;
             
         // for most tags a straight copy will do
@@ -809,10 +813,10 @@ BOOL tag_write_default_blocks(BYTE tagtype, BYTE *password)
             if(!tag_write_default_config(tagtype, password))
                 return FALSE;
             for(i= EM4X05_USER_DATA_BLOCK_NUM ; i < EM4X05_DATABLOCKS ; ++i)
-                if(!write_tag(i, EM4X05_BLANK_BLOCK, VERIFY))
+                if(i != EM4X05_PW_BLOCK_NUM && !write_tag(i, EM4X05_BLANK_BLOCK, VERIFY))
                     return FALSE;
-            // write default password
-            if(!write_tag(EM4X05_PW_BLOCK_NUM, EM4X05_PWD_DEFAULT, VERIFY))
+            // write default password (write only, so no verify)
+            if(!write_tag(EM4X05_PW_BLOCK_NUM, EM4X05_PWD_DEFAULT, NO_VERIFY))
                 return FALSE;
             return TRUE;
             

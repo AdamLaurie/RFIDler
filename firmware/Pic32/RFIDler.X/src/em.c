@@ -140,11 +140,10 @@
 #include "util.h"
 
 // em4205 return values
-const BYTE EM4205_Preamble[8]=  {0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00};   // "00001010"
-const BYTE EM4205_Error[8]= {0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01};       // "00000001"
-const BYTE *EM4205_Delays[4]= {"No Delay", "BP/8 (RF/8)", "BP/4 (RF/16)", "No Delay"};
-const BYTE *EM4205_Data_Rates[8]= {"RF/8", "RF/16", "Invalid", "RF/32", "RF/40", "Invalid", "Invalid", "RF/64"};
-const BYTE *EM4205_Capacitors[4]= {"Invalid", "210pF", "250pF", "330pF"};
+const BYTE EM4X05_Preamble[8]=  {0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00};   // "00001010"
+const BYTE EM4X05_Error[8]= {0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x01};       // "00000001"
+const BYTE *EM4X05_Delays[4]= {"No Delay", "BP/4 (RF/16)", "BP/8 (RF/8)", "No Delay"};
+const BYTE *EM4X05_Capacitors[4]= {"Invalid", "210pF", "250pF", "330pF"};
 // support routines for EM tags
 //
 
@@ -258,8 +257,8 @@ void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin)
 
 // em4x05 - comms as per em4469
 
-// em4205 doesn't use PWM for reader->tag comms, so hard code it
-BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay)
+// em4x05 doesn't use PWM for reader->tag comms, so hard code it
+BOOL em4x05_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay)
 {
     // 5 bit command + 6 bit address + parity + null = 13
     // return value 8 bit PREAMBLE + 45 bit OTA + null = 54
@@ -292,7 +291,7 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
         string_reverse(tmp2, 32);
         // add to command string
         rlen= strlen(tmp);
-        bin_to_em4205_ota(tmp + rlen, tmp2);
+        bin_to_em4x05_ota(tmp + rlen, tmp2);
         // convert to human readable
         binarraytobinstring(tmp + rlen, tmp + rlen, 45);
     }
@@ -310,7 +309,7 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
     }
 
     // send to tag
-    if(!em4205_forward_link(tmp))
+    if(!em4x05_forward_link(tmp))
         return FALSE;
 
     // return should be 8 bit PREAMBLE + 45 bit OTA formatted data
@@ -325,18 +324,18 @@ BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned l
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, rlen, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == rlen)
     {
         // check preamble
-        if(memcmp(tmp, EM4205_Preamble, 8) != 0x00)
+        if(memcmp(tmp, EM4X05_Preamble, 8) != 0x00)
             return FALSE;
         // extract OTA data
         if(get_response)
-            return em4205_ota_to_hex(response, tmp + 8);
+            return em4x05_ota_to_hex(response, tmp + 8);
         else
             return TRUE;
     }
     return FALSE;
 }
 
-BOOL em4205_forward_link(BYTE *data)
+BOOL em4x05_forward_link(BYTE *data)
 {
     // wait for a rising edge from TAG so we start talking while tag is modulating
     GetTimer_us(RESET);
@@ -374,24 +373,24 @@ BOOL em4205_forward_link(BYTE *data)
     TimerWait_FC(RFIDlerConfig.RWD_Wait_Switch_TX_RX);
 }
 
-BOOL em4205_get_uid(BYTE *response)
+BOOL em4x05_get_uid(BYTE *response)
 {
     // UID is stored in block 1
-    return em4205_read_word(response, 1);
+    return em4x05_read_word(response, 1);
 }
 
 // shut down TAG until next power up
-BOOL em4205_disable(void)
+BOOL em4x05_disable(void)
 {
-    return em4205_send_command(EM4205_DISABLE, NO_ADDRESS, TRUE, 0xFFFFFFFFL, FALSE, NULL, 0);
+    return em4x05_send_command(EM4X05_DISABLE, NO_ADDRESS, TRUE, 0xFFFFFFFFL, FALSE, NULL, 0);
 }
 
-BOOL em4205_write_word(BYTE word, BYTE *data)
+BOOL em4x05_write_word(BYTE word, BYTE *data, BOOL verify)
 {
     BOOL ret;
     BYTE tmp[33];
     
-    ret= em4205_send_command(EM4205_WRITE_WORD, word, TRUE, hextoulong(data), FALSE, NULL, EM4X05_WRITE_DELAY);
+    ret= em4x05_send_command(EM4X05_WRITE_WORD, word, TRUE, hextoulong(data), FALSE, NULL, EM4X05_WRITE_DELAY);
     
     // we should be checking command sent ok, but when testing never saw a correct preamble being returned by the tag.
     // AN604010 also suggests that you simply ignore this, and read the block back instead which we always do to verify anyway
@@ -399,7 +398,10 @@ BOOL em4205_write_word(BYTE word, BYTE *data)
     //if(!ret)
     //    return FALSE;
     
-    if(!em4205_read_word(tmp, word))
+    if(!verify)
+        return TRUE;
+    
+    if(!em4x05_read_word(tmp, word))
         return FALSE;
     if(memcmp(tmp, data, 8) != 0)
         return FALSE;
@@ -407,7 +409,7 @@ BOOL em4205_write_word(BYTE word, BYTE *data)
     return TRUE;
 }
 
-BOOL em4205_read_word(BYTE *response, BYTE word)
+BOOL em4x05_read_word(BYTE *response, BYTE word)
 {
     // hard reset
     stop_HW_clock();
@@ -415,12 +417,12 @@ BOOL em4205_read_word(BYTE *response, BYTE word)
     // delay for sleep period
     Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Sleep_Period) / 100);
 
-    return em4205_send_command(EM4205_READ_WORD, word, FALSE, 0L, TRUE, response, 0);
+    return em4x05_send_command(EM4X05_READ_WORD, word, FALSE, 0L, TRUE, response, 0);
 }
 
 // convert 32 bit binary data to 45 bit EM4205 OTA format
 // The 32 bit data field has an even parity bit inserted every 8 data bits, data is terminated with 8 column parity bits and a 0.
-void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin)
+void bin_to_em4x05_ota(unsigned char *ota, unsigned char *bin)
 {
     unsigned char i, j, parity, colparity[8]= {0,0,0,0,0,0,0,0};
 
@@ -447,7 +449,7 @@ void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin)
 }
 
 // convert EM4205 OTA format to 32 bit hex 
-BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota)
+BOOL em4x05_ota_to_hex(unsigned char *hex, unsigned char *ota)
 {
     unsigned char i, j, colparity[8]= {0,0,0,0,0,0,0,0}, tmp[32];
 
@@ -478,20 +480,20 @@ BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota)
     return TRUE;
 }
 
-BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info)
+BOOL em4x05_config_block_show(BYTE *config, BYTE *password, BYTE *info)
 {
     uint32_t    value= hextoulong(info);
     
     UserMessage("         Info Block (0): %.8s\r\n\r\n", info);
     
-    UserMessageNum("          Customer Code: 0x%03x\r\n", GET_CONFIG(value, EM4205_MASK_CUSTOMER, EM4205_SHIFT_CUSTOMER));
-    UserMessageNum("              Capacitor: %d = ", GET_CONFIG(value, EM4205_MASK_CAPACITOR, EM4205_SHIFT_CAPACITOR));
-    UserMessage("%s\r\n", EM4205_Capacitors[GET_CONFIG(value, EM4205_MASK_CAPACITOR, EM4205_SHIFT_CAPACITOR)]);
-    UserMessageNum("              Chip Type: %d = ", GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP));
-    if(GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP) == CHIP_TYPE_EM4205)
+    UserMessageNum("          Customer Code: 0x%03x\r\n", GET_CONFIG(value, EM4X05_MASK_CUSTOMER, EM4X05_SHIFT_CUSTOMER));
+    UserMessageNum("              Capacitor: %d = ", GET_CONFIG(value, EM4X05_MASK_CAPACITOR, EM4X05_SHIFT_CAPACITOR));
+    UserMessage("%s\r\n", EM4X05_Capacitors[GET_CONFIG(value, EM4X05_MASK_CAPACITOR, EM4X05_SHIFT_CAPACITOR)]);
+    UserMessageNum("              Chip Type: %d = ", GET_CONFIG(value, EM4X05_MASK_CHIP, EM4X05_SHIFT_CHIP));
+    if(GET_CONFIG(value, EM4X05_MASK_CHIP, EM4X05_SHIFT_CHIP) == CHIP_TYPE_EM4205)
         UserMessage("EM4205\r\n");
     else
-        if(GET_CONFIG(value, EM4205_MASK_CHIP, EM4205_SHIFT_CHIP) == CHIP_TYPE_EM4305)
+        if(GET_CONFIG(value, EM4X05_MASK_CHIP, EM4X05_SHIFT_CHIP) == CHIP_TYPE_EM4305)
             UserMessage("EM4305\r\n");
         else
             UserMessage("Invalid\r\n");
@@ -501,33 +503,68 @@ BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info)
     value= hextoulong(config);
     UserMessage("       Config Block (4): %.8s\r\n\r\n", config);
     
-    UserMessage("            Pigeon Mode: %s\r\n", GET_CONFIG(value, EM4205_MASK_PIGEON, EM4205_SHIFT_PIGEON) ? "True" : "False");
-    UserMessage("                    RTF: %s\r\n", GET_CONFIG(value, EM4205_MASK_RTF, EM4205_SHIFT_RTF) ? "True" : "False");
-    UserMessage("                Disable: %s\r\n", GET_CONFIG(value, EM4205_MASK_DISABLE, EM4205_SHIFT_DISABLE) ? "True" : "False");
-    UserMessage("            Write Login: %s\r\n", GET_CONFIG(value, EM4205_MASK_WRITE_LOGIN, EM4205_SHIFT_WRITE_LOGIN) ? "True" : "False");
-    UserMessage("             Read Login: %s\r\n", GET_CONFIG(value, EM4205_MASK_READ_LOGIN, EM4205_SHIFT_READ_LOGIN) ? "True" : "False");
-    UserMessageNum("                    LWR: %d\r\n", GET_CONFIG(value, EM4205_MASK_LWR, EM4205_SHIFT_LWR));
-    UserMessage("             Delayed On: %d = ", GET_CONFIG(value, EM4205_MASK_DELAYED_ON, EM4205_SHIFT_DELAYED_ON));
-    UserMessage("%s\r\n", EM4205_Delays[GET_CONFIG(value, EM4205_MASK_DELAYED_ON, EM4205_SHIFT_DELAYED_ON)]);
-    UserMessage("                Encoder: %d = ", GET_CONFIG(value, EM4205_MASK_ENCODER, EM4205_SHIFT_ENCODER));
-    if(GET_CONFIG(value, EM4205_MASK_ENCODER, EM4205_SHIFT_ENCODER) == 0x01)
+    UserMessage("            Pigeon Mode: %s\r\n", GET_CONFIG(value, EM4X05_MASK_PIGEON, EM4X05_SHIFT_PIGEON) ? "True" : "False");
+    UserMessage("                    RTF: %s\r\n", GET_CONFIG(value, EM4X05_MASK_RTF, EM4X05_SHIFT_RTF) ? "True" : "False");
+    UserMessage("                Disable: %s\r\n", GET_CONFIG(value, EM4X05_MASK_DISABLE, EM4X05_SHIFT_DISABLE) ? "True" : "False");
+    UserMessage("            Write Login: %s\r\n", GET_CONFIG(value, EM4X05_MASK_WRITE_LOGIN, EM4X05_SHIFT_WRITE_LOGIN) ? "True" : "False");
+    UserMessage("             Read Login: %s\r\n", GET_CONFIG(value, EM4X05_MASK_READ_LOGIN, EM4X05_SHIFT_READ_LOGIN) ? "True" : "False");
+    UserMessageNum("                    LWR: %d\r\n", GET_CONFIG(value, EM4X05_MASK_LWR, EM4X05_SHIFT_LWR));
+    UserMessage("             Delayed On: %d = ", GET_CONFIG(value, EM4X05_MASK_DELAYED_ON, EM4X05_SHIFT_DELAYED_ON));
+    UserMessage("%s\r\n", EM4X05_Delays[GET_CONFIG(value, EM4X05_MASK_DELAYED_ON, EM4X05_SHIFT_DELAYED_ON)]);
+    UserMessage("                Encoder: %d = ", GET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER));
+    if(GET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER) == 0x01)
         UserMessage("%s\r\n", "Manchester");
     else
-        if(GET_CONFIG(value, EM4205_MASK_ENCODER, EM4205_SHIFT_ENCODER) == 0x02)
+        if(GET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER) == 0x02)
             UserMessage("%s\r\n", "BiPhase");
         else
             UserMessage("%s\r\n", "Invalid");
-    UserMessage("              Data Rate: %d = ", GET_CONFIG(value, EM4205_MASK_DATA_RATE, EM4205_SHIFT_DATA_RATE));
-    // ignore lower two bits on data rate which should always be '11' and anything over 7
-    UserMessage("%s\r\n", EM4205_Data_Rates[(GET_CONFIG(value, EM4205_MASK_DATA_RATE, EM4205_SHIFT_DATA_RATE) >> 2) & 0x07]);
+    UserMessageNum("              Data Rate: %d = ", GET_CONFIG(value, EM4X05_MASK_DATA_RATE, EM4X05_SHIFT_DATA_RATE));
+    UserMessageNum("RF/%d\r\n", GET_CONFIG(value, EM4X05_MASK_DATA_RATE, EM4X05_SHIFT_DATA_RATE) * 2 + 2);
+    return TRUE;
+}
+
+// create a config block based on current tag settings
+BOOL em4x05_create_config_block(BYTE *config)
+{
+    uint32_t    value= hextoulong(config);
+
+    // data rate
+    if(RFIDlerConfig.DataRate >= 8 && RFIDlerConfig.DataRate <= 64)
+        value= SET_CONFIG(value, EM4X05_MASK_DATA_RATE, EM4X05_SHIFT_DATA_RATE, (RFIDlerConfig.DataRate - 2) / 2);
+    else
+        return FALSE;
+    
+    // modulation
+    if(RFIDlerConfig.Manchester && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+        SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_MANCHESTER);
+    else
+    {
+        if(RFIDlerConfig.BiPhase && RFIDlerConfig.Modulation == MOD_MODE_ASK_OOK)
+            SET_CONFIG(value, EM4X05_MASK_ENCODER, EM4X05_SHIFT_ENCODER, EM4X05_MOD_BIPHASE);
+        else
+            return FALSE;
+    }
+
+    // data blocks
+    if((RFIDlerConfig.DataBits / EM4X05_BLOCKSIZE + EM4X05_USER_DATA_BLOCK_NUM) > EM4X05_DATABLOCKS)
+        return FALSE;
+    value= SET_CONFIG(value, EM4X05_MASK_LWR, EM4X05_SHIFT_LWR, ((RFIDlerConfig.DataBits / EM4X05_BLOCKSIZE + EM4X05_USER_DATA_BLOCK_NUM - 1) & (EM4X05_MASK_LWR >> EM4X05_SHIFT_LWR)));
+
+    ulongtohex(config, value);
+
     return TRUE;
 }
 
 // set a config block suitable for emulating
-BOOL em4205_emulate_config_block(BYTE *config, BYTE target_tagtype)
+BOOL em4x05_emulate_config_block(BYTE *config, BYTE target_tagtype)
 {
     switch (target_tagtype)
     {
+       case TAG_TYPE_ASK_RAW:
+           memcpy(config, EM4X05_DEFAULT_CONFIG_BLOCK, HEXDIGITS(EM4X05_BLOCKSIZE));
+           return em4x05_create_config_block(config);
+           
         case TAG_TYPE_EM4X02:
         case TAG_TYPE_Q5:
         case TAG_TYPE_UNIQUE:
@@ -536,6 +573,10 @@ BOOL em4205_emulate_config_block(BYTE *config, BYTE target_tagtype)
 
         case TAG_TYPE_EM4X05:
             memcpy(config, EM4X05_DEFAULT_CONFIG_BLOCK, HEXDIGITS(EM4X05_BLOCKSIZE));
+            return TRUE;
+            
+        case TAG_TYPE_FDXB:
+            memcpy(config, EM4X05_FDXB_CONFIG_BLOCK, HEXDIGITS(EM4X05_BLOCKSIZE));
             return TRUE;
 
         default:

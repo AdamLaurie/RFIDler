@@ -466,9 +466,9 @@ void __ISR(_TIMER_4_VECTOR, ipl6auto) HW_read_bit(void)
             // get current bit value
             out= READER_DATA;
                         
-            // if manchester/biphase encoded and first bit, then add a half bit that we
+            // if manchester encoded and first bit, then add a half bit that we
             // lost when synchronising
-            if(!Reader_Bit_Count && (RFIDlerConfig.Manchester || RFIDlerConfig.BiPhase))
+            if(!Reader_Bit_Count && RFIDlerConfig.Manchester)
                 ++Reader_Bit_Count;
 
             // check for manchester encoding sync/errors

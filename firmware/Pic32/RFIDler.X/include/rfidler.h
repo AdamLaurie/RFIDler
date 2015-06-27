@@ -134,7 +134,7 @@
 #define RFIDLER_HW_VERSION        0x020
 
 // max sizes in BITS
-#define MAXBLOCKSIZE        128
+#define MAXBLOCKSIZE        512
 #define MAXTAGSIZE          4096
 #define MAXUID              512
 
@@ -398,3 +398,4 @@ extern rtccDate	RTC_date;			// date structure
 
 // bits to hex digits
 #define HEXDIGITS(x)                    (x / 4)
+#define HEXTOBITS(x)                    (x * 4)

@@ -144,64 +144,68 @@
 #define EM4X05_WRITE_DELAY      1340 // eeprom write in FCs
 
 // em4205 commands (leading 0 + 3 bits + even parity)
-#define EM4205_LOGIN            "00011"
-#define EM4205_WRITE_WORD       "00101"
-#define EM4205_READ_WORD        "01001"
-#define EM4205_PROTECT          "01100"
-#define EM4205_DISABLE          "01010"
+#define EM4X05_LOGIN            "00011"
+#define EM4X05_WRITE_WORD       "00101"
+#define EM4X05_READ_WORD        "01001"
+#define EM4X05_PROTECT          "01100"
+#define EM4X05_DISABLE          "01010"
 
 // config block masks
 
-#define EM4205_MASK_RESERVED                0b11111000000000000000000000000000
-#define EM4205_MASK_PIGEON                  0b00000100000000000000000000000000
-#define EM4205_MASK_UNUSED_4                0b00000010000000000000000000000000
-#define EM4205_MASK_RTF                     0b00000001000000000000000000000000
-#define EM4205_MASK_DISABLE                 0b00000000100000000000000000000000
-#define EM4205_MASK_UNUSED_3                0b00000000011000000000000000000000
-#define EM4205_MASK_WRITE_LOGIN             0b00000000000100000000000000000000
-#define EM4205_MASK_UNUSED_2                0b00000000000010000000000000000000
-#define EM4205_MASK_READ_LOGIN              0b00000000000001000000000000000000
-#define EM4205_MASK_LWR                     0b00000000000000111100000000000000
-#define EM4205_MASK_DELAYED_ON              0b00000000000000000011000000000000
-#define EM4205_MASK_UNUSED_1                0b00000000000000000000110000000000
-#define EM4205_MASK_ENCODER                 0b00000000000000000000001111000000
-#define EM4205_MASK_DATA_RATE               0b00000000000000000000000000111111
+#define EM4X05_MASK_RESERVED                0b11111000000000000000000000000000
+#define EM4X05_MASK_PIGEON                  0b00000100000000000000000000000000
+#define EM4X05_MASK_UNUSED_4                0b00000010000000000000000000000000
+#define EM4X05_MASK_RTF                     0b00000001000000000000000000000000
+#define EM4X05_MASK_DISABLE                 0b00000000100000000000000000000000
+#define EM4X05_MASK_UNUSED_3                0b00000000011000000000000000000000
+#define EM4X05_MASK_WRITE_LOGIN             0b00000000000100000000000000000000
+#define EM4X05_MASK_UNUSED_2                0b00000000000010000000000000000000
+#define EM4X05_MASK_READ_LOGIN              0b00000000000001000000000000000000
+#define EM4X05_MASK_LWR                     0b00000000000000111100000000000000
+#define EM4X05_MASK_DELAYED_ON              0b00000000000000000011000000000000
+#define EM4X05_MASK_UNUSED_1                0b00000000000000000000110000000000
+#define EM4X05_MASK_ENCODER                 0b00000000000000000000001111000000
+#define EM4X05_MASK_DATA_RATE               0b00000000000000000000000000111111
 
 // config block bit shifts
 
-#define EM4205_SHIFT_RESERVED               27
-#define EM4205_SHIFT_PIGEON                 26
-#define EM4205_SHIFT_UNUSED_5               25
-#define EM4205_SHIFT_RTF                    24
-#define EM4205_SHIFT_DISABLE                23
-#define EM4205_SHIFT_UNUSED_4               21
-#define EM4205_SHIFT_WRITE_LOGIN            20
-#define EM4205_SHIFT_UNUSED_3               19
-#define EM4205_SHIFT_READ_LOGIN             18
-#define EM4205_SHIFT_LWR                    14
-#define EM4205_SHIFT_DELAYED_ON             12
-#define EM4205_SHIFT_UNUSED_2               10
-#define EM4205_SHIFT_ENCODER                6
-#define EM4205_SHIFT_DATA_RATE              0
+#define EM4X05_SHIFT_RESERVED               27
+#define EM4X05_SHIFT_PIGEON                 26
+#define EM4X05_SHIFT_UNUSED_5               25
+#define EM4X05_SHIFT_RTF                    24
+#define EM4X05_SHIFT_DISABLE                23
+#define EM4X05_SHIFT_UNUSED_4               21
+#define EM4X05_SHIFT_WRITE_LOGIN            20
+#define EM4X05_SHIFT_UNUSED_3               19
+#define EM4X05_SHIFT_READ_LOGIN             18
+#define EM4X05_SHIFT_LWR                    14
+#define EM4X05_SHIFT_DELAYED_ON             12
+#define EM4X05_SHIFT_UNUSED_2               10
+#define EM4X05_SHIFT_ENCODER                6
+#define EM4X05_SHIFT_DATA_RATE              0
 
 // info block masks
 
-#define EM4205_MASK_CUSTOMER                0b0000000000001111111111000000000
-#define EM4205_MASK_CAPACITOR               0b0000000000000000000000001100000
-#define EM4205_MASK_CHIP                    0b0000000000000000000000000011110
+#define EM4X05_MASK_CUSTOMER                0b0000000000001111111111000000000
+#define EM4X05_MASK_CAPACITOR               0b0000000000000000000000001100000
+#define EM4X05_MASK_CHIP                    0b0000000000000000000000000011110
 
 // info block shifts
-#define EM4205_SHIFT_CUSTOMER               9
-#define EM4205_SHIFT_CAPACITOR              5
-#define EM4205_SHIFT_CHIP                   1
+#define EM4X05_SHIFT_CUSTOMER               9
+#define EM4X05_SHIFT_CAPACITOR              5
+#define EM4X05_SHIFT_CHIP                   1
 
 // config values
 #define CHIP_TYPE_EM4205                    8
 #define CHIP_TYPE_EM4305                    9
+#define EM4X05_MOD_MANCHESTER               1
+#define EM4X05_MOD_BIPHASE                  2
 
 // config blocks - note when encoding data blocks, remember to reverse bits as EM4X05 delivers data LSB 
-#define EM4X05_DEFAULT_CONFIG_BLOCK     "0002005F"  // everything default to false, Manchester, RF/64
+#define EM4X05_DEFAULT_CONFIG_BLOCK     "0002005F"  // everything default to false, Manchester, RF/64, maxword 8  (128 data bits / 4 words)
 #define EM4X05_UNIQUE_CONFIG_BLOCK      "0001805F"  // EM4X02/Unique - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
+#define EM4X05_FDXB_CONFIG_BLOCK        "0002108F"  // FDX-B ISO-11784/5 - BiPhase ('57 - inverted), Delay ON BP/4, RF/32, maxword 8 (128 data bits / 4 words)
+
 
 // data blocks
 #define EM4X05_BLANK_BLOCK              "00000000"
@@ -214,13 +218,13 @@ BOOL hex_to_em4x02_bin(unsigned char *em, unsigned char *hex);
 BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em);
 void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin);
 
-BOOL em4205_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay);
-BOOL em4205_forward_link(BYTE *data);
-BOOL em4205_get_uid(BYTE *response);
-BOOL em4205_disable(void);
-BOOL em4205_write_word(BYTE word, BYTE *data);
-BOOL em4205_read_word(BYTE *response, BYTE word);
-void bin_to_em4205_ota(unsigned char *ota, unsigned char *bin);
-BOOL em4205_ota_to_hex(unsigned char *hex, unsigned char *ota);
-BOOL em4205_config_block_show(BYTE *config, BYTE *password, BYTE *info);
-BOOL em4205_emulate_config_block(BYTE *config, BYTE target_tagtype);
+BOOL em4x05_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay);
+BOOL em4x05_forward_link(BYTE *data);
+BOOL em4x05_get_uid(BYTE *response);
+BOOL em4x05_disable(void);
+BOOL em4x05_write_word(BYTE word, BYTE *data, BOOL verify);
+BOOL em4x05_read_word(BYTE *response, BYTE word);
+void bin_to_em4x05_ota(unsigned char *ota, unsigned char *bin);
+BOOL em4x05_ota_to_hex(unsigned char *hex, unsigned char *ota);
+BOOL em4x05_config_block_show(BYTE *config, BYTE *password, BYTE *info);
+BOOL em4x05_emulate_config_block(BYTE *config, BYTE target_tagtype);

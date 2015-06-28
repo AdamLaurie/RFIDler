@@ -306,7 +306,7 @@ BOOL config_block_show(BYTE *config, BYTE *password, BYTE *info, BYTE tagtype)
     switch(tagtype)
     {
         case TAG_TYPE_EM4X05:
-            return em4x05_config_block_show(config, password, info);
+            return em4x05_config_block_show(config, info);
             
         case TAG_TYPE_HITAG2:
             return hitag2_config_block_show(config, password, info);

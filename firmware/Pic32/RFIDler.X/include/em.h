@@ -202,14 +202,17 @@
 #define EM4X05_MOD_BIPHASE                  2
 
 // config blocks - note when encoding data blocks, remember to reverse bits as EM4X05 delivers data LSB 
-#define EM4X05_DEFAULT_CONFIG_BLOCK     "0002005F"  // everything default to false, Manchester, RF/64, maxword 8  (128 data bits / 4 words)
-#define EM4X05_UNIQUE_CONFIG_BLOCK      "0001805F"  // EM4X02/Unique - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
-#define EM4X05_FDXB_CONFIG_BLOCK        "0002108F"  // FDX-B ISO-11784/5 - BiPhase ('57 - inverted), Delay ON BP/4, RF/32, maxword 8 (128 data bits / 4 words)
+#define EM4X05_DEFAULT_CONFIG_BLOCK             "0002005F"  // everything default to false, Manchester, RF/64, maxword 8  (128 data bits / 4 words)
+#define EM4X05_READ_LOGIN_CONFIG_BLOCK          "0006005F"  // as per default, but with READ LOGIN set
+#define EM4X05_WRITE_LOGIN_CONFIG_BLOCK         "0012005F"  // as per default, but with WRITE LOGIN set
+#define EM4X05_READ_WRITE_LOGIN_CONFIG_BLOCK    "0016005F"  // as per default, but with READ & WRITE LOGIN set
+#define EM4X05_UNIQUE_CONFIG_BLOCK              "0001805F"  // EM4X02/Unique - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
+#define EM4X05_FDXB_CONFIG_BLOCK                "0002108F"  // FDX-B ISO-11784/5 - BiPhase ('57 - inverted), Delay ON BP/4, RF/32, maxword 8 (128 data bits / 4 words)
 
 
 // data blocks
-#define EM4X05_BLANK_BLOCK              "00000000"
-#define EM4X05_PWD_DEFAULT              "00000000"
+#define EM4X05_BLANK_BLOCK                      "00000000"
+#define EM4X05_PWD_DEFAULT                      "00000000"
                                                     
 
 BOOL em4x02_get_uid(BYTE *response);
@@ -218,7 +221,7 @@ BOOL hex_to_em4x02_bin(unsigned char *em, unsigned char *hex);
 BOOL em4x02_hex_to_bin(unsigned char *bin, unsigned char *em);
 void bin_to_em4x02_bin(unsigned char *em, unsigned char *bin);
 
-BOOL em4x05_send_command(BYTE *command, char address, BOOL send_data, unsigned long data, BOOL get_response, BYTE *response, unsigned int write_delay);
+BOOL em4x05_send_command(BYTE *command, char address, BOOL send_data, BYTE *data, BOOL get_response, BYTE *response, unsigned int write_delay);
 BOOL em4x05_forward_link(BYTE *data);
 BOOL em4x05_get_uid(BYTE *response);
 BOOL em4x05_disable(void);
@@ -226,5 +229,6 @@ BOOL em4x05_write_word(BYTE word, BYTE *data, BOOL verify);
 BOOL em4x05_read_word(BYTE *response, BYTE word);
 void bin_to_em4x05_ota(unsigned char *ota, unsigned char *bin);
 BOOL em4x05_ota_to_hex(unsigned char *hex, unsigned char *ota);
-BOOL em4x05_config_block_show(BYTE *config, BYTE *password, BYTE *info);
+BOOL em4x05_config_block_show(BYTE *config, BYTE *info);
 BOOL em4x05_emulate_config_block(BYTE *config, BYTE target_tagtype);
+BOOL em4x05_login(BYTE *response, BYTE *pwd);

@@ -130,16 +130,20 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 #include "HardwareProfile.h"
-#include "rfidler.h"
-#include "login.h"
+#include "em.h"
 #include "hitag.h"
+#include "login.h"
 #include "q5.h"
+#include "rfidler.h"
 
 // login with password - user "auth" for crypto modes
 BOOL tag_login(unsigned int block, BYTE *response, BYTE *pwd)
 {
     switch (RFIDlerConfig.TagType)
     {
+        case TAG_TYPE_EM4X05:
+            return em4x05_login(response, pwd);
+            
         case TAG_TYPE_Q5:
         //case TAG_TYPE_T55X7:
             return q5_login(response, pwd);

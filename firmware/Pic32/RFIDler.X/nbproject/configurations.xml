@@ -55,6 +55,7 @@
       <itemPath>include/iso_7816.h</itemPath>
       <itemPath>include/t55x7.h</itemPath>
       <itemPath>include/sniff.h</itemPath>
+      <itemPath>include/tamagotchi.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -122,6 +123,7 @@
       <itemPath>src/iso7816.c</itemPath>
       <itemPath>src/t55x7.c</itemPath>
       <itemPath>src/sniff.c</itemPath>
+      <itemPath>src/tamagotchi.c</itemPath>
     </logicalFolder>
     <logicalFolder name="windows driver"
                    displayName="Windows Driver"
@@ -303,6 +305,8 @@
         </C32>
         <C32-AR>
         </C32-AR>
+        <C32-AS>
+        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -352,6 +356,8 @@
         </C32>
         <C32-AR>
         </C32-AR>
+        <C32-AS>
+        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -366,6 +372,8 @@
         </C32>
         <C32-AR>
         </C32-AR>
+        <C32-AS>
+        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -380,6 +388,8 @@
         </C32>
         <C32-AR>
         </C32-AR>
+        <C32-AS>
+        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>
@@ -566,6 +576,8 @@
         </C32>
         <C32-AR>
         </C32-AR>
+        <C32-AS>
+        </C32-AS>
         <C32-LD>
         </C32-LD>
         <C32CPP>

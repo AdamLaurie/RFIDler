@@ -332,6 +332,7 @@ extern rtccDate	RTC_date;			// date structure
 #define TAG_TYPE_T55X7                  16      // same as Q5 but different timings and no modulation-defeat
 #define TAG_TYPE_AWID_26                17
 #define TAG_TYPE_EM4X05                 18
+#define TAG_TYPE_TAMAGOTCHI             19
 
 // various
 

@@ -132,152 +132,33 @@
 
 
 #include "HardwareProfile.h"
-#include "rfidler.h"
-#include "clock.h"
 #include "comms.h"
-#include "hitag.h"
-#include "q5.h"
-#include "sniff.h"
+#include "rfidler.h"
 #include "tamagotchi.h"
 #include "util.h"
 
-// watch external clock for PWM messages
-// specify minimum gap to look for in us
-void sniff_pwm(unsigned int min)
+// decode externally sniffed PWM
+BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    BOOL            toggle;
-    BOOL            abort= FALSE;
-    unsigned long   i, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned int    i, j;
+    BOOL            decoded= FALSE;
+    BYTE            out[32]; // max response from tamagotchi unknown, but 20 is biggest we've seen so far
     
-    // make sure local clock isn't running & switch to input
-    stop_HW_clock();
-
-    COIL_MODE_READER();
-    READER_CLOCK_ENABLE_OFF(LOW);
-    
-    toggle= SNIFFER_COIL;
-    
-    // wait for 100 ticks to make sure we're settled
-    toggle= SNIFFER_COIL;
-    while(count < 100)
+    j= 0;
+    while(j < count)
     {
-        while(SNIFFER_COIL == toggle)
-            // check for user abort
-            if(get_user_abort())
-                return;
-        ++count;
-        toggle= !toggle;
-    }
-    
-    // watch for gaps / pulses
-    i= 0;
-    GetTimer_us(RESET);
-    while(!abort)
-    {
-        while(SNIFFER_COIL == toggle)
-            // check for user abort
-            if((abort= get_user_abort()))
-                break;
-        toggle= !toggle;
-        count= GetTimer_us(RESET);
-        // check if it was a gap
-        if(count > min)
+        i= generic_decode_pwm(out, &pulses[j], 10, 512, &gaps[j], 20, 500, count - j);
+        if(i)
         {
-            pulses[i]= pulsecount;
-            gaps[i++]= count;
-            pulsecount= 0L;
+            decoded= TRUE;
+            UserMessage("\r\n%s", out);
+            j += i;
         }
         else
-            pulsecount += count;
-        if(i == DETECT_BUFFER_SIZE)
-        {
-            decode_pwm(pulses, gaps, i);
-            i= 0;
-        }
-    }
-    
-    decode_pwm(pulses, gaps, i);
-}
-
-void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
-{
-    unsigned int i;
-    
-    switch(RFIDlerConfig.TagType)
-    {
-        case TAG_TYPE_HITAG1:
-        case TAG_TYPE_HITAG2:
-            hitag2_decode_pwm(pulses, gaps, count);
-            break;
-
-        case TAG_TYPE_Q5:
-        case TAG_TYPE_T55X7:
-            q5_decode_pwm(pulses, gaps, count);
-            break;
-
-        case TAG_TYPE_TAMAGOTCHI:
-            tamagotchi_decode_pwm(pulses, gaps, count);
-            break;
-            
-        default:
-            for(i= 0 ; i < count ; ++i)
-            {
-                UserMessageNum("\r\nPulse: %d ", pulses[i]);
-                UserMessageNum("Gap: %d", gaps[i]);
-            }
             break;
     }
-    UserMessage("\r\n","");
-}
-
-// convert pwm array to human readable binary
-// terminates at end of first sequence and returns number of samples processed 
-BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
-{
-    unsigned int    one, zero, i;
-    BOOL            sequence= FALSE;
     
-    // first try to detect size of one and zero blocks
-    // short block is a zero, long is a one
-    for(i= 0, zero= 65535, one= 0 ; i < count ; ++i)
-    {
-        if(gaps[i] >= mingap && gaps[i] <= maxgap && pulses[i] > minpulse && pulses[i] <= maxpulse)
-        {
-            if(pulses[i] > one)
-                one= pulses[i];
-            if(pulses[i] < zero)
-                zero= pulses[i];
-        }
-    }
+    UserMessage("%s", "\r\n");
     
-    if(zero == 65535 || one == 0)
-        return 0;
-    
-    // decode and return the first sequence
-    for(i= 0 ; i < count ; ++i)
-    {
-        if(gaps[i] >= mingap && gaps[i] <= maxgap)
-        {
-            if(pulses[i] <= maxpulse)
-            {
-                if(approx(pulses[i], zero, 20))
-                    *(result++)= '0';
-                else
-                    *(result++)= '1';
-                sequence= TRUE;
-            }
-            else
-                if(sequence)
-                {
-                   *result= '\0';
-                   return i + 1;
-                }
-        }
-    }
-    
-    if(!sequence)
-        return 0;
-    
-    *result= '\0';
-    return i;
+    return decoded;
 }

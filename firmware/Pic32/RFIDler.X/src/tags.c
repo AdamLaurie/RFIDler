@@ -170,6 +170,7 @@ const BYTE *TagTypes[]= {
     "T55X7",
     "AWID26",
     "EM4X05",
+    "TAMAGOTCHI",
     NULL
 };
 
@@ -669,6 +670,21 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.SyncBits= 16;
             RFIDlerConfig.DataBlocks= T55X7_DATABLOCKS;
             RFIDlerConfig.BlockSize= T55X7_BLOCKSIZE;
+            RFIDlerConfig.TagType= tag;
+            RFIDlerConfig.Repeat= 20;
+            RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)
+            RFIDlerConfig.RWD_Sleep_Period= 13000; // small tags such as keyfobs need a long sleep to reset
+            RFIDlerConfig.RWD_Wake_Period= 4000;
+            RFIDlerConfig.RWD_Gap_Period= 23; // 14; // 14 nominal, 8 - 30 normal, 8 - 25 fast write mode
+            RFIDlerConfig.RWD_Zero_Period= 16; // 24; // 24 nominal, 16 - 31 normal, 8 - 15 fast write mode
+            RFIDlerConfig.RWD_One_Period= 48; // 54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
+            RFIDlerConfig.RWD_Wait_Switch_TX_RX= 64; // t55x7 will exit downlink mode after 64 but we mustn't read until t55x7 switches damping on
+            RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192;
+            break;
+            
+        // special case - TAMAGOTCHI do not do anything but PWM, so most settings are irrelevant
+        case TAG_TYPE_TAMAGOTCHI:
+            RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.TagType= tag;
             RFIDlerConfig.Repeat= 20;
             RFIDlerConfig.Timeout= 13000; // timeout in uS (note with prescaler of 16 max is 13107)

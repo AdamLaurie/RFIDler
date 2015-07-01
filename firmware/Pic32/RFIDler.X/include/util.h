@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -133,7 +133,11 @@
 #define CRC16_MASK_ISO_11785      0x8408  // ISO 11785 animal tags
 #define CRC16_MASK_CRC16          0xA001  // standard CRC16 mask (used in ARC files)
 
-// NB These macros reverse the bit order in each byte, not for the whole integer!
+/*
+ * Hitag Crypto support macros
+ * These macros reverse the bit order in a byte, or *within* each byte of a
+ * 16 , 32 or 64 bit unsigned integer. (Not across the whole 16 etc bits.)
+ */
 #define rev8(X)   ((((X) >> 7) &1) + (((X) >> 5) &2) + (((X) >> 3) &4) \
                   + (((X) >> 1) &8) + (((X) << 1) &16) + (((X) << 3) &32) \
                   + (((X) << 5) &64) + (((X) << 7) &128) )

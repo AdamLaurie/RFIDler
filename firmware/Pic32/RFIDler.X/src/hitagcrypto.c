@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -241,17 +241,25 @@ static uint32_t hitag2_crypt(uint64_t s)
     return (ht2_function5c >> bitindex) & 1;
 }
 
+/*
+ * Parameters:
+ * Hitag_State* pstate - output, internal state after initialisation
+ * uint64_t sharedkey  - 48 bit key shared between reader & tag
+ * uint32_t serialnum  - 32 bit tag serial number
+ * uint32_t initvector - 32 bit random IV from reader, part of tag authentication
+ */
 void hitag2_init(Hitag_State* pstate, uint64_t sharedkey, uint32_t serialnum, uint32_t initvector)
 {
     uint32_t j;
-    // init state, including setting 16 bits at the end of register
-    uint64_t state = ((sharedkey & 0xFFFF) << 32) + serialnum; // serial number + 16 bits of shared key
+    // init state, from serial number and lowest 16 bits of shared key
+    uint64_t state = ((sharedkey & 0xFFFF) << 32) + serialnum;
 
-    // mix the initialisation vector and 32 bits of the shared key
+    // mix the initialisation vector and highest 32 bits of the shared key
     initvector ^= (uint32_t) (sharedkey >> 16);
 
     for (j = 2; j-- ;) {
-        // setup 16 bits from IV & Shared Key to mix-in
+        // move 16 bits from (IV xor Shared Key) to top of uint64_t state
+        // these will be XORed in turn with output of the crypto function
         state ^= (uint64_t) initvector << 48;
         initvector >>= 16;
 
@@ -364,7 +372,7 @@ unsigned int hitag2_benchtest_gen32()
     // init crypto
     hitag2_init(&state, key, serial, initvec);
 
-    // start timer for generating 32 bit stream
+    // benchmark: generation of 32 bit stream (excludes initialisation)
     GetTimer_us(RESET);
 
     (void) hitag2_nstep(&state, 32);
@@ -379,13 +387,13 @@ unsigned int hitag2_benchtest(uint32_t count)
     const uint32_t serial = 0x96eac292;
     const uint32_t initvec = 0x4ea276a6;
     Hitag_State state;
-    int i;
+    uint32_t i;
 
     // start timer
     GetTimer_us(RESET);
 
-    // init crypto & generate 32 bit authentication
-    // including i stops optimizer moving asignment out of loop
+    // benchmark: initialise crypto & generate 32 bit authentication
+    // adding i stops gcc optimizer moving init function call out of loop
     for (i = 0; i < count; i++) {
         hitag2_init(&state, key, serial, initvec + i);
         (void) hitag2_nstep(&state, 32);
@@ -398,11 +406,11 @@ unsigned int hitag2_benchtest(uint32_t count)
 unsigned hitag2_verifytest()
 {
     uint8_t expected[16] = { 0xD7, 0x23, 0x7F, 0xCE, 0x8C, 0xD0, 0x37, 0xA9, 0x57, 0x49, 0xC1, 0xE6, 0x48, 0x00, 0x8A, 0xB6 };
-    //const uint64_t key = 0x4ad292b272f2; // = rev64 (0x524B494D4E4FUL);
+    // key = 0x4ad292b272f2  after each byte has its bit order reversed
+    // serial = 0x96eac292    ditto
+    // initvec = 0x4ea276a6   ditto
     const uint64_t key = rev64 (0x524B494D4E4FUL);
-    //const uint32_t serial = 0x96eac292;  // = rev32 (0x69574349)
     const uint32_t serial = rev32 (0x69574349);
-    //const uint32_t initvec = 0x4ea276a6; // = rev32 (0x72456E65);
     const uint32_t initvec = rev32 (0x72456E65);
     
     uint32_t i;

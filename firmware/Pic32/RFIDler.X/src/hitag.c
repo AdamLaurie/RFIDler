@@ -169,7 +169,7 @@ BOOL hitag1_get_uid(BYTE *response)
 {
     BYTE tmp[132]; // 33 bits x 4
 
-    rwd_send(HITAG1_CC, strlen(HITAG1_CC), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
+    rwd_send(HITAG1_SET_CC, strlen(HITAG1_SET_CC), RESET, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, RFIDlerConfig.RWD_Sleep_Period, RFIDlerConfig.RWD_Wake_Period, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX);
      // get tag id in anti-collision mode (proprietary data format, so switch off manchester and read at double the data rate, for 4 x the data bits)
     RFIDlerConfig.Manchester= FALSE;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate / 2, tmp, RFIDlerConfig.DataBits * 4, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == RFIDlerConfig.DataBits * 4)
@@ -318,6 +318,9 @@ BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, B
 
     // get/check 3 bit ACK if required
     if(ack)
+    {
+        // sync manchester
+        HW_Skip_Bits= 1;
         if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, tmp, 3, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == 3)
         {
             if (memcmp(tmp, Hitag1ACK , 3) != 0)
@@ -325,11 +328,15 @@ BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, B
         }
         else
             return FALSE;
+    }
 
     if(!response_length)
         return TRUE;
 
     // read response as binary data
+    
+    // sync manchester
+    HW_Skip_Bits= 1;
     if(read_ask_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, response, response_length, RFIDlerConfig.Sync, sync ? RFIDlerConfig.SyncBits : 0, RFIDlerConfig.Timeout, ONESHOT_READ, BINARY) == response_length)
     {
         // delay for RX->TX time
@@ -368,6 +375,102 @@ void hitag1_crc(BYTE *crc, BYTE data, BYTE bits)
             *crc <<= 1;
     }
 }
+
+// decode externally sniffed PWM
+BOOL hitag1_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+{
+    unsigned int    i, j;
+    BOOL            decoded= FALSE;
+    BYTE            out[46], tmp[9], x; // max command from hitag1 is 5 bit command plus 32 bits + 8 bit crc == 45
+    
+    j= 0;
+    while(j < count)
+    {
+        i= generic_decode_pwm(out, &pulses[j], 10, 256, &gaps[j], 10, 80, count - j);
+        if(i)
+        {
+            // there are only 5 message sizes, so decode accordingly
+            switch(strlen(out))
+            {
+                // halt
+                case 4:
+                    if(memcmp(out, HITAG1_HALT, 4) == 0)
+                        UserMessage("\r\n%s, HALT", out);
+                    else
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                    break;
+                     
+                // get UID
+                case 5:
+                    if(memcmp(out, HITAG1_SET_CC, 5) == 0)
+                        UserMessage("\r\n%s, SET_CC", out);
+                        else
+                            UserMessage("\r\n%s, ?INVALID?", out); 
+                    break;
+                    
+               // read/write
+                case 20:
+                    if(memcmp(out, HITAG1_RDPPAGE, 4) == 0)
+                        UserMessage("\r\n%s, READ_PLAINTEXT_PAGE:", out);
+                        else
+                            if(memcmp(out, HITAG1_WRPPAGE, 4) == 0)
+                                UserMessage("\r\n%s, WRITE_PLAINTEXT_PAGE:", out);
+                            else
+                            {
+                            UserMessage("\r\n%s, ?INVALID?", out);
+                            break;
+                            }
+                    out[20]= '\0';
+                    binstringtohex(tmp, out + 4);
+                    // page
+                    UserMessage("%.2s:", tmp);
+                    // crc
+                    UserMessage("%s", tmp + 2);
+                    break;
+                    
+                // data
+                case 40:
+                    UserMessage("\r\n%s, DATA:", out);
+                    out[40]= '\0';
+                    binstringtohex(tmp, out);
+                    // DATA
+                    UserMessage("%.8s:", tmp);
+                    // CRC
+                    UserMessage("%s", tmp + 8);
+                    break;
+                    
+                // select
+                case 45:
+                    if(memcmp(out, HITAG1_SELECT, 5) == 0)
+                    {
+                        UserMessage("\r\n%s, SELECT:", out);
+                        out[45]= '\0';
+                        binstringtohex(tmp, out + 5);
+                        // UID
+                        UserMessage("%.8s:", tmp);
+                        // CRC
+                        UserMessage("%s", tmp + 8);
+                    }
+                    else
+                        UserMessage("\r\n%s, ?INVALID?", out);
+                    break;
+ 
+                default:
+                    UserMessage("\r\n%s,?INVALID?", out);
+            }
+            decoded= TRUE;
+            j += i;
+        }
+        else
+            break;
+    }
+    
+    UserMessage("%s", "\r\n");
+    
+    return decoded;
+}
+
+// hitag2 
 
 BOOL hitag2_get_uid(BYTE *response)
 {
@@ -801,7 +904,7 @@ BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned in
                     UserMessageNum("%d", x);
                     break;
                 
-                // password
+                // password or data
                 case 32:
                     if(auth)
                         UserMessage("\r\n%s, PWD:", out);

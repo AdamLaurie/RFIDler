@@ -131,7 +131,7 @@
 
 
 // hitag1 commands
-#define HITAG1_CC                   "00110"         // get UID when in Anti-Collision mode
+#define HITAG1_SET_CC               "00110"         // get UID when in Anti-Collision mode
 #define HITAG1_SELECT               "00000"         // select tag for read/write
 #define HITAG1_WRPPAGE              "1000"          // write page plaintext mode (page is 32 bits, number 0-63)
 #define HITAG1_WRPBLK               "1001"          // write block plaintext mode (block is 4 pages)
@@ -207,13 +207,15 @@
 
 BOOL hitag1_get_uid(BYTE *response);
 BOOL hitag1_hex_to_uid(BYTE *response, BYTE *hex);
+BOOL hitag1_select(BYTE *response, BYTE *uid);
+BOOL hitag1_read_page(BYTE *response, BYTE block);
 BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack);
 void hitag1_binarray_crc(BYTE *crc, BYTE *bin, BYTE length);
 void hitag1_crc(BYTE *crc, BYTE data, BYTE bits);
+BOOL hitag1_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+
 BOOL hitag2_get_uid(BYTE *response);
 BOOL hitag2_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag1_select(BYTE *response, BYTE *uid);
-BOOL hitag1_read_page(BYTE *response, BYTE block);
 BOOL hitag2_pwd_auth(BYTE *response, BYTE *pwd);
 BOOL hitag2_read_page(BYTE *response, BYTE block);
 BOOL hitag2_write_page(BYTE block, BYTE *data);

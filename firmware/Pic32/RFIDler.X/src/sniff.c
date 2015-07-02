@@ -206,6 +206,9 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count
     switch(RFIDlerConfig.TagType)
     {
         case TAG_TYPE_HITAG1:
+            hitag1_decode_pwm(pulses, gaps, count);
+            break;
+            
         case TAG_TYPE_HITAG2:
             hitag2_decode_pwm(pulses, gaps, count);
             break;

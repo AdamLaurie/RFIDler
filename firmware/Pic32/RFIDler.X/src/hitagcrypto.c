@@ -156,9 +156,14 @@
 
 /* Brief info about NXP Hitag 1, Hitag 2, Hitag S and Hitag u (mu)
 
-   Hitag, like Mifare, was created by a company called Mikron for micropayment
-   applications. Mikron was subsequently acquired by Philips Semiconductors.
-   Philips Semiconductors then became NXP.
+   Hitag 125kHz RFID was created by a company called Mikron (Mikron Gesellschaft
+   fur Integrierte Mikroelektronik Mbh), of Austria, for micropayment applications.
+   At about the same time, late 1980s to early 1990s, Mikron developed the
+   similarly featured Mifare micropayment card for 13.56MHz RFID.
+   (Mikron's European Patent EP 0473569 A2 was filed 23 August 1991, with a
+   priority date of 23 Aug 1990.)
+   Mikron was subsequently acquired by Philips Semiconductors in 1995.
+   Philips Semiconductors divsion subsequently became NXP.
 
    + Modulation read/write device -> transponder: 100 % ASK and binary pulse
      length coding
@@ -378,7 +383,6 @@ uint32_t hitag2_nstep(Hitag_State* pstate, uint32_t steps)
    The rest is encrypted by XORing it with the subsequent keystream.
 
 */
-
 
 
 unsigned int hitag2_benchtest_gen32()

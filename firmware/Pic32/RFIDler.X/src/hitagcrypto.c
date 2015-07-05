@@ -327,7 +327,17 @@ void hitag2_init(Hitag_State* pstate, uint64_t sharedkey, uint32_t serialnum, ui
 }
 
 
-// return up to 32 crypto bits
+/*
+ * Return up to 32 crypto bits.
+ * Last bit is in least significant bit, earlier bits are shifted left.
+ * Note that the Hitag transmission protocol is least significant bit,
+ * so we may want to change this, or add a function, that returns the
+ * crypto output bits in the other order.
+ *
+ * Parameters:
+ * Hitag_State* pstate - in/out, internal cipher state after initialisation
+ * uint32_t steps      - number of bits requested, (capped at 32)
+ */
 uint32_t hitag2_nstep(Hitag_State* pstate, uint32_t steps)
 {
     uint64_t state = pstate->shiftreg;

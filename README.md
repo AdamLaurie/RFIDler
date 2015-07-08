@@ -134,6 +134,8 @@ When you connect with USB for the first time, you may need to perform some confi
 Create a rule file for UDEV to allow non-root access to the file, and also disable modem manager access. An appropriate file can be found in the MPLAB project
 under the "Linux Support" tab. Copy this file to `/etc/udev/rules.d` and run `sudo udevadm control --reload-rules`
 
+This file can also be found in this repo at: linux-support/71-rfidler-lf-cdc-blacklist.rules
+
 ####  Windows
 
 Windows drivers can be found in the 'Windows Driver' tab of the MPLAB project

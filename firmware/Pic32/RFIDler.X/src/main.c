@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -434,8 +434,9 @@ BYTE ProcessIO(void)
             switch (Comms_In_Buffer[i])
             {
 
-                // backspace
+                // backspace or delete
                 case 0x08:
+                case 0x7f:
                     numBytesRead= 0;
                     if(commandbytes == 0)
                     {
@@ -969,7 +970,7 @@ BYTE ProcessSerialCommand(char *command)
     BYTE commandok= FALSE;
     BYTE tmpc;
     double tmpfloat;
-    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3,  tmpint4, tmpint5, tmpint6, tmpint7;
+    unsigned int i, p, tmpint, tmpint1, tmpint2, tmpint3, tmpint4, tmpint5, tmpint6, tmpint7;
     static unsigned long tmplong;
     static char local_tmp[256], local_tmp1[256], local_tmp2[256];
     BYTE *ccprompt= "";

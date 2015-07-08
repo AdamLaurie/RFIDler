@@ -190,10 +190,53 @@ BOOL send_indala_raw(unsigned char *indala)
     return send_psk1_bin(bits + i, j, RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.DataRateSub0, RFIDlerConfig.Repeat);
 }
 
-// since we currently don't know how to interpret indala data, we just do a raw select
+// we currently do a raw select, then check for 101 terminator, parity, & 2 zero bits
 BOOL indala64_get_uid(BYTE *response)
 {
-    return psk1_raw_get_uid(response);
+    //Reading failed
+    if (!psk1_raw_get_uid(response) || (strlen(response) != 16))
+        return FALSE;
+
+    //Typical Indala64 key
+    //0x0000000123456785
+    //0b100100011010001010110011110000101
+    //                                ^^^- Always ends with 101
+    //                              ^^---- Parity bits, total must be odd
+    //                            ^^------ Always zero
+    //  ^^^^^^^^^^^^^^^^^^^^^^^^^^-------- (Per site) scrambled wiegand-26 data
+
+
+    //Last three bits should be 101
+    //if (response[7] & 0x7 != 5)
+    if (response[15] != '5' && response[15] != 'D')
+        return FALSE;
+
+    //There should be two zero bits as well
+    //if (response[7] & 0x60 != 0)
+    if (response[14] != '0' && response[14] != '1' && response[14] != '8' && response[14] != '9')
+        return FALSE;
+
+
+    //Parity check, count bits
+    int bits;
+    int i, n;
+    for (i=0; i<16; i++)
+    {
+        if (response[i] >= 'a' && response[i] <= 'f')
+            n = response[i] - ('a' - 10);
+        else if (response[i] >= '0' && response[i] <= '9')
+            n = response[i] - '0';
+        else if (response[i] >= 'A' && response[i] <= 'F')
+            n = response[i] - ('A' - 10);
+        else
+            return FALSE;
+        bits += __builtin_popcount(n);
+    }
+
+    if (bits % 2 == 0)
+        return FALSE;
+
+    return TRUE;
 }
 
 // since we currently don't know how to interpret indala data, just copy

@@ -156,9 +156,14 @@
 
 /* Brief info about NXP Hitag 1, Hitag 2, Hitag S and Hitag u (mu)
 
-   Hitag, like Mifare, was created by a company called Mikron for micropayment
-   applications. Mikron was subsequently acquired by Philips Semiconductors.
-   Philips Semiconductors then became NXP.
+   Hitag 125kHz RFID was created by a company called Mikron (Mikron Gesellschaft
+   fur Integrierte Mikroelektronik Mbh), of Austria, for micropayment applications.
+   At about the same time, late 1980s to early 1990s, Mikron developed the
+   similarly featured Mifare micropayment card for 13.56MHz RFID.
+   (Mikron's European Patent EP 0473569 A2 was filed 23 August 1991, with a
+   priority date of 23 Aug 1990.)
+   Mikron was subsequently acquired by Philips Semiconductors in 1995.
+   Philips Semiconductors divsion subsequently became NXP.
 
    + Modulation read/write device -> transponder: 100 % ASK and binary pulse
      length coding
@@ -231,11 +236,11 @@ static uint32_t hitag2_crypt(uint64_t s)
     const uint32_t ht2_function5c = 0x7907287B;	// 0111 1001 0000 0111 0010 1000 0111 1011
     uint32_t bitindex;
 
-    bitindex =  ((ht2_function4a >> pickbits2_2 (s, 1, 4)) & 1);
-    bitindex |= ((ht2_function4b >> pickbits1_1_2 (s, 7, 11, 13)) & 1) << 1;
-    bitindex |= ((ht2_function4b >> pickbits1x4 (s, 16, 20, 22, 25)) & 1) << 2;
-    bitindex |= ((ht2_function4b >> pickbits2_1_1 (s, 27, 30, 32)) & 1) << 3;
-    bitindex |= ((ht2_function4a >> pickbits1_2_1(s, 33, 42, 45)) & 1) << 4;
+    bitindex =  (ht2_function4a >> pickbits2_2 (s, 1, 4)) & 1;
+    bitindex |= ((ht2_function4b << 1) >> pickbits1_1_2 (s, 7, 11, 13)) & 0x02;
+    bitindex |= ((ht2_function4b << 2) >> pickbits1x4 (s, 16, 20, 22, 25)) & 0x04;
+    bitindex |= ((ht2_function4b << 3) >> pickbits2_1_1 (s, 27, 30, 32)) & 0x08;
+    bitindex |= ((ht2_function4a << 4) >> pickbits1_2_1(s, 33, 42, 45)) & 0x10;
 
     DEBUG_PRINTF("hitag2_crypt bitindex = %02x\n", bitindex);
     return (ht2_function5c >> bitindex) & 1;
@@ -250,87 +255,116 @@ static uint32_t hitag2_crypt(uint64_t s)
  */
 void hitag2_init(Hitag_State* pstate, uint64_t sharedkey, uint32_t serialnum, uint32_t initvector)
 {
-    uint32_t j;
     // init state, from serial number and lowest 16 bits of shared key
-    uint64_t state = ((sharedkey & 0xFFFF) << 32) + serialnum;
+    uint64_t state = ((sharedkey & 0xFFFF) << 32) | serialnum;
 
     // mix the initialisation vector and highest 32 bits of the shared key
     initvector ^= (uint32_t) (sharedkey >> 16);
 
-    for (j = 2; j-- ;) {
-        // move 16 bits from (IV xor Shared Key) to top of uint64_t state
-        // these will be XORed in turn with output of the crypto function
-        state ^= (uint64_t) initvector << 48;
-        initvector >>= 16;
+    // move 16 bits from (IV xor Shared Key) to top of uint64_t state
+    // these will be XORed in turn with output of the crypto function
+    state |= (uint64_t) initvector << 48;
+    initvector >>= 16;
 
-        // unrolled loop, do 16 times
-        // shift register, then calc new bit
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
+    // unrolled loop is faster on PIC32 (MIPS), do 32 times
+    // shift register, then calc new bit
+    state >>= 1;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
 
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-        state >>= 1;
-        state ^= (uint64_t) hitag2_crypt(state) << 47;
-    }
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+
+    // highest 16 bits of IV XOR Shared Key
+    state |= (uint64_t) initvector << 47;
+
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state = (state >> 1) ^ (uint64_t) hitag2_crypt(state) << 46;
+    state ^= (uint64_t) hitag2_crypt(state) << 47;
 
     DEBUG_PRINTF("hitag2_init result = %012I64x\n", state);
     pstate->shiftreg = state;
+    /* naive version for reference, LFSR has 16 taps
     pstate->lfsr = state ^ (state >>  2) ^ (state >>  3) ^ (state >>  6)
               ^ (state >>  7) ^ (state >>  8) ^ (state >> 16) ^ (state >> 22)
               ^ (state >> 23) ^ (state >> 26) ^ (state >> 30) ^ (state >> 41)
               ^ (state >> 42) ^ (state >> 43) ^ (state >> 46) ^ (state >> 47);
+    */
+    {
+        // optimise with one 64-bit intermediate
+        uint64_t temp = state ^ (state >> 1);
+        pstate->lfsr = state ^ (state >>  6) ^ (state >> 16)
+                  ^ (state >> 26) ^ (state >> 30) ^ (state >> 41)
+                  ^ (temp >>  2) ^ (temp >>  7) ^ (temp >> 22)
+                  ^ (temp >> 42) ^ (temp >> 46);
+    }
 }
 
 
-// return up to 32 crypto bits
+/*
+ * Return up to 32 crypto bits.
+ * Last bit is in least significant bit, earlier bits are shifted left.
+ * Note that the Hitag transmission protocol is least significant bit,
+ * so we may want to change this, or add a function, that returns the
+ * crypto output bits in the other order.
+ *
+ * Parameters:
+ * Hitag_State* pstate - in/out, internal cipher state after initialisation
+ * uint32_t steps      - number of bits requested, (capped at 32)
+ */
 uint32_t hitag2_nstep(Hitag_State* pstate, uint32_t steps)
 {
     uint64_t state = pstate->shiftreg;
     uint32_t result = 0;
     uint64_t lfsr = pstate->lfsr;
 
+    if (steps == 0)
+        return 0;
+
     if (steps > 32)
         steps = 32;
 
-    while (steps--) {
+    do {
         // update shift registers
         if (lfsr & 1) {
-            state |= 0x1000000000000; // new bit to shift in
-            lfsr ^= 0x16701064400e6; // number comes from the LFSR taps
-        }
-        state >>= 1;
-        lfsr >>= 1;
+            state = (state >> 1) | 0x800000000000;
+            lfsr = (lfsr >> 1) ^ 0xB38083220073;
 
-        // accumulate next bit of crypto
-        result |= hitag2_crypt(state) << steps;
-    }
+            // accumulate next bit of crypto
+            result = (result << 1) | hitag2_crypt(state);
+        } else {
+            state >>= 1;
+            lfsr >>= 1;
+
+            result = (result << 1) | hitag2_crypt(state);
+        }
+    } while (--steps);
 
     DEBUG_PRINTF("hitag2_nstep state = %012I64x, result %02x\n", state, result);
     pstate->shiftreg = state;
@@ -359,7 +393,6 @@ uint32_t hitag2_nstep(Hitag_State* pstate, uint32_t steps)
    The rest is encrypted by XORing it with the subsequent keystream.
 
 */
-
 
 
 unsigned int hitag2_benchtest_gen32()

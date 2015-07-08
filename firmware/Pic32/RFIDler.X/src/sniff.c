@@ -141,13 +141,19 @@
 #include "tamagotchi.h"
 #include "util.h"
 
-// watch external clock for PWM messages
-// specify minimum gap to look for in us
-void sniff_pwm(unsigned int min)
+/*
+ * watch external clock for PWM messages
+ * unsigned int mingap   - specify minimum gap to look for in us
+ * unsigned int minpulse - minpulse width (only enforced in NFC mode)
+ * unsigned int mesg_gap - treat gap >= this as end of a message (0 = don't do this)
+ *                       - so call decode function in big gaps
+ * BOOL nfcmode          - TRUE means don't wait for reader clock to stabilise, do enforce minpulse
+ */
+void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode)
 {
     BOOL            toggle;
     BOOL            abort= FALSE;
-    unsigned long   i, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned long   len, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
     
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
@@ -157,46 +163,71 @@ void sniff_pwm(unsigned int min)
     
     toggle= SNIFFER_COIL;
     
-    // wait for 100 ticks to make sure we're settled
-    toggle= SNIFFER_COIL;
-    while(count < 100)
+    // reader/tag mode - wait for 100 ticks to make sure we're settled
+    if (!nfcmode)
     {
-        while(SNIFFER_COIL == toggle)
-            // check for user abort
-            if(get_user_abort())
-                return;
-        ++count;
-        toggle= !toggle;
+        toggle= SNIFFER_COIL;
+        while(count < 100)
+        {
+            while(SNIFFER_COIL == toggle)
+                // check for user abort
+                if(get_user_abort())
+                    return;
+            ++count;
+            toggle= !toggle;
+        }
     }
-    
+
     // watch for gaps / pulses
-    i= 0;
+    len= 0;
     GetTimer_us(RESET);
     while(!abort)
     {
+        unsigned int j = 0;
         while(SNIFFER_COIL == toggle)
+        {
             // check for user abort
             if((abort= get_user_abort()))
                 break;
+
+            // iff mesg_gap parameter > 0 then look for inter-message gap
+            if ((pulsecount > 0) && (mesg_gap > 0) && (0 == (j++ % 8)))
+            {
+                count= GetTimer_us(NO_RESET);
+                if (count >= mesg_gap)
+                {
+                    pulses[len]= pulsecount;
+                    gaps[len++]= GetTimer_us(RESET);
+                    pulsecount= 0L;
+                    decode_pwm(pulses, gaps, len);
+                    len= 0;
+                }
+            }
+        }
         toggle= !toggle;
         count= GetTimer_us(RESET);
         // check if it was a gap
-        if(count > min)
+        if (count > mingap)
         {
-            pulses[i]= pulsecount;
-            gaps[i++]= count;
-            pulsecount= 0L;
+            // ignore very small pulsecount when sniffing NFC
+            if (!nfcmode || (pulsecount > minpulse))
+            {
+                pulses[len]= pulsecount;
+                gaps[len++]= count;
+                pulsecount= 0L;
+            }
         }
         else
             pulsecount += count;
-        if(i == DETECT_BUFFER_SIZE)
+        if(len == DETECT_BUFFER_SIZE)
         {
-            decode_pwm(pulses, gaps, i);
-            i= 0;
+            decode_pwm(pulses, gaps, len);
+            len= 0;
         }
     }
-    
-    decode_pwm(pulses, gaps, i);
+
+    if (len > 0)
+        decode_pwm(pulses, gaps, len);
 }
 
 void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)

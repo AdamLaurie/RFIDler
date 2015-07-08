@@ -137,28 +137,168 @@
 #include "tamagotchi.h"
 #include "util.h"
 
+// temporary? Enable debug prints for bit level decode
+#define VERBOSE_TAMA_LOGGING
+
+// tunable constants for decode
+const unsigned long KBitMinPulse = 80;          // nominal bit pulse: 100 uS
+const unsigned long KBitMaxPulse = 130;
+const unsigned long KOneMinGap = 550;           // nominal One Gap: 650 uS
+const unsigned long KOneMaxGap = 700;
+const unsigned long KZeroMinGap = 150;          // nominal Zero Gap: 250 uS
+const unsigned long KZeroMaxGap = 300;
+const unsigned long KBarrierMinPulse = 400;     // nominal Barrier: 200 uS gap, 500 uS clock burst
+const unsigned long KBarrierMaxPulse = 600;
+
+
 // decode externally sniffed PWM
 BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    unsigned int    i, j;
+    unsigned int    index, offset, outcount;
     BOOL            decoded= FALSE;
     BYTE            out[32]; // max response from tamagotchi unknown, but 20 is biggest we've seen so far
-    
-    j= 0;
-    while(j < count)
+
+#if defined(VERBOSE_TAMA_LOGGING)
+    UserMessageNum("\r\ntamagotchi_decode_pwm() in-> %d pulses/gap pairs", count);
+#endif
+
+    // FIXME skip leading pulses of zero uS - can delete when sniff_pwm() no longer gives these to us
+    offset= 0;
+    while ((offset < count) && (pulses[offset] == 0))
     {
-        i= generic_decode_pwm(out, &pulses[j], 10, 512, &gaps[j], 20, 500, count - j);
-        if(i)
+        UserMessageNum("\r\n** Pulse: %d ", pulses[offset]);
+        UserMessageNum("Gap: %d", gaps[offset]);
+        offset++;
+    }
+
+    // decode
+    for(index= 0, outcount= 0; (index + offset) < count;)
+    {
+        unsigned long temp = pulses[offset + index];
+
+        // start of byte barrier?
+        if ((temp >= KBarrierMinPulse) && (temp <= KBarrierMaxPulse) && ((index + offset) < (count - 7)))
         {
-            decoded= TRUE;
-            UserMessage("\r\n%s", out);
-            j += i;
+            unsigned int    bits = 0;
+            BYTE b = 0;
+
+#if defined(VERBOSE_TAMA_LOGGING)
+            UserMessageNum("\r\nBarrier (%d) ", temp);
+#endif
+            // process the byte (note changes index)
+            do {
+                b <<= 1;
+                // peek at the next pulse to make sure it is valid
+                temp = pulses[offset + index + 1];
+
+                // bit is invalid if next pulse is wrong size
+                if ((temp < KBitMinPulse) || (temp > KBitMaxPulse))
+                {
+                    decoded = FALSE;
+                    UserMessageNum("(bad pulse count %d) ", temp);
+                    break; // bad pulse width
+                }
+
+                if (index == 0)
+                    decoded = TRUE;
+
+                // value of bit depends on gap size
+                temp = gaps[offset + index];
+                if ((temp >= KOneMinGap) && (temp <= KOneMaxGap))
+                {
+                    // 1
+                    b += 1;
+#if defined(VERBOSE_TAMA_LOGGING)
+                   UserMessageNum("1 (gap %d) ", temp);
+#endif
+                }
+                else if ((temp >= KZeroMinGap) && (temp <= KZeroMaxGap))
+                {
+                    // 0
+#if defined(VERBOSE_TAMA_LOGGING)
+                    UserMessageNum("0 (gap %d) ", temp);
+#endif
+                }
+                else
+                {
+                    decoded = FALSE;
+#if defined(VERBOSE_TAMA_LOGGING)
+                    UserMessageNum("(bad gap %d) ", temp);
+#endif
+                    break; // bad gap
+                }
+
+                ++bits;
+                ++index;
+            }
+            while (((offset + index) < count) && (bits < 8));
+
+            if (bits == 8)
+            {
+                out[outcount++] = b;
+#if defined(VERBOSE_TAMA_LOGGING)
+                UserMessageNum(" 0x%02x", b);
+#endif
+            }
         }
         else
-            break;
+        {
+#if defined(VERBOSE_TAMA_LOGGING)
+            UserMessageNum("\r\nPulse: %d ", pulses[offset + index]);
+            UserMessageNum("Gap: %d", gaps[offset + index]);
+#endif
+            decoded = FALSE;
+        }
+        ++index;
     }
     
+#if defined(VERBOSE_TAMA_LOGGING)
     UserMessage("%s", "\r\n");
-    
+#endif
+
+    // sum bytes (except initial sync 0xf0 and received checksum)
+    // and if message seems valid display hex/text dump
+    if (decoded && (outcount > 2) && (out[0] == 0xf0))
+    {
+        BYTE checksum = 0;
+        for (index= 1; index < (outcount - 1); index++ )
+            checksum += out[index];
+
+        UserMessageNum("Message checking, calculated checksum: 0x%x\r\n", checksum);
+        if (checksum != out[outcount-1])
+        {
+            decoded = FALSE;
+        }
+        else
+        {
+            // print message in hex
+            for (index= 0; index < outcount; index++ )
+            {
+                UserMessageNum("%02X", out[index]);
+                if ((index % 8) == 7)
+                    UserMessage(" ", NULL);
+            }
+
+            UserMessage("    ", NULL);
+            // print message in Tamagotchi Alphabet (ie user assigned name)
+            for (index= 0; index < outcount; index++ )
+            {
+                BYTE b = '.';
+
+                if (out[index] < 26)
+                    b = 'A' + out[index];
+                else if (out[index] == 26)
+                    b = ' ';
+
+                UserMessageNum("%c", b);
+            }
+
+            UserMessage("%s", "\r\n");
+        }
+    }
+
+#if defined(VERBOSE_TAMA_LOGGING)
+    UserMessageNum("tamagotchi_decode_pwm() out <- (decoded = %d)\r\n", decoded);
+#endif
     return decoded;
 }

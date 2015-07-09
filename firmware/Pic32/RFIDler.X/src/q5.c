@@ -148,7 +148,7 @@ BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOO
     // send command
     if(!rwd_send(command, length, reset, BLOCK, RWD_STATE_START_SEND, RFIDlerConfig.FrameClock, Q5_START_GAP - RFIDlerConfig.RWD_Gap_Period, 0, RFIDlerConfig.RWD_Zero_Period, RFIDlerConfig.RWD_One_Period, RFIDlerConfig.RWD_Gap_Period, RFIDlerConfig.RWD_Wait_Switch_TX_RX))
         return FALSE;
-
+        
     if(!response_length)
         return TRUE;
 
@@ -216,9 +216,9 @@ BOOL q5_read_block(BYTE *response, BYTE block)
     memcpy(tmp, Q5_DIRECT_ACCESS, 2);
     if(PWD_Mode)
     {
-        tmp[2]= '1';
-        hextobinstring(tmp + 3, Password);
-        inttobinstring(tmp + 34, (unsigned int) block, 3);
+        hextobinstring(tmp + 2, Password);
+        tmp[34]= '0';
+        inttobinstring(tmp + 35, (unsigned int) block, 3);
     }
     else
     {
@@ -233,8 +233,6 @@ BOOL q5_read_block(BYTE *response, BYTE block)
         //DEBUG_PIN_4= !DEBUG_PIN_4;
         if(q5_send_command(response, tmp, strlen(tmp), reset, NO_SYNC, 32))
             return TRUE;
-        // try resetting tag
-        reset= TRUE;
     }
 
     return FALSE;
@@ -252,7 +250,7 @@ BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify)
     memset(tmp, '\0', sizeof(tmp));
 
     // command
-    memcpy(tmp, Q5_STD_WRITE_P0, 2);
+    memcpy(tmp, Q5_WRITE_P0, 2);
     p= 2;
 
     // password
@@ -296,7 +294,7 @@ BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify)
 // set password and mode, and return UID
 BOOL q5_login(BYTE *response, BYTE *pass)
 {
-    BYTE tmp[35];
+    BYTE tmp[36];
 
     // check we need password - if we can get UID without, then we don't
     if(q5_get_uid(tmp))
@@ -310,7 +308,7 @@ BOOL q5_login(BYTE *response, BYTE *pass)
     tmp[34]= '\0';
 
     // send password
-    if (!q5_send_command(response, tmp, strlen(tmp), RESET, NO_SYNC, 0))
+    if (!q5_send_command(NULL, tmp, strlen(tmp), NO_RESET, NO_SYNC, 0))
         return FALSE;
 
     // see if we can now get UID
@@ -502,22 +500,152 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 // decode externally sniffed PWM
 BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
-    unsigned int    i, j;
-    BOOL            decoded= FALSE;
-    BYTE            out[65]; // max response from hitag2 is 64 bits
+    unsigned int    i;
+    BOOL            decoded= FALSE, sequence;
+    static BOOL     pwd= FALSE;
+    BYTE            tmp[4], out[71], *p; // max response from q5 is 70 bits
     
-    j= 0;
-    while(j < count)
+    i= 0;
+    while(i < count)
     {
-        i= generic_decode_pwm(out, &pulses[j], 10, 512, &gaps[j], 20, 500, count - j);
-        if(i)
+        // we can't use generic_decode_pwm as Q5 commands may be all 0 or all 1
+        for(p= out, sequence= FALSE ; i < count ; ++i)
+            if(gaps[i] >= 100 && gaps[i] <= 512)
+            {
+                if(pulses[i] <= 512)
+                {
+                    if(approx(pulses[i], 128, 20))
+                        *(p++)= '0';
+                    else
+                        *(p++)= '1';
+                    sequence= TRUE;
+                }
+                else
+                {
+                    ++i;
+                    break;
+                }
+            }
+        *p= '\0';
+        
+        if(sequence)
         {
+            // there are only 7 message sizes, so decode accordingly
+            switch(strlen(out))
+            {
+                // GET Trace Data (UID)) or RESET
+                case 2:
+                    if(memcmp(out, Q5_GET_TRACE_DATA, 2) == 0)
+                        UserMessage("\r\n%s, GET_TRACE_DATA", out);
+                    else
+                        if(memcmp(out, Q5_SOFT_RESET, 2) == 0)
+                            UserMessage("\r\n%s, RESET", out);
+                        else
+                            UserMessage("\r\n%s, ?INVALID?", out); 
+                    break;
+                
+                // modulation defeat
+                case 5:
+                    if(memcmp(out, Q5_MODULATION_DEFEAT, 5) == 0)
+                        UserMessage("\r\n%s, MODULATION_DEFEAT", out);
+                    else
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                    break;
+                    
+                // read
+                case 6:
+                    if(memcmp(out, Q5_DIRECT_ACCESS, 2) == 0)
+                        UserMessage("\r\n%s, DIRECT_ACCESS:", out);
+                    else
+                    {
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                        break;
+                    }
+                    // PWD mode (should be 0))
+                    UserMessage("%0.1s:", out + 2);
+                    // ADDRESS
+                    binstringtohex(tmp, out + 3);
+                    UserMessage("%0.2s", tmp);
+                    pwd= FALSE;
+                    break;
+                    
+                // login (AOR followed by PWD)
+                case 34:
+                    if(memcmp(out, Q5_AOR, 2) == 0)
+                        UserMessage("\r\n%s, AOR:", out);
+                    else
+                    {
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                        break;
+                    }
+                    // PWD
+                    binstringtohex(tmp, out + 2);
+                    UserMessage("%0.8s", tmp);
+                    pwd= TRUE;
+                    break;
+                
+                // PWD read/ STD write
+                // note the only way to tell these apart is by knowing we are in PWD mode
+                case 38:
+                    if(pwd && memcmp(out, Q5_DIRECT_ACCESS, 2) == 0)
+                    {
+                        UserMessage("\r\n%s, PWD_DIRECT_ACCESS:", out);
+                        // PWD
+                        binstringtohex(tmp, out + 2);
+                        UserMessage("%0.8s:", tmp);
+                        // Lock BIT
+                        UserMessage("%0.1s:", out + 34);
+                        // ADDRESS
+                        binstringtohex(tmp, out + 35);
+                        UserMessage("%0.1s", tmp);
+                        break;
+                    }
+                    
+                    if(!pwd && memcmp(out, Q5_WRITE_P0, 2) == 0)
+                        UserMessage("\r\n%s, WRITE_P0:", out);
+                    else
+                    {
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                        break;
+                    }
+                    // Lock BIT
+                    UserMessage("%0.1s:", out + 2);
+                    // DATA
+                    binstringtohex(tmp, out + 3);
+                    UserMessage("%0.8s:", tmp);
+                    // ADDRESS
+                    binstringtohex(tmp, out + 35);
+                    UserMessage("%0.1s", tmp);
+                    break;
+                    
+                // PWD write
+                case 70:
+                    if(memcmp(out, Q5_WRITE_P0, 2) == 0)
+                        UserMessage("\r\n%s, PWD_WRITE_P0:", out);
+                    else
+                    {
+                        UserMessage("\r\n%s, ?INVALID?", out); 
+                        break;
+                    }
+                    // PWD
+                    binstringtohex(tmp, out + 2);
+                    UserMessage("%0.8s:", tmp);
+                    // Lock BIT
+                    UserMessage("%0.1s:", out + 34);
+                    // DATA
+                    binstringtohex(tmp, out + 35);
+                    UserMessage("%0.8s:", tmp);
+                    // ADDRESS
+                    binstringtohex(tmp, out + 67);
+                    UserMessage("%0.1s", tmp);
+                    pwd= TRUE;
+                    break;
+                    
+                default:
+                    UserMessage("\r\n%s, ?INVALID?", out);
+            }
             decoded= TRUE;
-            UserMessage("\r\n%s", out);
-            j += i;
         }
-        else
-            break;
     }
     
     UserMessage("%s", "\r\n");

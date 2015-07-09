@@ -142,7 +142,7 @@
 #include "util.h"
 
 // watch external clock for PWM messages
-// specify minimum gap to look for in us
+// specify minimum gap to look for in uS
 void sniff_pwm(unsigned int min)
 {
     BOOL            toggle;
@@ -199,6 +199,7 @@ void sniff_pwm(unsigned int min)
     decode_pwm(pulses, gaps, i);
 }
 
+// values are in uS
 void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
 {
     unsigned int i;
@@ -235,6 +236,7 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count
 
 // convert pwm array to human readable binary
 // terminates at end of first sequence and returns number of samples processed 
+// pulse widths in uS
 BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
 {
     unsigned int    one, zero, i;

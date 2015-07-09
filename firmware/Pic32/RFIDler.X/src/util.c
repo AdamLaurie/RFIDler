@@ -419,20 +419,24 @@ unsigned int hextobinstring(unsigned char *target, unsigned char *source)
 // return number of bits converted
 unsigned int binarraytohex(unsigned char *target, unsigned char *source, unsigned int length)
 {
-    unsigned char i, x;
+    unsigned char i, x, shift;
     unsigned int j= length;
 
-    if(j % 4)
-        return 0;
+    // disabled this test as we get a lot of funny sized binary strings we need to convert!
+    //if(j % 4)
+    //    return 0;
+    if(length <= 4)
+        shift= length;
+    else
+        shift= 4;
 
     while(j)
     {
-        for(i= x= 0 ; i < 4 ; ++i)
-            x += (source[i] << (3 - i));
+        for(i= x= 0 ; i < 4 ; ++i, --j)
+            x += (source[i] << ((shift - 1) - i));
         sprintf(target,"%X", x);
         ++target;
-        source += 4;
-        j -= 4;
+        source += i;
     }
 
     return length;
@@ -449,21 +453,26 @@ void hexprintbinarray(BYTE *bin, unsigned int length)
 // return number of bits converted
 unsigned int binstringtohex(unsigned char *target, unsigned char *source)
 {
-    unsigned char i, x;
+    unsigned char i, x, shift;
     unsigned int j, length;
 
     length= j= strlen(source);
-    if(j % 4)
-        return 0;
+    if(length <= 4)
+        shift= length;
+    else
+        shift= 4;
+    
+    // disabled this check as we need to convert odd binary string lengths
+    //if(j % 4)
+    //    return 0;
 
     while(j)
     {
-        for(i= x= 0 ; i < 4 ; ++i)
-            x += ((source[i] - '0') << (3 - i));
+        for(i= x= 0 ; i < 4 && source[i] != '\0'; ++i, --j)
+            x += ((source[i] - '0') << ((shift - 1) - i));
         sprintf(target,"%X", x);
         ++target;
-        source += 4;
-        j -= 4;
+        source += i;
     }
 
     return length;

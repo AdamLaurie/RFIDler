@@ -654,6 +654,7 @@ BOOL tag_set(BYTE tag)
             RFIDlerConfig.RWD_One_Period= 48; //54; // 54 nominal, 48 - 63 normal, 24 - 31 fast write mode
             RFIDlerConfig.RWD_Wait_Switch_TX_RX= 48; //64; // q5 will exit downlink mode after 64 but may not yet be damped!
             RFIDlerConfig.RWD_Wait_Switch_RX_TX= 192; // the longer the better!
+            PWD_Mode= FALSE;
             break;
 
         case TAG_TYPE_T55X7:

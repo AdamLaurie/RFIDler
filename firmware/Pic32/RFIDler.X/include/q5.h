@@ -134,8 +134,8 @@
 
 #define Q5_SOFT_RESET           "00"        // reset (test mode)
 #define Q5_DIRECT_ACCESS        "10"        // direct read in pwd or non-pwd mode
-#define Q5_STD_WRITE_P0         "10"        // write page 0
-#define Q5_STD_WRITE_P1         "11"        // write page 1
+#define Q5_WRITE_P0             "10"        // write page 0
+#define Q5_WRITE_P1             "11"        // write page 1
 #define Q5_GET_TRACE_DATA       "11"        // get 64 bits tracebility data
 #define Q5_AOR                  "10"        // Answer On Request (wakeup)
 #define Q5_MODULATION_DEFEAT    "00011"     // tell tag to go quiet
@@ -155,6 +155,9 @@
 
 // config blocks
 #define Q5_DEFAULT_CONFIG_BLOCK      "E601F004"      // q5 native mode (also em4x02/unique)
+#define Q5_PWD_CONIG_BLOCK           "E601F404"      // q5 native mode with PWD enabled
+#define Q5_AOR_CONIG_BLOCK           "E601F804"      // q5 native mode with AOR enabled
+#define Q5_PWD_AOR_CONIG_BLOCK       "E601FC04"      // q5 native mode with PWD and AOR enabled
 #define Q5_FDXB_CONFIG_BLOCK         "E600F0E8"      // emulate fdx-b
 #define Q5_HID_26_CONFIG_BLOCK       "E6018056"      // hid 26 bit
 #define Q5_INDALA_64_CONFIG_BLOCK    "E600F014"      // emulate indala 64 bit

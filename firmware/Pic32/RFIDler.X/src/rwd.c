@@ -135,6 +135,7 @@
 #include "HardwareProfile.h"
 #include "rfidler.h"
 #include "rwd.h"
+#include "util.h"
 
 // set default parameters for RWD PWM commands
 void rwd_set_pwm(unsigned long fc, unsigned long sleep, unsigned int wake, unsigned int pw0, unsigned int pw1, unsigned int gap, unsigned int wait_txrx, unsigned int wait_rxtx)
@@ -175,7 +176,7 @@ BOOL rwd_send(unsigned char *command, unsigned int length, BOOL reset, BOOL bloc
     }
     else
         memcpy(RWD_Command_Buff, command, length);
-
+    
     RWD_Command_Buff[length]= '*';
     RWD_Command_ThisBit= RWD_Command_Buff;
 

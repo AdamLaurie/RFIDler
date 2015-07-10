@@ -211,4 +211,4 @@ BOOL q5_login(BYTE *response, BYTE *pass);
 BOOL q5_rwd_test(BYTE *pattern);
 BOOL q5_config_block_show(BYTE *config, BYTE *password);
 BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype);
-BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);

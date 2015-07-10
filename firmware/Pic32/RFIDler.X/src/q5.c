@@ -498,12 +498,12 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 }
 
 // decode externally sniffed PWM
-BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    i;
     BOOL            decoded= FALSE, sequence;
     static BOOL     pwd= FALSE;
-    BYTE            tmp[4], out[71], *p; // max response from q5 is 70 bits
+    BYTE            tmp[18], out[71], *p; // max response from q5 is 70 bits
     
     i= 0;
     while(i < count)

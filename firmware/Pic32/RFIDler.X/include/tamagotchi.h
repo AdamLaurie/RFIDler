@@ -129,6 +129,6 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BOOL tamagotchi_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
 
 

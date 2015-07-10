@@ -147,7 +147,8 @@ void sniff_pwm(unsigned int min)
 {
     BOOL            toggle;
     BOOL            abort= FALSE;
-    unsigned long   i, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned long   count, pulsecount= 0L;
+    unsigned int    i, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
     
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
@@ -159,7 +160,7 @@ void sniff_pwm(unsigned int min)
     
     // wait for 100 ticks to make sure we're settled
     toggle= SNIFFER_COIL;
-    while(count < 100)
+    while(count < 100L)
     {
         while(SNIFFER_COIL == toggle)
             // check for user abort
@@ -181,26 +182,26 @@ void sniff_pwm(unsigned int min)
         toggle= !toggle;
         count= GetTimer_us(RESET);
         // check if it was a gap
-        if(count > min)
+        if(count > (unsigned long) min)
         {
-            pulses[i]= pulsecount;
-            gaps[i++]= count;
+            pulses[i]= (unsigned int) pulsecount;
+            gaps[i++]= (unsigned int) count;
             pulsecount= 0L;
         }
         else
             pulsecount += count;
         if(i == DETECT_BUFFER_SIZE)
         {
-            decode_pwm(pulses, gaps, i);
+            decode_pwm(pulses, gaps, i - 1);
             i= 0;
         }
     }
     
-    decode_pwm(pulses, gaps, i);
+    decode_pwm(pulses, gaps, i - 1);
 }
 
 // values are in uS
-void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+void decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int i;
     
@@ -237,7 +238,7 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count
 // convert pwm array to human readable binary
 // terminates at end of first sequence and returns number of samples processed 
 // pulse widths in uS
-BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
+BYTE generic_decode_pwm(BYTE *result, unsigned int pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned int gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
 {
     unsigned int    one, zero, i;
     BOOL            sequence= FALSE;

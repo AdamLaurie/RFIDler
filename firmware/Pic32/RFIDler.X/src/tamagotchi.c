@@ -138,7 +138,7 @@
 #include "util.h"
 
 // decode externally sniffed PWM
-BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL tamagotchi_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    i, j;
     BOOL            decoded= FALSE;

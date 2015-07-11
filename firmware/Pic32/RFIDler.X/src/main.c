@@ -908,6 +908,7 @@ void show_usage(char *command)
         "SET TAG <TYPE>                                               Set parameters appropriate for TAG TYPE\r\n",
         "SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n",
         "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
+        // fixme: sniff-nfc is temporary, intention is to fold this back into sniff-pwm once reliable
         "SNIFF-NFC [MIN-GAP] [MIN-PULSE] [MESG-GAP]                   Sniff PWM NFC link, default MIN GAP 25, MIN PULSE 20, MESG GAP 1000 uS.\r\n",
         "SNIFF-PWM [MIN GAP]                                          Sniff PWM on external clock with READER coil. MIN GAP in uS (default 12).\r\n",
         "STOP                                                         Stop any running clocks\r\n",
@@ -1974,7 +1975,7 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "SNIFF-NFC", 9) == 0)
     {
-        // default min gap
+        // default min gap, min pulse, end of mesg gap
         tmpint= 25;
         tmpint1= 20;
         tmpint2= 1000;

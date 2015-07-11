@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -385,7 +385,7 @@ BOOL q5_config_block_show(BYTE *config, BYTE *password)
     UserMessage("%s\r\n", (BYTE *) Q5_Modulation[GET_CONFIG(value, Q5_MASK_MODULATION, Q5_SHIFT_MODULATION)]);
     UserMessageNum("         Max Block: %d\r\n", GET_CONFIG(value, Q5_MASK_MAX_BLOCK, Q5_SHIFT_MAX_BLOCK));
     UserMessage("                ST: %s\r\n", GET_CONFIG(value, Q5_MASK_ST, Q5_SHIFT_ST) ? "True" : "False");
-    
+
     UserMessage("\r\n     PWD Block (7): %.8s    ", password);
     printhexreadable(password, 4);
     UserMessage("%s", "\r\n");
@@ -500,7 +500,7 @@ BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype)
 }
 
 // decode externally sniffed PWM
-BOOL q5_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    i, j;
     BOOL            decoded= FALSE;

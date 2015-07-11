@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -212,7 +212,7 @@ BOOL hitag1_read_page(BYTE *response, BYTE block);
 BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack);
 void hitag1_binarray_crc(BYTE *crc, BYTE *bin, BYTE length);
 void hitag1_crc(BYTE *crc, BYTE data, BYTE bits);
-BOOL hitag1_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BOOL hitag1_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
 
 BOOL hitag2_get_uid(BYTE *response);
 BOOL hitag2_hex_to_uid(BYTE *response, BYTE *hex);
@@ -226,6 +226,6 @@ void hitag2_binarray_crypt(BYTE *target, BYTE *source, unsigned int length);
 unsigned long hitag2_crypt(unsigned long source, BYTE length);
 unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
 BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
-BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count);
+BOOL hitag2_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
 BOOL hitag2_config_block_show(BYTE *config, BYTE *password, BYTE *key);
 

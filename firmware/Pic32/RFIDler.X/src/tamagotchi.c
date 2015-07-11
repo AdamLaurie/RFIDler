@@ -141,22 +141,29 @@
 #define VERBOSE_TAMA_LOGGING
 
 // tunable constants for decode
-const unsigned long KBitMinPulse = 80;          // nominal bit pulse: 100 uS
-const unsigned long KBitMaxPulse = 130;
-const unsigned long KOneMinGap = 550;           // nominal One Gap: 650 uS
-const unsigned long KOneMaxGap = 700;
-const unsigned long KZeroMinGap = 150;          // nominal Zero Gap: 250 uS
-const unsigned long KZeroMaxGap = 300;
-const unsigned long KBarrierMinPulse = 400;     // nominal Barrier: 200 uS gap, 500 uS clock burst
-const unsigned long KBarrierMaxPulse = 600;
+const unsigned int KBitMinPulse = 80;           // nominal bit pulse: 100 uS
+const unsigned int KBitMaxPulse = 130;
+const unsigned int KOneMinGap = 550;            // nominal One Gap: 600 ~ 650 uS
+const unsigned int KOneMaxGap = 700;
+const unsigned int KZeroMinGap = 150;           // nominal Zero Gap: 250 uS
+const unsigned int KZeroMaxGap = 300;
+const unsigned int KBarrierMinPulse = 350;      // nominal Barrier: 200 uS gap, 500 uS clock burst
+const unsigned int KBarrierMaxPulse = 600;
 
+const unsigned KMaxTamaMessage = 32; // max known message len from tamagotchi (for email)
+
+// local functions
+BOOL VerifyTamaMessage(BYTE *out, unsigned int outcount);
+BYTE ChecksumTamaMessage(BYTE *out, unsigned int outcount);
+void DumpTamaMessage(BYTE *out, unsigned int outcount);
+char TamaAlphabetConvert(BYTE b);
 
 // decode externally sniffed PWM
-BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL tamagotchi_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    index, offset, outcount;
     BOOL            decoded= FALSE;
-    BYTE            out[32]; // max response from tamagotchi unknown, but 20 is biggest we've seen so far
+    BYTE            out[KMaxTamaMessage];
 
 #if defined(VERBOSE_TAMA_LOGGING)
     UserMessageNum("\r\ntamagotchi_decode_pwm() in-> %d pulses/gap pairs", count);
@@ -172,7 +179,7 @@ BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigne
     }
 
     // decode
-    for(index= 0, outcount= 0; (index + offset) < count;)
+    for(index= 0, outcount= 0; ((index + offset) < count) && (outcount < (KMaxTamaMessage - 1));)
     {
         unsigned long temp = pulses[offset + index];
 
@@ -244,8 +251,21 @@ BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigne
         else
         {
 #if defined(VERBOSE_TAMA_LOGGING)
-            UserMessageNum("\r\nPulse: %d ", pulses[offset + index]);
-            UserMessageNum("Gap: %d", gaps[offset + index]);
+            temp = pulses[offset + index];
+            if ((temp >= KBitMinPulse) && (temp <= KBitMaxPulse))
+                UserMessageNum("\r\nBit Pulse: %d, ", temp);
+            else if ((temp >= KBarrierMinPulse) && (temp <= KBarrierMaxPulse))
+                UserMessageNum("\r\nBarrier Pulse: %d, ", temp);
+            else
+                UserMessageNum("\r\n??? Pulse: %d, ", temp);
+
+            temp = gaps[offset + index];
+            if ((temp >= KOneMinGap) && (temp <= KOneMaxGap))
+                UserMessageNum("1 Gap: %d", temp);
+            else if ((temp >= KZeroMinGap) && (temp <= KZeroMaxGap))
+                UserMessageNum("0 Gap: %d", temp);
+            else
+                UserMessageNum("??? Gap: %d", temp);
 #endif
             decoded = FALSE;
         }
@@ -256,49 +276,88 @@ BOOL tamagotchi_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigne
     UserMessage("%s", "\r\n");
 #endif
 
-    // sum bytes (except initial sync 0xf0 and received checksum)
-    // and if message seems valid display hex/text dump
-    if (decoded && (outcount > 2) && (out[0] == 0xf0))
-    {
-        BYTE checksum = 0;
-        for (index= 1; index < (outcount - 1); index++ )
-            checksum += out[index];
-
-        UserMessageNum("Message checking, calculated checksum: 0x%x\r\n", checksum);
-        if (checksum != out[outcount-1])
-        {
-            decoded = FALSE;
-        }
-        else
-        {
-            // print message in hex
-            for (index= 0; index < outcount; index++ )
-            {
-                UserMessageNum("%02X", out[index]);
-                if ((index % 8) == 7)
-                    UserMessage(" ", NULL);
-            }
-
-            UserMessage("    ", NULL);
-            // print message in Tamagotchi Alphabet (ie user assigned name)
-            for (index= 0; index < outcount; index++ )
-            {
-                BYTE b = '.';
-
-                if (out[index] < 26)
-                    b = 'A' + out[index];
-                else if (out[index] == 26)
-                    b = ' ';
-
-                UserMessageNum("%c", b);
-            }
-
-            UserMessage("%s", "\r\n");
-        }
-    }
+    if (decoded)
+        decoded = VerifyTamaMessage(out, outcount);
 
 #if defined(VERBOSE_TAMA_LOGGING)
     UserMessageNum("tamagotchi_decode_pwm() out <- (decoded = %d)\r\n", decoded);
 #endif
     return decoded;
+}
+
+
+// sum bytes (except initial sync 0xf0 and received checksum)
+// and if message seems valid display hex/text dump
+BOOL VerifyTamaMessage(BYTE *out, unsigned int outcount)
+{
+    BOOL valid = FALSE;
+
+    // check for sync & message length bytes
+    if ((outcount > 5) && (out[0] == 0xf0) && (out[2] == outcount - 4))
+    {
+        BYTE checksum = ChecksumTamaMessage(out, outcount - 1);
+
+        UserMessageNum("Message checking, calculated checksum: 0x%x\r\n", checksum);
+        if (checksum == out[outcount-1])
+        {
+            valid = TRUE;
+            DumpTamaMessage(out, outcount);
+        }
+    }
+
+    return valid;
+}
+
+
+BYTE ChecksumTamaMessage(BYTE *out, unsigned int outcount)
+{
+    BYTE checksum = 0;
+    unsigned int    index;
+
+    // index starts at 1 to skip sync byte
+    for (index= 1; index < outcount; index++ )
+        checksum += out[index];
+
+    return checksum;
+}
+
+void DumpTamaMessage(BYTE *out, unsigned int outcount)
+{
+    unsigned int index;
+    char         text[KMaxTamaMessage + 1];
+
+    // print message in hex
+    for (index= 0; index < outcount; index++ )
+    {
+        BYTE b = out[index];
+
+        UserMessageNum(" %02X", b);
+        if ((index % 8) == 7)
+            UserMessage(" ", NULL);
+
+        // convert from Tamagotchi Alphabet (eg user assigned name, email)
+        text[index] = TamaAlphabetConvert(b);
+    }
+    text[index] = 0;
+
+    UserMessage("    %s\r\n", text);
+}
+
+
+char TamaAlphabetConvert(BYTE b)
+{
+    if (b < 26)
+        return 'A' + b;
+    else if (b >= 32 && b <= 41)
+        return '0' + b - 32;
+    else switch (b)
+    {
+        case 26: return ' ';
+        case 27: return '.';
+        case 28: return '\'';
+        case 29: return '-';
+        case 30: return '!';
+        // unknown
+        default: return '?';
+    }
 }

@@ -146,14 +146,15 @@
  * unsigned int mingap   - specify minimum gap to look for in us
  * unsigned int minpulse - minpulse width (only enforced in NFC mode)
  * unsigned int mesg_gap - treat gap >= this as end of a message (0 = don't do this)
- *                       - so call decode function in big gaps
+ *                       - so call decode function in big no carrier gaps
  * BOOL nfcmode          - TRUE means don't wait for reader clock to stabilise, do enforce minpulse
  */
 void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode)
 {
     BOOL            toggle;
     BOOL            abort= FALSE;
-    unsigned long   len, count, pulsecount= 0L, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned long   count, pulsecount= 0L;
+    unsigned int    len, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
     
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
@@ -167,7 +168,7 @@ void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BO
     if (!nfcmode)
     {
         toggle= SNIFFER_COIL;
-        while(count < 100)
+        while(count < 100L)
         {
             while(SNIFFER_COIL == toggle)
                 // check for user abort
@@ -201,19 +202,20 @@ void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BO
                     pulsecount= 0L;
                     decode_pwm(pulses, gaps, len);
                     len= 0;
+                    continue;
                 }
             }
         }
         toggle= !toggle;
         count= GetTimer_us(RESET);
         // check if it was a gap
-        if (count > mingap)
+        if (count > (unsigned long) mingap)
         {
             // ignore very small pulsecount when sniffing NFC
             if (!nfcmode || (pulsecount > minpulse))
             {
-                pulses[len]= pulsecount;
-                gaps[len++]= count;
+                pulses[len]= (unsigned int) pulsecount;
+                gaps[len++]= (unsigned int) count;
                 pulsecount= 0L;
             }
         }
@@ -230,7 +232,7 @@ void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BO
         decode_pwm(pulses, gaps, len);
 }
 
-void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+void decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int i;
     
@@ -266,7 +268,7 @@ void decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count
 
 // convert pwm array to human readable binary
 // terminates at end of first sequence and returns number of samples processed 
-BYTE generic_decode_pwm(BYTE *result, unsigned long pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned long gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
+BYTE generic_decode_pwm(BYTE *result, unsigned int pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned int gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count)
 {
     unsigned int    one, zero, i;
     BOOL            sequence= FALSE;

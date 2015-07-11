@@ -377,7 +377,7 @@ void hitag1_crc(BYTE *crc, BYTE data, BYTE bits)
 }
 
 // decode externally sniffed PWM
-BOOL hitag1_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL hitag1_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    i, j;
     BOOL            decoded= FALSE;
@@ -853,7 +853,7 @@ BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype)
 }
 
 // decode externally sniffed PWM
-BOOL hitag2_decode_pwm(unsigned long pulses[], unsigned long gaps[], unsigned int count)
+BOOL hitag2_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
 {
     unsigned int    i, j;
     BOOL            decoded= FALSE, encrypted= FALSE, auth= FALSE;

@@ -157,6 +157,7 @@
 #include "rfidler.h"
 #include "rwd.h"
 #include "sc_config.h"
+#include "sniff.h"
 #include "tags.h"
 #include "uid.h"
 #include "util.h"
@@ -907,7 +908,7 @@ void show_usage(char *command)
         "SET TAG <TYPE>                                               Set parameters appropriate for TAG TYPE\r\n",
         "SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n",
         "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
-        "SNIFF-PWM [MIN GAP]                                          Sniff PWM on external clock with READER coil. MIN GAP in uS (default 12).\r\n",
+        "SNIFF-PWM [MIN GAP] [MIN PULSE] [MESG GAP]                   Sniff PWM on external clock with READER coil. Values in uS (default 12/0/0).\r\n",
         "STOP                                                         Stop any running clocks\r\n",
         "TAGS                                                         Show known TAG TYPES\r\n",
         "TCONFIG                                                      Show TAG's config block\r\n",
@@ -1972,12 +1973,14 @@ BYTE ProcessSerialCommand(char *command)
 
     if (strncmp(command, "SNIFF-PWM", 9) == 0)
     {
-        // default min gap
-        tmpint= 12;
-        sscanf(command + 9, " %d", &tmpint);
+        tmpint= 0;
+        tmpint1= 0;
+        tmpint2= 0;
+        sscanf(command + 9, " %d %d %d", &tmpint, &tmpint1, &tmpint2);
         commandok= command_ack(DATA);
         UserMessage("%s", "Waiting for PWM (hit any key to abort/report)...\r\n");
-        sniff_pwm(tmpint);
+        // NFC_MODE applies if there is a message gap
+        sniff_pwm(tmpint, tmpint1, tmpint2, tmpint2 ? NFC_MODE : NO_NFC_MODE);
         eod();
     }
 

@@ -512,6 +512,10 @@ BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int coun
         for(p= out, sequence= FALSE ; i < count ; ++i)
             if(gaps[i] >= 100 && gaps[i] <= 512)
             {
+                // make sure invalid data doesn't overrun buffer
+                if(p - out == sizeof(out) - 2)
+                    break;
+                
                 if(pulses[i] <= 512)
                 {
                     if(approx(pulses[i], 128, 20))
@@ -643,6 +647,7 @@ BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int coun
                     
                 default:
                     UserMessage("\r\n%s, ?INVALID?", out);
+                    break;
             }
             decoded= TRUE;
         }

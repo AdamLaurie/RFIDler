@@ -128,7 +128,13 @@
  ***************************************************************************/
 
 // Author: Adam Laurie <adam@aperturelabs.com>
+// Natalie Silvanovich
+// Tony Naggs
 
 BOOL tamagotchi_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
 
-
+// local functions
+BOOL VerifyTamaMessage(BYTE *out, unsigned int outcount);
+BYTE ChecksumTamaMessage(BYTE *out, unsigned int outcount);
+void DumpTamaMessage(BYTE *out, unsigned int outcount);
+char TamaAlphabetConvert(BYTE b);

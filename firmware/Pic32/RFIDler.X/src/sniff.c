@@ -141,14 +141,36 @@
 #include "tamagotchi.h"
 #include "util.h"
 
+void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode)
+{
+    switch(RFIDlerConfig.TagType)
+    {
+        case TAG_TYPE_TAMAGOTCHI:
+            nfcmode= TRUE;
+            if(!mingap)
+                mingap= 25;
+            if(!minpulse)
+                minpulse= 20;
+            if(!mesg_gap)
+                mesg_gap= 1000;
+            break;
+            
+        default:
+            if(!mingap)
+                mingap= 12;
+            break;
+    }
+    do_sniff_pwm(mingap, minpulse, mesg_gap, nfcmode);
+}
+
 // watch external clock for PWM messages
 // specify minimum gap to look for in uS
-void sniff_pwm(unsigned int min)
+void do_sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode)
 {
     BOOL            toggle;
     BOOL            abort= FALSE;
     unsigned long   count, pulsecount= 0L;
-    unsigned int    i, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
+    unsigned int    len, gaps[DETECT_BUFFER_SIZE], pulses[DETECT_BUFFER_SIZE];
     
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
@@ -158,46 +180,72 @@ void sniff_pwm(unsigned int min)
     
     toggle= SNIFFER_COIL;
     
-    // wait for 100 ticks to make sure we're settled
-    toggle= SNIFFER_COIL;
-    while(count < 100L)
+    // reader/tag mode - wait for 100 ticks to make sure we're settled
+    if (!nfcmode)
     {
-        while(SNIFFER_COIL == toggle)
-            // check for user abort
-            if(get_user_abort())
-                return;
-        ++count;
-        toggle= !toggle;
+        toggle= SNIFFER_COIL;
+        while(count < 100L)
+        {
+            while(SNIFFER_COIL == toggle)
+                // check for user abort
+                if(get_user_abort())
+                    return;
+            ++count;
+            toggle= !toggle;
+        }
     }
-    
+
     // watch for gaps / pulses
-    i= 0;
+    len= 0;
     GetTimer_us(RESET);
     while(!abort)
     {
+        unsigned int j = 0;
         while(SNIFFER_COIL == toggle)
+        {
             // check for user abort
             if((abort= get_user_abort()))
                 break;
+
+            // iff mesg_gap parameter > 0 then look for inter-message gap
+            if ((pulsecount > 0) && (mesg_gap > 0) && (0 == (j++ % 8)))
+            {
+                count= GetTimer_us(NO_RESET);
+                if (count >= mesg_gap)
+                {
+                    pulses[len]= pulsecount;
+                    gaps[len++]= GetTimer_us(RESET);
+                    pulsecount= 0L;
+                    decode_pwm(pulses, gaps, len);
+                    len= 0;
+                    continue;
+                }
+            }
+        }
         toggle= !toggle;
         count= GetTimer_us(RESET);
         // check if it was a gap
-        if(count > (unsigned long) min)
+        if (count > (unsigned long) mingap)
         {
-            pulses[i]= (unsigned int) pulsecount;
-            gaps[i++]= (unsigned int) count;
-            pulsecount= 0L;
+            // ignore very small pulsecount when sniffing NFC
+            if (!nfcmode || (pulsecount > minpulse))
+            {
+                pulses[len]= (unsigned int) pulsecount;
+                gaps[len++]= (unsigned int) count;
+                pulsecount= 0L;
+            }
         }
         else
             pulsecount += count;
-        if(i == DETECT_BUFFER_SIZE)
+        if(len == DETECT_BUFFER_SIZE)
         {
-            decode_pwm(pulses, gaps, i - 1);
-            i= 0;
+            decode_pwm(pulses, gaps, len);
+            len= 0;
         }
     }
-    
-    decode_pwm(pulses, gaps, i - 1);
+
+    if (len > 0)
+        decode_pwm(pulses, gaps, len);
 }
 
 // values are in uS
@@ -232,7 +280,7 @@ void decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count)
             }
             break;
     }
-    UserMessage("\r\n","");
+    UserMessage("%s", "\r\n");
 }
 
 // convert pwm array to human readable binary

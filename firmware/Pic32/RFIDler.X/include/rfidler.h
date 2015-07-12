@@ -361,6 +361,9 @@ extern rtccDate	RTC_date;			// date structure
 #define LOCK                            TRUE
 #define NO_LOCK                         FALSE
 
+#define NFC_MODE                        TRUE
+#define NO_NFC_MODE                     FALSE
+
 #define ONESHOT_READ                    TRUE
 #define NO_ONESHOT_READ                 FALSE
 

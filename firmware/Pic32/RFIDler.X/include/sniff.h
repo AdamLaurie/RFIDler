@@ -129,6 +129,7 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-void sniff_pwm(unsigned int min);
+void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode);
+void do_sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode);
 void decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
 BYTE generic_decode_pwm(BYTE *result, unsigned int pulses[], unsigned int minpulse, unsigned int maxpulse, unsigned int gaps[], unsigned int mingap, unsigned int maxgap, unsigned int count);

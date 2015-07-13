@@ -128,6 +128,7 @@
  ***************************************************************************/
 
 // Author: Adam Laurie <adam@aperturelabs.com>
+// Anssi Kolehmainen contributed Indala64 validate & parity check
 
 
 // indala functions

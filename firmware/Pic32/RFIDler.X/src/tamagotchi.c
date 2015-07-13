@@ -130,6 +130,8 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 // Natalie Silvanovich
 // Tony Naggs
+//
+// Credit also to Mr Blinky (Twitter @MstrBlinky) for publishing info on decoding Tamagotchi Friends NFC, eg http://mrblinky.net/tf/packet-sniffing.txt
 
 #include "HardwareProfile.h"
 #include "comms.h"

@@ -141,6 +141,11 @@
 #include "tamagotchi.h"
 #include "util.h"
 
+// watch external clock for PWM messages
+// specify minimum gap to look for in us
+// minpulse width (for NFC mode)
+// min gap between messages (for NFC mode)
+// nfcmode => 2 active devices, skip waiting for reader clock to stabilise
 void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BOOL nfcmode)
 {
     switch(RFIDlerConfig.TagType)
@@ -148,9 +153,9 @@ void sniff_pwm(unsigned int mingap, unsigned minpulse, unsigned int mesg_gap, BO
         case TAG_TYPE_TAMAGOTCHI:
             nfcmode= TRUE;
             if(!mingap)
-                mingap= 25;
+                mingap= 50;
             if(!minpulse)
-                minpulse= 20;
+                minpulse= 5;
             if(!mesg_gap)
                 mesg_gap= 1000;
             break;

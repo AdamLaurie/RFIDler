@@ -91,7 +91,7 @@
 //  is available on the target processor.
 //#define USB_TRANSCEIVER_OPTION USB_EXTERNAL_TRANSCEIVER
 
-// we're only doing CDC serial so low speed is plenty
+// we're doing CDC serial so we need to be at least Full speed
 #define USB_SPEED_OPTION USB_FULL_SPEED
 //#define USB_SPEED_OPTION USB_LOW_SPEED //(not valid option for PIC24F devices)
 

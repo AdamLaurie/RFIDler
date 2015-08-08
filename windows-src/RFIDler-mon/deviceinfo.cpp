@@ -121,14 +121,33 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
 void DeviceInfo::DecDeviceTypeCount()
 {
     devPresent = FALSE;
+    UpdateDeviceTypeCount(-1);
+}
+
+
+void DeviceInfo::UpdateDeviceTypeCount(int delta)
+{
     switch (devType) {
-    case DevRfidler:        iCountRfidlers--; break;
-    case DevMicroDevBoard:  iCountDevBoards--; break;
-    case DevMicroBoot:      iCountBootloaders--; break;
-    case DevRfidUnconfig:   iCountUnconRfidlers--; break;
-    case DevMicroUnconfig:  iCountUnconDevBoards--; break;
-    case DevOtherSerial:    iCountOtherSerial--; break;
-    default:                break;
+    case DevRfidlerCom:
+        iCountRfidlers += delta;
+        break;
+    case DevMicroDevBoard:
+        iCountDevBoards += delta;
+        break;
+    case DevMicroBootloader:
+        iCountBootloaders += delta;
+        break;
+    case DevUnconfigRfidlerCom:
+        iCountUnconRfidlers += delta;
+        break;
+    case DevUnconfigMicroDevBoard:
+        iCountUnconDevBoards += delta;
+        break;
+    case DevOtherSerial:
+        iCountOtherSerial += delta;
+        break;
+    default:
+        break;
     }
 }
 
@@ -136,15 +155,7 @@ void DeviceInfo::DecDeviceTypeCount()
 void DeviceInfo::IncDeviceTypeCount()
 {
     devPresent = TRUE;
-    switch (devType) {
-    case DevRfidler:        iCountRfidlers++; break;
-    case DevMicroDevBoard:  iCountDevBoards++; break;
-    case DevMicroBoot:      iCountBootloaders++; break;
-    case DevRfidUnconfig:   iCountUnconRfidlers++; break;
-    case DevMicroUnconfig:  iCountUnconDevBoards++; break;
-    case DevOtherSerial:    iCountOtherSerial++; break;
-    default:                break;
-    }
+    UpdateDeviceTypeCount(1);
 }
 
 
@@ -219,7 +230,7 @@ void DeviceInfo::SetDeviceIcon()
 {
     switch(devType)
     {
-    case DevRfidler:
+    case DevRfidlerCom:
         if ((devState == DevPresent) || (devState == DevArrived)) {
             devImage = DevImgRfidlerOk;
         } else {
@@ -233,7 +244,7 @@ void DeviceInfo::SetDeviceIcon()
             devImage = DevImgDevBoardRemoved;
         }
         break;
-    case DevMicroBoot:
+    case DevMicroBootloader:
         if ((devState == DevPresent) || (devState == DevArrived)) {
             devImage = DevImgRfidlerBoot;
         } else {
@@ -247,10 +258,10 @@ void DeviceInfo::SetDeviceIcon()
             devImage = DevImgOtherSerialRemoved;
         }
         break;
-    case DevRfidUnconfig:
+    case DevUnconfigRfidlerCom:
         devImage = DevImgRfidlerUnconfig;
         break;
-    case DevMicroUnconfig:
+    case DevUnconfigMicroDevBoard:
     default:
         devImage = DevImgDevBoardUnconfig;
         break;
@@ -282,15 +293,15 @@ const TCHAR *DeviceInfo::DevTypeName()
 {
     switch (devType)
     {
-    case DevRfidler:
-    case DevRfidUnconfig:
+    case DevRfidlerCom:
+    case DevUnconfigRfidlerCom:
         return _T("RFIDler");
     case DevMicroDevBoard:
-    case DevMicroUnconfig:
+    case DevUnconfigMicroDevBoard:
         return _T("dev board");
     case DevOtherSerial:
         return _T("serial");
-    case DevMicroBoot:
+    case DevMicroBootloader:
         return _T("Bootloader");
     default:
         assert(0);
@@ -316,14 +327,14 @@ const TCHAR *DeviceInfo::DisplayName()
 {
     switch (devType)
     {
-    case DevRfidler:
+    case DevRfidlerCom:
     case DevMicroDevBoard:
     case DevOtherSerial:
         return devPortName;
-    case DevMicroBoot:
+    case DevMicroBootloader:
         return _T("HID bootloader");
-    case DevRfidUnconfig:
-    case DevMicroUnconfig:
+    case DevUnconfigRfidlerCom:
+    case DevUnconfigMicroDevBoard:
         return _T("Unconfigured");
     default:
         assert(0);
@@ -336,48 +347,51 @@ const TCHAR *DeviceInfo::DisplayName()
 const TCHAR *DeviceInfo::InfoTip()
 {
     static TCHAR   infotipBuffer[1024];
+    TCHAR *desc = NULL;
+
+    infotipBuffer[0] = 0;
 
     switch (devType)
     {
-    case DevRfidler:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("RFIDler COM port"));
+    case DevRfidlerCom:
+        desc = _T("RFIDler COM port");
         break;
     case DevMicroDevBoard:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("Microchip USB COM port\nDevelopment board"));
+        desc = _T("Microchip USB COM port\nDevelopment board");
         break;
-    case DevMicroBoot:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer),
-            _T("Microchip HID bootloader\nRFIDler or other development board"));
+    case DevMicroBootloader:
+        desc = _T("Microchip HID bootloader\nRFIDler or other development board");
         break;
-    case DevRfidUnconfig:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("RFIDler, COM port drivers not installed"));
+    case DevUnconfigRfidlerCom:
+        desc = _T("RFIDler COM port, driver not installed");
         break;
-    case DevMicroUnconfig:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), 
-            _T("Microchip USB COM port, COM port drivers not installed"));
+    case DevUnconfigMicroDevBoard:
+        desc = _T("Microchip USB COM port, driver not installed");
         break;
     case DevOtherSerial:
-        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), devFriendlyName);
+        desc = devFriendlyName;
         break;
     default:
         assert(0);
-        infotipBuffer[0] = 0;
+    }
+
+    if (desc) {
+        wcscpy_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
     }
 
     // describe serial port type, based on Windows GUID for ports, modem or multiport serial card
-    switch (devSerialType) {
-    case SerialPort:
-        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nSerial Port"));
-        break;
-    case SerialModem:
-        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nModem"));
-        break;
-    case SerialMultiport:
-        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nMultiport Serial Device"));
-        break;
-    case SerialNone:
-    default:
-        break; // nothing to say
+    if (devSerialType != SerialNone) {
+        desc = NULL;
+        if (devSerialType == SerialPort) {
+            desc = _T("\nSerial Port");
+        } else if (devSerialType == SerialModem) {
+            desc = _T("\nModem");
+        } else if (devSerialType == SerialMultiport) {
+            desc = _T("\nMultiport Serial Device");
+        }
+        if (desc) {
+            wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
+        }
     }
 
     if (devHardwareId) {
@@ -387,11 +401,13 @@ const TCHAR *DeviceInfo::InfoTip()
 
     if (devSerialNumber) {
         if (devIsWinSerial) {
-            wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nWindows generated serial number"));
+            desc = _T("\nWindows generated serial number");
         } else {
-            wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nBuilt-in device serial number"));
+            desc = _T("\nBuilt-in device serial number");
         }
+        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
     }
+
     return infotipBuffer;
 }
 

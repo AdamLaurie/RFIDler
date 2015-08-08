@@ -231,6 +231,7 @@ public:
     HWND        ctlHWnd;        /* control's handle */
     RECT        ctlRect;        /* initial control position & dimensions */
     BOOL        ctlHidden;      /* hidden because current window size is too small */
+    // TODO? add minimum control size
 };
 
 
@@ -273,6 +274,7 @@ static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
 }   /* GetInitialControlPositions() */
 
 
+// stretch / move controls in response to window resize
 static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
 {
     unsigned idx;
@@ -339,6 +341,11 @@ static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
 }
 
 
+/*
+  If possible restore position of the window from last time it is was run.
+  Otherwise hacky stuff to position main window because CW_USERDEFAULT positioning does not work for dialog based windows,
+  as we don't want to be in top left corner of the screen.
+  */
 void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker)
 {
     RECT rc;
@@ -1154,8 +1161,11 @@ void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aD
 {
     const wchar_t *desc = _T("RFIDler Monitor");
 
+    // something has changed from old settings?
     if (fname && ((aDesktopShortcut != aDeskLinkExists) || (aStartupShortcut != aStartlinkExists))) {
         IShellLink *psl;
+
+        // connect to Windows Shell
         HRESULT hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
             IID_IShellLink, (void**)&psl);
 
@@ -1179,6 +1189,7 @@ void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aD
                 CreateOrBreakLink(psl, shortcut, CSIDL_DESKTOP, aDesktopShortcut);
             }
             if (aStartupShortcut != aStartlinkExists) {
+                // TODO: add Argument(s) to indicate launch from Startup Shortcut
                 CreateOrBreakLink(psl, shortcut, CSIDL_STARTUP, aStartupShortcut);
             }
             psl->Release();
@@ -1343,7 +1354,7 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
             TCHAR *fname = NULL;
             BOOL gotfileversion = FALSE;
 
-            // TODO get version number from exe
+            // get version number from exe
             if (GetProgramFilename(&fname)) {
                 DWORD verSize = GetFileVersionInfoSize(fname, NULL);
                 if (verSize > 0) {
@@ -1603,19 +1614,21 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
     ClientToScreen(hWndLV, &scrPt);
 
     switch (dev->DeviceType()) {
-    case DevRfidler:
+    case DevRfidlerCom:
     case DevMicroDevBoard:
     case DevOtherSerial:
         lpMenuName = MAKEINTRESOURCE(IDR_PORT_CONTEXT);
         break;
-    case DevMicroBoot:
-    case DevRfidUnconfig:
-    case DevMicroUnconfig:
-    default:
+    case DevMicroBootloader:
         lpMenuName = MAKEINTRESOURCE(IDR_DEV_CONTEXT);
-#if (ENABLE_BOOTLOADER_FLASH || _DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
         defaultitem = ID_CONTEXT_OPEN_FOR_REFLASH;
 #endif
+        break;
+    case DevUnconfigRfidlerCom:
+    case DevUnconfigMicroDevBoard:
+    default:
+        // TODO Context Menu for Unconfigured device? Maybe help text?
         break;
     }
 
@@ -1628,18 +1641,19 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
             SetMenuDefaultItem(hMenuTrackPopup, defaultitem, FALSE);
         }
 
-#if !(ENABLE_BOOTLOADER_FLASH || _DEBUG)
+#if !defined(ENABLE_BOOTLOADER_FLASH) && !defined(_DEBUG)
         switch (dev->DeviceType()) {
-        case DevRfidler:
+        case DevRfidlerCom:
         case DevMicroDevBoard:
         case DevOtherSerial:
             break;
-        case DevMicroBoot:
-        case DevRfidUnconfig:
-        case DevMicroUnconfig:
-        default:
+        case DevMicroBootloader:
             // disable BOOTLOADER FLASH menu item
             RemoveMenu(hMenuTrackPopup, ID_CONTEXT_OPEN_FOR_REFLASH, MF_BYCOMMAND); 
+            break;
+        case DevUnconfigRfidlerCom:
+        case DevUnconfigMicroDevBoard:
+        default:
             break;
         }
 
@@ -1661,7 +1675,7 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
             //case ID_CONTEXT_COPYALL_DETAILS: // possible future fn, needs ListView iterator & string info buffers
                 ContextMenuClipboardSelect(hWnd, dev, selection);
                 break;
-#if (ENABLE_BOOTLOADER_FLASH || _DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
             case ID_CONTEXT_OPEN_FOR_REFLASH:
                 if (!dev->DeleteOnUnlock()) {
                     // launch Bootloader Flash dialog
@@ -1698,15 +1712,13 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, Mo
 
     if (dev) {
         switch (dev->DeviceType()) {
-        case DevRfidler:
+        case DevRfidlerCom:
         case DevMicroDevBoard:
         case DevOtherSerial:
-            // todo future enhancement, have default menu item
+            // todo future enhancement, have a default menu item
             break;
-        case DevMicroBoot:
-        case DevRfidUnconfig:
-        case DevMicroUnconfig:
-#if (ENABLE_BOOTLOADER_FLASH || _DEBUG)
+        case DevMicroBootloader:
+#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
             {
                 // launch Bootloader Flash dialog
                 BootloaderParams bl;
@@ -1722,6 +1734,8 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, Mo
             aOptions;
 #endif
             break;
+        case DevUnconfigRfidlerCom:
+        case DevUnconfigMicroDevBoard:
         default:
             break;
         }

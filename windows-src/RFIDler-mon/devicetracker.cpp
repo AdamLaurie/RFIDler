@@ -696,11 +696,11 @@ void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
     wchar_t *devInstanceId = NULL;
 
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
-        enum DevType dType = DevUnknwown;
+        enum DevType dType = DevUnknown;
 
         // examine serial device
         if ((aSerialType == SerialPort) && CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
-            dType = DevRfidler;
+            dType = DevRfidlerCom;
         } else if ((aSerialType == SerialPort) && mOptions.ShowDevBoardsOrAnySerial() &&
                 CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
             dType = DevMicroDevBoard;
@@ -709,7 +709,7 @@ void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
             dType = DevOtherSerial;
         }
 
-        if (dType != DevUnknwown) {
+        if (dType != DevUnknown) {
             // Get RFIDler or Get Microchip USB Serial device details
             AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, 
                 aSerialType, aNow, aScanId);
@@ -724,17 +724,17 @@ void DeviceTracker::CheckHidDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &Devi
     wchar_t *devInstanceId = NULL;
 
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
-        enum DevType dType = DevUnknwown;
+        enum DevType dType = DevUnknown;
 
         if (CheckDeviceId(devInstanceId, size, szMicrochipBootHidId)) {
             // HID Bootloader
-            dType = DevMicroBoot;
+            dType = DevMicroBootloader;
         } else if (CheckDeviceId(devInstanceId, size, szMicrochipBootHwUsbId)) {
             // USB parent of Bootloader, give us the USB port & hub
             dType = DevMicroBootShadow;
         }
 
-        if (dType != DevUnknwown) {
+        if (dType != DevUnknown) {
             // device details
             AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, SerialNone, aNow, aScanId);
         }
@@ -749,19 +749,19 @@ void DeviceTracker::CheckClassNoneDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA
     wchar_t *devInstanceId = NULL;
 
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
-        enum DevType dType = DevUnknwown;
+        enum DevType dType = DevUnknown;
 
         // check USB hardware id for unconfigured RFIDler, Microchip devboard
         if (CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
             // Get RFIDler dev details
-            dType = DevRfidUnconfig;
+            dType = DevUnconfigRfidlerCom;
         } else if (mOptions.ShowDevBoardsOrAnySerial() &&
                 CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
             // Get Microchip USB Serial device details
-            dType = DevMicroUnconfig;
+            dType = DevUnconfigMicroDevBoard;
         }
 
-        if (dType != DevUnknwown) {
+        if (dType != DevUnknown) {
             // Get RFIDler or Get Microchip USB Serial device details
             AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, SerialPort, aNow, aScanId);
         }
@@ -1137,6 +1137,10 @@ void DeviceTracker::GetSerialnumber(const wchar_t *devInstanceId, DWORD size, BO
    (Or PCI location etc..)
    Similar devices can therefore have the same serial number at different times, affects us
    when showing not currently present devices.
+
+   On the other hand later Rfidler binaries use the preprogrammed on-chip unique Ethernet MAC,
+   and mangle the byte order to create a unique serial number. So e.g. 'COM5' will be the serial
+   port interface to the same Rfidler regardless of which USB hub/port it is plugged into.
    */
 DeviceInfo *DeviceTracker::FindDevMatchBySernum(enum DevType aDevType, wchar_t *sernumber)
 {
@@ -1152,21 +1156,21 @@ DeviceInfo *DeviceTracker::FindDevMatchBySernum(enum DevType aDevType, wchar_t *
             // control which type transitions are allowed
             switch (aDevType)
             {
-            case DevRfidler:
-            case DevRfidUnconfig:
-                if ((dType == DevRfidler) || (dType == DevRfidUnconfig)) {
+            case DevRfidlerCom:
+            case DevUnconfigRfidlerCom:
+                if ((dType == DevRfidlerCom) || (dType == DevUnconfigRfidlerCom)) {
                     cmpSernum = TRUE;
                 }
                 break;
             case DevMicroDevBoard:
-            case DevMicroUnconfig:
-                if ((dType == DevMicroDevBoard) || (dType == DevMicroUnconfig)) {
+            case DevUnconfigMicroDevBoard:
+                if ((dType == DevMicroDevBoard) || (dType == DevUnconfigMicroDevBoard)) {
                     cmpSernum = TRUE;
                 }
                 break;
-            case DevMicroBoot:
+            case DevMicroBootloader:
             case DevMicroBootShadow:
-                if ((dType == DevMicroBoot) || (dType == DevMicroBootShadow)) {
+                if ((dType == DevMicroBootloader) || (dType == DevMicroBootShadow)) {
                     cmpSernum = TRUE;
                 }
                 break;
@@ -1230,10 +1234,10 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
         GetSerialnumber(devInstanceId, size, isWinSerial, &serialNumber, &hardwareId);
     }
 
-    if ((aDevType == DevMicroBoot) || (aDevType == DevMicroBootShadow)) {
+    if ((aDevType == DevMicroBootloader) || (aDevType == DevMicroBootShadow)) {
         // get ContainerId - indicates merged object for HID & USB aspects of Bootloader
         containerId = GetContainerId(DeviceInfoSet, DeviceInfoData);
-        devItem = FindDevMatchByContainerId(DevMicroBoot, containerId);
+        devItem = FindDevMatchByContainerId(DevMicroBootloader, containerId);
     } else {
         devItem = FindDevMatchBySernum(aDevType, serialNumber);
     }
@@ -1241,11 +1245,11 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
     // get more details for new or Present device
     if ((!devItem) || (dState == DevPresent) || (aDevType == DevMicroBootShadow)) {
         // USB hub & port are easy to get for USB/... devices but not for HID/...
-        if (DevMicroBoot != aDevType) {
+        if (DevMicroBootloader != aDevType) {
             usbValid = GetDevUsbLocation(DeviceInfoSet, DeviceInfoData, usbHub, usbPort);
         }
 
-        if ( (DevRfidler == aDevType) || (DevMicroDevBoard == aDevType) || (DevOtherSerial == aDevType)) {
+        if ( (DevRfidlerCom == aDevType) || (DevMicroDevBoard == aDevType) || (DevOtherSerial == aDevType)) {
             wchar_t *valpos = NULL;
             // get COM port name
             portname = GetPortname(DeviceInfoSet, DeviceInfoData);
@@ -1265,11 +1269,11 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
 
     if (devItem) {
         // device in list, so update connected state, COM port name, USB location, ..
-        devItem->UpdateDevice((aDevType == DevMicroBootShadow) ? DevMicroBoot : aDevType,
+        devItem->UpdateDevice((aDevType == DevMicroBootShadow) ? DevMicroBootloader : aDevType,
             dState, aNow, portname, portnumber, usbHub, usbPort, usbValid, serialNumber,
             aScanId, isWinSerial);
 
-        if (aDevType == DevMicroBoot) {
+        if (aDevType == DevMicroBootloader) {
             if (!devItem->HardwareId()) {
                 // transfer memory ownership
                 devItem->UpdateHardwareId(hardwareId);
@@ -1281,7 +1285,7 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
 
         // create new device object, & add to display
         item = DeviceInfo::NewDevice(
-            (aDevType == DevMicroBootShadow) ? DevMicroBoot : aDevType, dState, aNow,
+            (aDevType == DevMicroBootShadow) ? DevMicroBootloader : aDevType, dState, aNow,
             serialNumber, portname, friendlyname, hardwareId, portnumber,
             containerId, usbHub, usbPort,
             usbValid, aScanId, mListDevices, isWinSerial, aSerialType);
@@ -1345,10 +1349,10 @@ void DeviceTracker::CleanupOrphanedDevices(FILETIME &aNow, unsigned aScanId)
             } else {
                 enum DevType dType = item->DeviceType();
 
-                if ( ((dType == DevMicroDevBoard) || (dType == DevMicroUnconfig))
+                if ( ((dType == DevMicroDevBoard) || (dType == DevUnconfigMicroDevBoard))
                         && !mOptions.ShowDevBoardsOrAnySerial() ) {
                     unlink = TRUE;
-                } else if ( ((dType == DevRfidUnconfig) || (dType == DevMicroUnconfig))
+                } else if ( ((dType == DevUnconfigRfidlerCom) || (dType == DevUnconfigMicroDevBoard))
                         && !mOptions.ShowNonConfig() ) {
                     unlink = TRUE;
                 } else if ( (dType == DevOtherSerial) && !mOptions.ShowAnySerial() ) {
@@ -1379,12 +1383,12 @@ void DeviceTracker::CleanupDevicesAfterOptionsChange()
         enum DevType dType = item->DeviceType();
         enum DevState dState = item->DeviceState();
 
-        if ( ((dType == DevMicroDevBoard) || (dType == DevMicroUnconfig))
+        if ( ((dType == DevMicroDevBoard) || (dType == DevUnconfigMicroDevBoard))
                 && !mOptions.ShowDevBoardsOrAnySerial()) {
             unlink = TRUE;
         } else if ( (dType == DevOtherSerial) && !mOptions.ShowAnySerial() ) {
             unlink = TRUE;
-        } else if ( ((dType == DevRfidUnconfig) || (dType == DevMicroUnconfig))
+        } else if ( ((dType == DevUnconfigRfidlerCom) || (dType == DevUnconfigMicroDevBoard))
                 && !mOptions.ShowNonConfig() ) {
             unlink = TRUE;
         } else if ((dState == DevAbsent) && !mOptions.ShowNotPresent()) {
@@ -1523,7 +1527,7 @@ void DeviceTracker::StatusBarRefresh()
     // also update status bar - mHWndStatusBar
     if (mHWndStatusBar) {
         // status bar could has counts for Dev boards, Bootloaders, etc
-        int count = DeviceInfo::GetCountRfidlers();
+        int count = DeviceInfo::CountOfRfidlers();
 
         if (count) {
             StringCbPrintf(statusBuffer, sizeof(statusBuffer), _T("%u RFIDler%s connected"), count,
@@ -1533,7 +1537,7 @@ void DeviceTracker::StatusBarRefresh()
         }
         SendMessage(mHWndStatusBar, SB_SETTEXT, 0, (LPARAM) statusBuffer);
 
-        count = DeviceInfo::GetCountBootloaders();
+        count = DeviceInfo::CountOfBootloaders();
         if (count) {
             StringCbPrintf(statusBuffer, sizeof(statusBuffer), _T("%u HID Bootloader%s connected"), count,
                 (count == 1) ? _T("") : _T("s"));
@@ -1543,7 +1547,7 @@ void DeviceTracker::StatusBarRefresh()
         SendMessage(mHWndStatusBar, SB_SETTEXT, 1, (LPARAM) statusBuffer);
 
         if (mOptions.ShowDevBoardsOrAnySerial()) {
-            count = DeviceInfo::GetCountDevBoards();
+            count = DeviceInfo::CountOfDevBoards();
 
             if (count) {
                 StringCbPrintf(statusBuffer, sizeof(statusBuffer), _T("%u Dev Board%s connected"), count,
@@ -1597,16 +1601,16 @@ BOOL DeviceTracker::CheckInitialScanFlag(enum DevType dType)
 {
     switch(dType)
     {
-    case DevRfidler:
+    case DevRfidlerCom:
         return mInitialiseRfidler;
     case DevMicroDevBoard:
         return mInitialiseMicroSer;
-    case DevMicroBoot:
+    case DevMicroBootloader:
         return mInitialiseRfidler;
     case DevOtherSerial:
         return mInitialiseAnySerial;
-    case DevRfidUnconfig:
-    case DevMicroUnconfig:
+    case DevUnconfigRfidlerCom:
+    case DevUnconfigMicroDevBoard:
     default:
         return mInitialiseUnconfig;
     }
@@ -1622,26 +1626,33 @@ void DeviceTracker::DetermineArrivalNotifications(enum DevType dType, enum DevSt
         }
         BOOL updateStatusBar = FALSE;
 
-        if (dType == DevRfidler) {
+        switch (dType)
+        {
+        case DevRfidlerCom:
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyRfidlerArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
-        } else if (dType == DevMicroDevBoard) {
+            break;
+        case DevMicroDevBoard:
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
-        } else if (dType == DevMicroBoot) {
+            break;
+        case DevMicroBootloader:
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyBootArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
+            break;
+        default:
+            // future feature, arrival notifications for DevOtherSerial ? 
+            break;
         }
-        // future feature, arrival notifications for DevOtherSerial ? 
 
         if (updateStatusBar) {
             StatusBarRefresh();
@@ -1661,7 +1672,7 @@ void DeviceTracker::DetermineRemovalNotifications(enum DevType dType, enum DevSt
                 (newState != DevPresent) && (newState != DevArrived)) {
         BOOL updateStatusBar = FALSE;
 
-        if (dType == DevRfidler) {
+        if (dType == DevRfidlerCom) {
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyRfidlerArrFlash()) {
@@ -1673,7 +1684,7 @@ void DeviceTracker::DetermineRemovalNotifications(enum DevType dType, enum DevSt
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
-        } else if (dType == DevMicroBoot) {
+        } else if (dType == DevMicroBootloader) {
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyBootArrFlash()) {

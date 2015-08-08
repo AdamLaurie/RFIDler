@@ -9,7 +9,7 @@
 
     Author: Anthony Naggs, 2014
 
-    Copyright (c) 2014 Anthony Naggs.
+    Copyright (c) 2014-2015 Anthony Naggs.
     All rights reserved.
 
     Limited assignment of rights under the 'BSD 2-Clause License':
@@ -79,7 +79,7 @@ typedef BOOL (WINAPI *LPFNSetupDiGetDevicePropertyW)(HDEVINFO DeviceInfoSet,
 //#define ENABLE_BOOTLOADER_FLASH
 
 
-// arbitrary different numbers for different imers
+// arbitrary different numbers for different timers
 #define DEV_RESCAN_TIMER_MAGICNUMBER    19
 #define ARRIVAL_TIMER_MAGICNUMBER       53
 #define REGISTRY_SAVE_MAGICNUMBER       91
@@ -265,15 +265,15 @@ private:
 
 enum DevState { DevArrived, DevPresent, DevRemoved, DevAbsent, DevNotConnected };
 enum DevType {
-                DevRfidler,
-                DevMicroDevBoard,
-                DevMicroBoot,
-                DevRfidUnconfig,
-                DevMicroUnconfig,
+                DevRfidlerCom,          // Rfidler COM (serial) port
+                DevMicroDevBoard,       // Microchip Dev Board serial port
+                DevMicroBootloader,     // Microchip Dev Board bootloader
+                DevUnconfigRfidlerCom,  // unconfigured Rfidler COM port, driver not (yet) installed
+                DevUnconfigMicroDevBoard,       // unconfigured Microchip Dev Board, driver not (yet) installed
             /* temporary USB parent for HID Bootloader, gives access to USB location */
                 DevMicroBootShadow,
                 DevOtherSerial,
-                DevUnknwown };
+                DevUnknown };
 
 enum DevImage { DevImgRfidlerOk = 0, DevImgRfidlerUnconfig, DevImgRfidlerRemoved, DevImgRfidlerBoot,
                 DevImgDevBoardOk, DevImgDevBoardRemoved, DevImgDevBoardUnconfig,
@@ -300,7 +300,7 @@ public:
     const TCHAR *LocationString();
     const TCHAR *DisplayName();
     const TCHAR *InfoTip();
-    // manage delete and allow GUI to lock against delete eg whilst showing Context Menu
+    // manage delete and allow GUI to lock against object delete eg whilst showing Context Menu
     DeviceInfo *DeleteDevice();
     void LockForContextMenu();
     void UnlockForContextMenu();
@@ -322,9 +322,9 @@ public:
     static int CALLBACK CompareProc(DeviceInfo *dev1, DeviceInfo *dev2, LPARAM primaryKey);
 
     // device counts
-    static int GetCountRfidlers() { return iCountRfidlers; }
-    static int GetCountDevBoards() { return iCountDevBoards; }
-    static int GetCountBootloaders() { return iCountBootloaders; }
+    static int CountOfRfidlers() { return iCountRfidlers; }
+    static int CountOfDevBoards() { return iCountDevBoards; }
+    static int CountOfBootloaders() { return iCountBootloaders; }
 
 private:
     DeviceInfo(enum DevType aDevType, enum DevState aDevState, FILETIME aNow,
@@ -350,6 +350,9 @@ private:
     void DecDeviceTypeCount();
     void IncDeviceTypeCount();
 
+    // helper
+    void UpdateDeviceTypeCount(int delta);
+
 private:
     static DeviceTracker *gdevTracker;
     static int iCountRfidlers;
@@ -360,7 +363,7 @@ private:
     static int iCountOtherSerial;
 
 #ifdef _DEBUG
-    unsigned long long devMagic;        // 64 bit magic number
+    unsigned long long devMagic;        // 64 bit magic number to identify objects in memory
 #endif
 
     FILETIME        devTimestamp;

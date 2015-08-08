@@ -614,7 +614,7 @@ void DeviceTracker::ScanForDevChanges()
         ScanIncludingUnconfigDevs(ft, scanId);
     } else {
         // check for device types we are specifically interested in
-        ScanBootDevices(ft, scanId);
+        ScanHidDevices(ft, scanId);
         ScanSerialDevices(ft, scanId);
     }
 
@@ -696,21 +696,21 @@ void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
     wchar_t *devInstanceId = NULL;
 
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
-        enum DevType dType = DevUnknown;
+        // set default non-match result
+        enum DevType dType = mOptions.ShowAnySerial() ? DevOtherSerial : DevUnknown;
 
         // examine serial device
-        if ((aSerialType == SerialPort) && CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
-            dType = DevRfidlerCom;
-        } else if ((aSerialType == SerialPort) && mOptions.ShowDevBoardsOrAnySerial() &&
-                CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
-            dType = DevMicroDevBoard;
-        } else if (mOptions.ShowAnySerial()) {
-            // note separation of COM or LPT ports occurs in AddOrUpdateDevice()
-            dType = DevOtherSerial;
+        if (aSerialType == SerialPort) {
+            if (CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
+                dType = DevRfidlerCom;
+            } else if (mOptions.ShowDevBoardsOrAnySerial() && CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
+                dType = DevMicroDevBoard;
+            }
         }
 
+        // note separation of COM or LPT ports occurs in AddOrUpdateDevice()
         if (dType != DevUnknown) {
-            // Get RFIDler or Get Microchip USB Serial device details
+            // Get (RFIDler / Microchip / other) USB Serial device details
             AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, 
                 aSerialType, aNow, aScanId);
         }
@@ -821,7 +821,7 @@ void DeviceTracker::ScanIncludingUnconfigDevs(FILETIME &aNow, unsigned aScanId)
 }
 
 
-void DeviceTracker::ScanBootDevices(FILETIME &aNow, unsigned aScanId)
+void DeviceTracker::ScanHidDevices(FILETIME &aNow, unsigned aScanId)
 {
     HDEVINFO DeviceInfoSet;
     SP_DEVINFO_DATA DeviceInfoData;
@@ -1636,7 +1636,9 @@ void DeviceTracker::DetermineArrivalNotifications(enum DevType dType, enum DevSt
             }
             break;
         case DevMicroDevBoard:
-            updateStatusBar = TRUE;
+            if (mOptions.ShowDevBoardsOrAnySerial()) {
+                updateStatusBar = TRUE;
+            }
             // notify if wanted (except if Options just changed)
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
@@ -1650,7 +1652,7 @@ void DeviceTracker::DetermineArrivalNotifications(enum DevType dType, enum DevSt
             }
             break;
         default:
-            // future feature, arrival notifications for DevOtherSerial ? 
+            // future feature, arrival notifications for DevOtherSerial ?
             break;
         }
 
@@ -1672,26 +1674,35 @@ void DeviceTracker::DetermineRemovalNotifications(enum DevType dType, enum DevSt
                 (newState != DevPresent) && (newState != DevArrived)) {
         BOOL updateStatusBar = FALSE;
 
-        if (dType == DevRfidlerCom) {
+        switch (dType)
+        {
+        case DevRfidlerCom:
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyRfidlerArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
-        } else if (dType == DevMicroDevBoard) {
-            updateStatusBar = TRUE;
+            break;
+        case DevMicroDevBoard:
+            if (mOptions.ShowDevBoardsOrAnySerial()) {
+                updateStatusBar = TRUE;
+            }
             // notify if wanted (except if Options just changed)
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
-        } else if (dType == DevMicroBootloader) {
+            break;
+        case DevMicroBootloader:
             updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyBootArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
+            break;
+        default:
+            // future feature, removal notifications for DevotherSerial?
+            break;
         }
-        // future feature, removal notifications for DevotherSerial?
 
         if (updateStatusBar) {
             StatusBarRefresh();

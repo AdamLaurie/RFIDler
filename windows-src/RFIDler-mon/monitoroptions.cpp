@@ -64,18 +64,14 @@ void MonOptions::ReadRegistryValues()
     // read registry values
     HKEY hk1, hk2, hk3;
 
-    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegistryBase, 0, 
-            KEY_ALL_ACCESS, &hk1)) {
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegistryBase, 0, KEY_ALL_ACCESS, &hk1)) {
         // create vendor and application keys
-        if (ERROR_SUCCESS == RegOpenKeyEx(hk1, KRegVendor, 0,
-                KEY_ALL_ACCESS, &hk2)) {
-            if (ERROR_SUCCESS == RegOpenKeyEx(hk2, KRegProgramName, 0,
-                    KEY_ALL_ACCESS, &hk3)) {
+        if (ERROR_SUCCESS == RegOpenKeyEx(hk1, KRegVendor, 0, KEY_ALL_ACCESS, &hk2)) {
+            if (ERROR_SUCCESS == RegOpenKeyEx(hk2, KRegProgramName, 0, KEY_ALL_ACCESS, &hk3)) {
                 DWORD temp;
                 DWORD valtype;
-                DWORD valsize;
+                DWORD valsize = sizeof(temp);
 
-                valsize = sizeof(temp);
                 // what optional stuff to show
                 RegQueryValueEx(hk3, KRegKeyShowFlags, 0, &valtype, (BYTE*)&temp, &valsize);
                 if (REG_DWORD == valtype) {
@@ -130,12 +126,10 @@ void MonOptions::ReadRegistryValues()
                 {
                     HKEY hk4;
 
-                    if (ERROR_SUCCESS == RegOpenKeyEx(hk3, KRegKeyMRUHexFile, 0,
-                            KEY_ALL_ACCESS, &hk4)) {
+                    if (ERROR_SUCCESS == RegOpenKeyEx(hk3, KRegKeyMRUHexFile, 0, KEY_ALL_ACCESS, &hk4)) {
                         wchar_t fnamebuff[1024];
                         TCHAR numbuff[4];
 
-                        
                         for (int j = 0; j < optHexFileHistoryCount; j++) {
                             DWORD strsize = sizeof(fnamebuff);
 
@@ -189,6 +183,9 @@ void MonOptions::SetNotifyOptionsAndRegistrySave(const MonOptions &newValues)
 
 void MonOptions::RegistrySaveChangedValues()
 {
+    // use timer as a one-shot
+    CancelRegSaveTimer();
+
     if (optNeedSaveFlags) {
         HKEY hk1, hk2, hk3;
         DWORD disp;
@@ -207,11 +204,13 @@ void MonOptions::RegistrySaveChangedValues()
                         RegSetValueEx(hk3, KRegKeyShowFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveShowFlags = FALSE;
                     }
+
                     if (optNeedSaveNotifyFlags) {
                         temp = optNotifyFlags;
                         RegSetValueEx(hk3, KRegKeyNotifyFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveNotifyFlags = FALSE;
                     }
+
                     if (optNeedSaveWindowPlace) {
                         temp = optWindowPlace.left;
                         RegSetValueEx(hk3, KRegKeyWinPosX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
@@ -223,16 +222,19 @@ void MonOptions::RegistrySaveChangedValues()
                         RegSetValueEx(hk3, KRegKeyWinSizeCY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveWindowPlace = FALSE;
                     }
+
                     if (optNeedSaveViewSortOrder) {
                         temp = optViewSortOrder;
                         RegSetValueEx(hk3, KRegKeySortOrder, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveViewSortOrder = FALSE;
                     }
+
                     if (optNeedSaveViewStyleButton) {
                         temp = optViewStyleButton;
                         RegSetValueEx(hk3, KRegKeyViewStyle, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveViewStyleButton = FALSE;
                     }
+
                     if (optNeedSaveHexFileHistory) {
                         HKEY hk4;
 
@@ -254,8 +256,7 @@ void MonOptions::RegistrySaveChangedValues()
             }
             RegCloseKey(hk1);
         }
-    }
-    CancelRegSaveTimer();
+    } // if optNeedSaveFlags
 }
 
 

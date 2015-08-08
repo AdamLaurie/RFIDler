@@ -256,19 +256,20 @@ static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
         wnd->wndSize.cy = wndRect.bottom - wndRect.top;
 
         for (idx = 0; idx < wnd->wndCtlCount; idx++) {
-            HWND hCtl;
-
             ctl = wnd->wndCtrls + idx;
-            hCtl= GetDlgItem(hWnd, ctl->ctlId);
+            // if valid control
+            if (ctl->ctlId) {
+                HWND hCtl= GetDlgItem(hWnd, ctl->ctlId);
 
-            if (hCtl) {
-                ctl->ctlHWnd = hCtl;
+                if (hCtl) {
+                    ctl->ctlHWnd = hCtl;
 
-                /* get control corners */
-                GetWindowRect(hCtl, &ctl->ctlRect);
-                /* convert screen co-ordinates to positions in dialog client area */
-                MapWindowPoints(NULL, hWnd, (LPPOINT) &ctl->ctlRect, 2);
-            } /* valid hCtl handle */
+                    /* get control corners */
+                    GetWindowRect(hCtl, &ctl->ctlRect);
+                    /* convert screen co-ordinates to positions in dialog client area */
+                    MapWindowPoints(NULL, hWnd, (LPPOINT) &ctl->ctlRect, 2);
+                } /* valid hCtl handle */
+            }
         } /* for */
     }
 }   /* GetInitialControlPositions() */
@@ -1035,12 +1036,11 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 /* retry wrapper around GetModuleFileName() with growing buffer */
 BOOL GetProgramFilename(TCHAR **fname)
 {
-    unsigned sz = 128;
+    unsigned sz = 64;
     DWORD    res;
     TCHAR    *f;
 
     do {
-        sz *= 2;
         f = (TCHAR *) calloc(sz, sizeof(TCHAR));
         if (f == NULL) {
             /* OOM */
@@ -1048,14 +1048,30 @@ BOOL GetProgramFilename(TCHAR **fname)
         }
 
         res = GetModuleFileName(NULL, f, sz);
-        if ((res > 0) && (res < (sz - 1))) {
+        if ((res > 0) && (res < sz)) {
+            res += 1; // account for null terminator
+
+            // try to shrink allocation 
+            if ( (sz - res) >= 16) {
+                TCHAR *f2 = (TCHAR *) realloc(f, res * sizeof(TCHAR));
+                if (f2) {
+                    f = f2;
+                }
+            }
+
             *fname = f;
             return TRUE;
         }
 
         free(f);
         f = NULL;
-    } while ( (res != 0) && (sz < 32768) );
+        if (res == 0) {
+            // function error
+            break;
+        }
+
+        sz = (sz + (sz / 2) + 15) & ~15; // increase buffer a bit, rounding to nice binary values
+    } while (sz < 50000);
 
     /* function failed or buffer is ridiculously large */
     return FALSE;
@@ -1656,7 +1672,6 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
         default:
             break;
         }
-
 #endif
 
         // ensure device is not freed whilst we are using it

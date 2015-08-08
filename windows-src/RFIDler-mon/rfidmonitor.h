@@ -460,7 +460,7 @@ private:
 
     void ScanForDevChanges();
     void ScanIncludingUnconfigDevs(FILETIME &aNow, unsigned aScanId);
-    void ScanBootDevices(FILETIME &aNow, unsigned aScanId);
+    void ScanHidDevices(FILETIME &aNow, unsigned aScanId);
     void ScanSerialDevices(FILETIME &aNow, unsigned aScanId);
     void AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
         const wchar_t *devInstanceId, DWORD size, SerialType aSerialType, FILETIME &aNow, unsigned aScanId);

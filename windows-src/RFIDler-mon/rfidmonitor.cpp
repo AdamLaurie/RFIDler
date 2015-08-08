@@ -51,7 +51,7 @@
 #pragma comment(lib, "SetupAPI.lib")
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "version.lib")
-#if (ENABLE_BOOTLOADER_FLASH || _DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
 // todo review
 #pragma comment(lib, "hid.lib")
 #endif
@@ -77,6 +77,7 @@ const TCHAR *szMicrochipBootHidId = _T("HID\\VID_04D8&PID_003C");
 
 /* ******************** PROGRAM CONFIGURATION ********************* */
 /* nominal minimum window size is 300 * 250 */
+// FIXME? have min sizes for controls & then calc overall min
 static const SIZE KMinimiumWindowSize = { 300, 250 };
 
 /* how long a device is shown in Removed or Arrived state */
@@ -85,8 +86,8 @@ const DWORD KArrivalOrRemovalTimeLimit = 5;
 
 
 
-class ControlPos;
-class WindowPos;
+class AppControlPos;
+class AppWindowPos;
 
 
 class BootloaderParams
@@ -106,7 +107,11 @@ static HWND InitNotificationControls(MonOptions *aOptions, HWND hWndTab);
 static BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+
+#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
 static INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+#endif
+
 static BOOL GetProgramFilename(TCHAR **fname);
 static void CheckProgramShortcuts(const wchar_t *shortcut, BOOL *aDeskLinkExists, BOOL *aStartlinkExists);
 static BOOL CheckLinkname(const wchar_t *shortcut, int csidl);
@@ -116,8 +121,8 @@ static void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, 
     BOOL aDeskLinkExists, BOOL aStartlinkExists);
 static BOOL CALLBACK InstallConfigDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static ATOM RegisterMainWindow (HINSTANCE hInstance);
-static void GetInitialControlPositions(HWND hWnd, WindowPos *wnd);
-static void RecalcControlPositions(HWND hWnd, WindowPos *wnd);
+static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd);
+static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd);
 static void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker);
 static void LVColumnClickAndSort(DeviceTracker *DevTracker, int newOrder, HWND hwndFrom);
 static void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip);
@@ -136,8 +141,8 @@ static DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt);
 int WINAPI WinMain (
     HINSTANCE hInstance,
     HINSTANCE /* hPrevInstance */,
-    PSTR /*szCmdLine*/,
-    int /*iCmdShow*/
+    PSTR /* szCmdLine TODO: use to identify when launched from Startup Shortcut */,
+    int /* iCmdShow TODO: review if useful to support this */
 )
 {
     ATOM ClassId;
@@ -154,12 +159,13 @@ int WINAPI WinMain (
     // we use the listview & imagelist from 'Common Controls'
     ZeroMemory(&ccInit, sizeof(ccInit));
     ccInit.dwSize = sizeof(ccInit);
-    ccInit.dwICC = ICC_WIN95_CLASSES;
+    ccInit.dwICC = ICC_WIN95_CLASSES | ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&ccInit);
     // need Microsoft COM setup for handling shortcuts
     CoInitialize(NULL);
 
-    // simply use DialogBox to show window
+    // simply use DialogBoxParam to show window
+    // TODO: pass a parameter block, eg including launch from Startup flag
     INT_PTR result = DialogBoxParam (hInstance, MAKEINTRESOURCE(IDD_MONITOR), 0, MonitorDlgProc, (LPARAM) hInstance);
 
     CoUninitialize();
@@ -178,8 +184,10 @@ ATOM RegisterMainWindow (HINSTANCE hInstance)
     WndClass.cbClsExtra    = 0;
     WndClass.cbWndExtra    = DLGWINDOWEXTRA;
     WndClass.hInstance     = hInstance;
-    WndClass.hIcon         = (HICON) LoadImage(hInstance, MAKEINTRESOURCE(IDI_MONITOR00),
-                                    IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+    // Visual Studio 2010 does not allow setting Class of Dialog template, so icon given here wont be used for our main window
+    WndClass.hIcon         = NULL;
+                            /* (HICON) LoadImage(hInstance, MAKEINTRESOURCE(IDI_RFIDLER),
+                                    IMAGE_ICON, 48, 48, LR_DEFAULTCOLOR); */
     WndClass.hCursor       = LoadCursor (NULL, IDC_ARROW);
     WndClass.hbrBackground = (HBRUSH) GetStockObject (LTGRAY_BRUSH);
     WndClass.lpszMenuName  = NULL;
@@ -207,41 +215,41 @@ void PrintDebugStatus(const TCHAR *format, ...)
 
 
 /* info for managing main window during resize */
-/* maybe use Horizontal & Vertical alignments specified in the dialog editor instead? */
-#define FLAG_TOP_NOMOVE             0x0001
-#define FLAG_HEIGHT_FIXED           0x0002
-#define FLAG_BOTTOM_TRACK           0x0004
-#define FLAG_LEFT_NOMOVE            0x0010
-#define FLAG_WIDTH_FIXED            0x0020
-#define FLAG_RIGHT_TRACK            0x0040
+#define FLAG_TOP_NOMOVE             0x00000001
+#define FLAG_HEIGHT_FIXED           0x00000002
+#define FLAG_BOTTOM_TRACK           0x00000004
+
+#define FLAG_LEFT_NOMOVE            0x00000100
+#define FLAG_WIDTH_FIXED            0x00000200
+#define FLAG_RIGHT_TRACK            0x00000400
 
 
-class ControlPos {
+class AppControlPos {
 public:
     int         ctlId;          /* item id on dialog */
     unsigned    ctlPosRules;    /* our repositioning rules */
     HWND        ctlHWnd;        /* control's handle */
     RECT        ctlRect;        /* initial control position & dimensions */
-    BOOL        ctlHidden;      /* hidden because current size is too small */
+    BOOL        ctlHidden;      /* hidden because current window size is too small */
 };
 
 
-class WindowPos {
+class AppWindowPos {
 public:
-    ControlPos  *wndCtrls;
-    unsigned    wndCtlCount;
-    SIZE        wndSize;
+    AppControlPos   *wndCtrls;
+    unsigned        wndCtlCount;
+    SIZE            wndSize;
 };
 
 
-static void GetInitialControlPositions(HWND hWnd, WindowPos *wnd)
+static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
 {
     RECT wndRect;
 
     /* get control initial positions */
     if (GetClientRect(hWnd, &wndRect)) {
         unsigned idx;
-        ControlPos *ctl;
+        AppControlPos *ctl;
 
         wnd->wndSize.cx = wndRect.right - wndRect.left;
         wnd->wndSize.cy = wndRect.bottom - wndRect.top;
@@ -265,7 +273,7 @@ static void GetInitialControlPositions(HWND hWnd, WindowPos *wnd)
 }   /* GetInitialControlPositions() */
 
 
-static void RecalcControlPositions(HWND hWnd, WindowPos *wnd)
+static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
 {
     unsigned idx;
     HDWP hdwp;
@@ -289,9 +297,9 @@ static void RecalcControlPositions(HWND hWnd, WindowPos *wnd)
     hdwp = BeginDeferWindowPos(wnd->wndCtlCount);
 
     for (idx = 0; idx < wnd->wndCtlCount; idx++) {
-        UINT       uFlags = SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE;
-        ControlPos *ctl = wnd->wndCtrls + idx;
-        RECT       *rt = &ctl->ctlRect;
+        UINT           uFlags = SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE;
+        AppControlPos  *ctl = wnd->wndCtrls + idx;
+        RECT           *rt = &ctl->ctlRect;
 
         // width change?
         if (increaseW != 0) {
@@ -308,6 +316,7 @@ static void RecalcControlPositions(HWND hWnd, WindowPos *wnd)
             }
         }
     
+        // height change?
         if (increaseH != 0) {
             if (ctl->ctlPosRules & FLAG_HEIGHT_FIXED) {
                 // not fixed pos Y?
@@ -385,19 +394,20 @@ BOOL CALLBACK MonitorDlgProc (
 )
 {
     /* statics keep state between Windows messages */
-    static HINSTANCE  hInst = 0;
-    static DeviceTracker *DevTracker;
-    static HWND hWndLV = NULL;
-    static HWND hWndStatusBar = NULL;
+    static HINSTANCE        hInst = 0;
+    static DeviceTracker    *DevTracker;
+    static HWND             hWndLV = NULL;
+    static HWND             hWndStatusBar = NULL;
     // data to support resizing of window
-    static ControlPos MainControls[] =
+    static AppControlPos MainControls[] =
     {
         { IDC_RFIDLERLIST, FLAG_TOP_NOMOVE | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
         { IDC_STATUSBAR,  FLAG_HEIGHT_FIXED | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
     };
-    static WindowPos MainWnd = {
+
+    static AppWindowPos MainWnd = {
         MainControls,
-        sizeof(MainControls) / sizeof(ControlPos),
+        sizeof(MainControls) / sizeof(AppControlPos),
     };
 
 
@@ -407,15 +417,25 @@ BOOL CALLBACK MonitorDlgProc (
     switch (iMsg) {
     case WM_INITDIALOG:	/* from CreateDialog() */
         hInst = (HINSTANCE) lParam;
+
+        // set System Menu Icon for dialog
+        SetClassLong(hWnd, GCL_HICON, (LONG) LoadIcon(hInst, MAKEINTRESOURCE(IDI_RFIDLER)));
+
+        // create / remember key child windows
         hWndLV = GetDlgItem(hWnd, IDC_RFIDLERLIST);
+
         // Create Status Bar with sizing grip at bottom of window
-        hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP, 
-            _T(""), hWnd, IDC_STATUSBAR);
+        hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP, _T(""), hWnd, IDC_STATUSBAR);
+
+        // setup support for resizing / moving child controls when dialog is resized
         GetInitialControlPositions(hWnd, &MainWnd);
-        // create device tracking stuff
+
+        // create Plug & Play device tracking stuff
         DevTracker = new DeviceTracker(hWnd, hWndLV, hWndStatusBar, hInst);
         if (DevTracker) {
-            // Setting are restored in DeviceTracker constructor, so we can test them now
+            // Registry Settings etc are restored by DeviceTracker constructor, so we can use them now
+
+            // should StatusBar have 2 or 3 partitions?
             if (hWndStatusBar) {
                 if (DevTracker->GetOptions().ShowDevBoardsOrAnySerial()) {
                     SetStatusBarPartitions(hWndStatusBar, 3);
@@ -424,9 +444,11 @@ BOOL CALLBACK MonitorDlgProc (
                 }
             }
             DevTracker->Initialize();
-            // restore window position & size, or use CW_USEDEFAULT positioning
+
+            // restore old window position & size if any, or use CW_USEDEFAULT positioning
             MoveMainWindow(hWnd, hInst, DevTracker);
         } else {
+            // Kaboom! major failure creating program resources
             MessageBox(hWnd, _T("out of memory error"), szAppName, MB_OK);
             EndDialog (hWnd, 0);
         }
@@ -605,7 +627,7 @@ BOOL CALLBACK MonitorDlgProc (
         }
         break;
 
-    case WM_CONTEXTMENU: // Context Menu for ListView (should only be VK_APPS or Shift+F10 come here)
+    case WM_CONTEXTMENU: // Context Menu for ListView (should only be that VK_APPS or Shift+F10 come here)
         if (wParam == (WPARAM) hWndLV) {
             if ((lParam == 0xFFFFFFFF) && (ListView_GetSelectedCount(hWndLV) > 0)) {
                 LVSelectedItemContextMenu(hInst, hWnd, hWndLV, &DevTracker->GetOptions());
@@ -635,15 +657,6 @@ BOOL CALLBACK MonitorDlgProc (
             }
             handled++;
             break;
-        case ICON_REFRESH_MAGICNUMBER:
-            /* Windows Bug: Sometimes window icon updates but big taskbar one doesn't.
-               Attempt to workaround: Try using timer to ensure at least 1 minute between changes.
-               */
-            if (DevTracker) {
-                DevTracker->AppIconRefresh();
-            }
-            handled++;
-            break;
         case REGISTRY_SAVE_MAGICNUMBER:
             if (DevTracker) {
                 DevTracker->GetOptions().RegistrySaveChangedValues();
@@ -668,6 +681,9 @@ BOOL CALLBACK MonitorDlgProc (
         // close program
         PostQuitMessage (0);
         handled++;
+        break;
+
+    default:
         break;
     }
     	

@@ -82,10 +82,10 @@ typedef BOOL (WINAPI *LPFNSetupDiGetDevicePropertyW)(HDEVINFO DeviceInfoSet,
 // arbitrary different numbers for different imers
 #define DEV_RESCAN_TIMER_MAGICNUMBER    19
 #define ARRIVAL_TIMER_MAGICNUMBER       53
-#define ICON_REFRESH_MAGICNUMBER        72
 #define REGISTRY_SAVE_MAGICNUMBER       91
 
 
+// a few classes & such need declaring before the class definitions
 class MonOptions;
 class DeviceInfo;
 class DeviceTracker;
@@ -102,12 +102,13 @@ public:
     // new instance with default values
     MonOptions(HWND hWndMain) :                  
         optHwndMain(hWndMain), // window to send timer messages too
-        optShowFlags(0), optNotifyFlags(0), optHaveValueFlags(0), optNeedSaveFlags(0),        
+        optDefaultShowFlags(0), optShowFlags(0), optDefaultNotifyFlags(0), optNotifyFlags(0), optHaveValueFlags(0),
+        optNeedSaveFlags(0),
         optViewSortOrder(lvDispName), optViewStyleButton(ID_VIEW_DETAILS),
         optHexFileHistoryCount(0), optTimerRegistrySave(0)
         {
-            // initial What to show options:
-            optDefShowNonConfig = FALSE;
+            // initial What to show options (bit flags):
+            optDefShowNonConfig = TRUE;
             optDefShowNotPresent = FALSE;
             optDefShowDevBoards = TRUE;
             optDefShowRecentDisc = TRUE;
@@ -121,6 +122,16 @@ public:
             optDefNotifyMicrochipArrFlash = FALSE;
 
             optNotifyFlags = optDefaultNotifyFlags;
+
+            // which default registry should be saved
+            // individual flags are cleared if previously saved values are recovered
+            // first save is triggered by first user change of settings
+            optNeedSaveShowFlags = TRUE;
+            optNeedSaveNotifyFlags = TRUE;
+            optNeedSaveWindowPlace = TRUE;
+            optNeedSaveViewSortOrder = TRUE;
+            optNeedSaveViewStyleButton = TRUE;
+            optNeedSaveHexFileHistory = FALSE;
 
             optWindowPlace.left = 0;
             optWindowPlace.top = 0;
@@ -253,10 +264,17 @@ private:
 
 
 enum DevState { DevArrived, DevPresent, DevRemoved, DevAbsent, DevNotConnected };
-enum DevType { DevRfidler, DevMicroDevBoard, DevMicroBoot, DevRfidUnconfig, DevMicroUnconfig,
+enum DevType {
+                DevRfidler,
+                DevMicroDevBoard,
+                DevMicroBoot,
+                DevRfidUnconfig,
+                DevMicroUnconfig,
             /* temporary USB parent for HID Bootloader, gives access to USB location */
                 DevMicroBootShadow,
-                DevOtherSerial, DevUnknwown };
+                DevOtherSerial,
+                DevUnknwown };
+
 enum DevImage { DevImgRfidlerOk = 0, DevImgRfidlerUnconfig, DevImgRfidlerRemoved, DevImgRfidlerBoot,
                 DevImgDevBoardOk, DevImgDevBoardRemoved, DevImgDevBoardUnconfig,
                 DevImgOtherSerialOk, DevImgOtherSerialRemoved };
@@ -385,13 +403,9 @@ public:
         mSetupDiGetDevicePropertyW(NULL),
 #endif
         mNeedDevScan(FALSE),
-        mDevicesInArrivalState(FALSE), mNeedIconUpdate(TRUE),
+        mDevicesInArrivalState(FALSE),
         mNeedFlashWindow(FALSE), mHNotifyHid(NULL),
-        mHNotifySerial(NULL), mTimerDevScan(0), mTimerArrival(0), mTimerIconRefresh(0),
-        mIcoMonitor00(0), mIcoMonitor01(0), mIcoMonitor02(0), mIcoMonitor03(0),
-        mIcoMonitor10(0), mIcoMonitor11(0), mIcoMonitor12(0), mIcoMonitor13(0),
-        mIcoMonitor20(0), mIcoMonitor21(0), mIcoMonitor22(0), mIcoMonitor23(0),
-        mIcoMonitor30(0), mIcoMonitor31(0), mIcoMonitor32(0), mIcoMonitor33(0),
+        mHNotifySerial(NULL), mTimerDevScan(0), mTimerArrival(0),
         mImageList(NULL), mImageListSm(NULL)
         {
             // read any saved options from registry
@@ -410,7 +424,7 @@ public:
     int GetViewSortOrder() { return (int) mSortType; }
     void SetViewSortOrder(int sortkey) { mSortType = (enum lvCol) sortkey; 
                                         mOptions.SaveViewSortOrder(sortkey); }
-    void AppIconRefresh();
+    void StatusBarRefresh();
 
     // Get / Set options
     MonOptions& GetOptions();
@@ -439,11 +453,9 @@ private:
     void UnregisterForDevNotifications();
 
     void UpdateArrivalOrRemovalState(FILETIME &now);
-    void UpdateWndIconAndNotifications();
-    BOOL DetermineAppNewIcon(); 
+    void UpdateStatusBarAndWinFlashNotifications();
+
     void ScanForDevChanges();
-    void KickIconRefreshTimer();
-    void CancelIconRefreshTimer();
     void ScanIncludingUnconfigDevs(FILETIME &aNow, unsigned aScanId);
     void ScanBootDevices(FILETIME &aNow, unsigned aScanId);
     void ScanSerialDevices(FILETIME &aNow, unsigned aScanId);
@@ -482,7 +494,7 @@ private:
     MonOptions  mOptions;      // current option flags
 
     HWND        mHWndMain;      // Main Window, used for eg notifying device arrival/removal if enabled
-    HICON       mCurrIcon;
+
     HWND        mHWndListView;  // ListView to maintain
     HWND        mHWndStatusBar; // status bar along the bottom of the window
     HINSTANCE   mHInst;
@@ -502,32 +514,14 @@ private:
 
     BOOL        mNeedDevScan;           // need to rescan devices
     BOOL        mDevicesInArrivalState; // need to refresh display e.g. display options changed, arrival state timer
-    BOOL        mNeedIconUpdate;        // need to update 'LED lights' icon
     BOOL        mNeedFlashWindow;
     // WM_DEVICECHANGE notification handles
     HDEVNOTIFY  mHNotifyHid;
     HDEVNOTIFY  mHNotifySerial;
     unsigned    mTimerDevScan;
     unsigned    mTimerArrival;
-    unsigned    mTimerIconRefresh;
 
     // initialised by loading resources
-    HICON       mIcoMonitor00;          // IDI_MONITOR00
-    HICON       mIcoMonitor01;          // IDI_MONITOR01
-    HICON       mIcoMonitor02;          // IDI_MONITOR02
-    HICON       mIcoMonitor03;          // IDI_MONITOR03
-    HICON       mIcoMonitor10;          // IDI_MONITOR10
-    HICON       mIcoMonitor11;          // IDI_MONITOR11
-    HICON       mIcoMonitor12;          // IDI_MONITOR12
-    HICON       mIcoMonitor13;          // IDI_MONITOR13
-    HICON       mIcoMonitor20;          // IDI_MONITOR20
-    HICON       mIcoMonitor21;          // IDI_MONITOR21
-    HICON       mIcoMonitor22;          // IDI_MONITOR22
-    HICON       mIcoMonitor23;          // IDI_MONITOR23
-    HICON       mIcoMonitor30;          // IDI_MONITOR30
-    HICON       mIcoMonitor31;          // IDI_MONITOR31
-    HICON       mIcoMonitor32;          // IDI_MONITOR32
-    HICON       mIcoMonitor33;          // IDI_MONITOR33
     HIMAGELIST  mImageList;
     HIMAGELIST  mImageListSm;
 };

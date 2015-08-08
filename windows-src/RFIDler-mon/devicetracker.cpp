@@ -467,24 +467,6 @@ void DeviceTracker::Initialize()
     // enable tooltips, in all display views, also full row select
     ListView_SetExtendedListViewStyle(mHWndListView, LVS_EX_INFOTIP  | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT);
 
-    // load & prepare icon with different counts of 'lit LEDs'
-    mIcoMonitor00 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR00));
-    mIcoMonitor01 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR01));
-    mIcoMonitor02 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR02));
-    mIcoMonitor03 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR03));
-    mIcoMonitor10 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR10));
-    mIcoMonitor11 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR11));
-    mIcoMonitor12 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR12));
-    mIcoMonitor13 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR13));
-    mIcoMonitor20 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR20));
-    mIcoMonitor21 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR21));
-    mIcoMonitor22 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR22));
-    mIcoMonitor23 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR23));
-    mIcoMonitor30 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR30));
-    mIcoMonitor31 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR31));
-    mIcoMonitor32 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR32));
-    mIcoMonitor33 = LoadIcon(mHInst, MAKEINTRESOURCE(IDI_MONITOR33));
-
     RegisterForDevNotifications();
 
     // create image lists
@@ -544,10 +526,7 @@ void DeviceTracker::Initialize()
     // kick timer to do initial device scan
     KickDevScanTimer();
 
-    if (DetermineAppNewIcon()) {
-        // kick 1s timer to change icon 
-        KickIconRefreshTimer();
-    }
+    StatusBarRefresh();
 }
 
 
@@ -556,7 +535,6 @@ void DeviceTracker::Cleanup()
 {
     CancelArrivalTimer();
     CancelDevScanTimer();
-    CancelIconRefreshTimer();
     mOptions.CancelRegSaveTimer();
 
     if (mImageList) {
@@ -566,60 +544,12 @@ void DeviceTracker::Cleanup()
         ImageList_Destroy(mImageListSm);
     }
 
-    if (mIcoMonitor00) {
-        DestroyIcon(mIcoMonitor00);
-    }
-    if (mIcoMonitor01) {
-        DestroyIcon(mIcoMonitor01);
-    }
-    if (mIcoMonitor02) {
-        DestroyIcon(mIcoMonitor02);
-    }
-    if (mIcoMonitor03) {
-        DestroyIcon(mIcoMonitor03);
-    }
-    if (mIcoMonitor10) {
-        DestroyIcon(mIcoMonitor10);
-    }
-    if (mIcoMonitor11) {
-        DestroyIcon(mIcoMonitor11);
-    }
-    if (mIcoMonitor12) {
-        DestroyIcon(mIcoMonitor12);
-    }
-    if (mIcoMonitor13) {
-        DestroyIcon(mIcoMonitor13);
-    }
-    if (mIcoMonitor20) {
-        DestroyIcon(mIcoMonitor20);
-    }
-    if (mIcoMonitor21) {
-        DestroyIcon(mIcoMonitor21);
-    }
-    if (mIcoMonitor22) {
-        DestroyIcon(mIcoMonitor22);
-    }
-    if (mIcoMonitor23) {
-        DestroyIcon(mIcoMonitor23);
-    }
-    if (mIcoMonitor30) {
-        DestroyIcon(mIcoMonitor30);
-    }
-    if (mIcoMonitor31) {
-        DestroyIcon(mIcoMonitor31);
-    }
-    if (mIcoMonitor32) {
-        DestroyIcon(mIcoMonitor32);
-    }
-    if (mIcoMonitor33) {
-        DestroyIcon(mIcoMonitor33);
-    }
-
-    // free device list
+    // free our device list
     {
         DeviceInfo *devPtr = mListDevices;
 
         while (devPtr) {
+            // BUGBUG: actually free the memory
             devPtr = devPtr->DeviceNext();
         }
         mListDevices = NULL;
@@ -680,15 +610,17 @@ void DeviceTracker::ScanForDevChanges()
     SystemTimeToFileTime(&st, &ft);  // file time format
 
     if (mOptions.ShowNonConfig()) {
+        // have to scan all devices in order to check for unconfigured
         ScanIncludingUnconfigDevs(ft, scanId);
     } else {
+        // check for device types we are specifically interested in
         ScanBootDevices(ft, scanId);
         ScanSerialDevices(ft, scanId);
     }
 
     CleanupOrphanedDevices(ft, scanId);
 
-    UpdateWndIconAndNotifications();
+    UpdateStatusBarAndWinFlashNotifications();
     scanId++;
 }
 
@@ -926,7 +858,8 @@ void DeviceTracker::ScanSerialDevices(FILETIME &aNow, unsigned aScanId)
     DWORD flags;
     DWORD DeviceIndex = 0;
     int i;
-    /* RFIDler & Microchip DevBoards are in GUID_DEVCLASS_PORTS
+
+    /* RFIDler & Microchip DevBoard COM ports are in GUID_DEVCLASS_PORTS,
        'Show Any Serial' needs to include Modems & Multiport Serial devices
     */
     const GUID *serialGuid[] = { &GUID_DEVCLASS_PORTS, &GUID_DEVCLASS_MODEM, &GUID_DEVCLASS_MULTIPORTSERIAL };
@@ -1199,7 +1132,7 @@ void DeviceTracker::GetSerialnumber(const wchar_t *devInstanceId, DWORD size, BO
 
 
 /*
-   NB serial numbers are not necessarily unique!!!
+   NB on older Rfidler (binaries) serial numbers are not necessarily unique!!!
    If device does not carry one preprogrammed, windows generates based on dev type, & USB hub/port.
    (Or PCI location etc..)
    Similar devices can therefore have the same serial number at different times, affects us
@@ -1384,6 +1317,7 @@ void DeviceTracker::UpdateArrivedAndRemovedDevices()
     }
 
     if (!mDevicesInArrivalState) {
+        // cancel timer if no more expected changes (ie no devices in fresh arrival/removal states)
         CancelArrivalTimer();
     }
 
@@ -1489,7 +1423,7 @@ void DeviceTracker::SetOptions(const MonOptions& aOptions, SetMode setmode)
             // ensure status bar is updated
             if (aOptions.ShowDevBoardsOrAnySerial()) {
                 SetStatusBarPartitions(mHWndStatusBar, 3);
-                KickIconRefreshTimer();
+                StatusBarRefresh();
             } else {
                 SetStatusBarPartitions(mHWndStatusBar, 2);
             }
@@ -1566,15 +1500,10 @@ void DeviceTracker::UpdateArrivalOrRemovalState(FILETIME &now)
 }
 
 
-void DeviceTracker::UpdateWndIconAndNotifications()
+void DeviceTracker::UpdateStatusBarAndWinFlashNotifications()
 {
-    if (mNeedIconUpdate) {
-        mNeedIconUpdate = FALSE;
-        if (DetermineAppNewIcon()) {
-            // kick 1s timer to change timer
-            KickIconRefreshTimer();
-        }
-    }
+    StatusBarRefresh();
+
     if (mNeedFlashWindow) {
         FlashWindow(mHWndMain, FALSE);
         mNeedFlashWindow = FALSE;
@@ -1583,21 +1512,13 @@ void DeviceTracker::UpdateWndIconAndNotifications()
 
 
  /*
-  Windows bug: sometimes small icon updates but big taskbar one doesn't 
-  Workaround is just to keep refreshing ...
-  Unfortunately at some point Windows Shell seems to only use a cached icon
-  on the Taskbar. At least the small icon in corner of the window changes
-  as intended.
+   Refresh device counts for Window Status Bar
   */
-void DeviceTracker::AppIconRefresh()
+void DeviceTracker::StatusBarRefresh()
 {
     static TCHAR statusBuffer[1024];
 
-    // update App icon and cancel timer
-    DeviceTracker::CancelIconRefreshTimer();
-
-    SetClassLong(mHWndMain, GCL_HICON, (LONG) mCurrIcon);
-
+    // TODO? change icon overlay in system tray?
 
     // also update status bar - mHWndStatusBar
     if (mHWndStatusBar) {
@@ -1633,37 +1554,6 @@ void DeviceTracker::AppIconRefresh()
             SendMessage(mHWndStatusBar, SB_SETTEXT, 2, (LPARAM) statusBuffer);
         }
     }
-}
-
-
-/* 
-    Main window icon changes depending on how many RFIDler or Bootloader devices
-    are connected.
-    Updates mCurrIcon, returns TRUE if changed.
-*/
-BOOL DeviceTracker::DetermineAppNewIcon()
-{
-    HICON newIcon = 0;
-    int portCount = DeviceInfo::GetCountRfidlers() + DeviceInfo::GetCountDevBoards();
-    int bootCount = DeviceInfo::GetCountBootloaders();
-
-    portCount = min(portCount, 3);
-    bootCount = min(bootCount, 3);
-
-    HICON iconChoice[4][4] = {
-        { mIcoMonitor00, mIcoMonitor01, mIcoMonitor02, mIcoMonitor03, },
-        { mIcoMonitor10, mIcoMonitor11, mIcoMonitor12, mIcoMonitor13, },
-        { mIcoMonitor20, mIcoMonitor21, mIcoMonitor22, mIcoMonitor23, },
-        { mIcoMonitor30, mIcoMonitor31, mIcoMonitor32, mIcoMonitor33, },
-    };
-
-    newIcon = iconChoice[portCount][bootCount];
-
-    if (newIcon != mCurrIcon) {
-        mCurrIcon = newIcon;
-        return TRUE;
-    }
-    return FALSE;
 }
 
 
@@ -1703,24 +1593,6 @@ void DeviceTracker::CancelDevScanTimer()
 }
 
 
-void DeviceTracker::KickIconRefreshTimer()
-{
-    if (!mTimerIconRefresh) {
-        // wait at least 1s, as changes often bunch together seems to fix issue with Taskbar icon glitching
-        SetTimer (mHWndMain, mTimerIconRefresh = ICON_REFRESH_MAGICNUMBER, 1000, NULL);
-    }
-}
-
-
-void DeviceTracker::CancelIconRefreshTimer()
-{
-    if (mTimerIconRefresh) {
-        KillTimer(mHWndMain, mTimerIconRefresh);
-        mTimerIconRefresh = 0;
-    }
-}
-
-
 BOOL DeviceTracker::CheckInitialScanFlag(enum DevType dType)
 {
     switch(dType)
@@ -1748,27 +1620,32 @@ void DeviceTracker::DetermineArrivalNotifications(enum DevType dType, enum DevSt
         if (newState == DevArrived) {
             mDevicesInArrivalState = TRUE;
         }
+        BOOL updateStatusBar = FALSE;
 
         if (dType == DevRfidler) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyRfidlerArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         } else if (dType == DevMicroDevBoard) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         } else if (dType == DevMicroBoot) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyBootArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         }
         // future feature, arrival notifications for DevOtherSerial ? 
+
+        if (updateStatusBar) {
+            StatusBarRefresh();
+        }
     }
 }
 
@@ -1782,27 +1659,32 @@ void DeviceTracker::DetermineRemovalNotifications(enum DevType dType, enum DevSt
 
     if (((oldState == DevPresent) || (oldState == DevArrived)) &&
                 (newState != DevPresent) && (newState != DevArrived)) {
+        BOOL updateStatusBar = FALSE;
 
         if (dType == DevRfidler) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyRfidlerArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         } else if (dType == DevMicroDevBoard) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseMicroSer && mOptions.NotifyMicrochipArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         } else if (dType == DevMicroBoot) {
-            mNeedIconUpdate = TRUE;
+            updateStatusBar = TRUE;
             // notify if wanted (except if Options just changed)
             if (!mInitialiseRfidler && mOptions.NotifyBootArrFlash()) {
                 mNeedFlashWindow = TRUE;
             }
         }
         // future feature, removal notifications for DevotherSerial?
+
+        if (updateStatusBar) {
+            StatusBarRefresh();
+        }
     }
 }
 

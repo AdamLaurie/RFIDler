@@ -51,7 +51,7 @@
 #pragma comment(lib, "SetupAPI.lib")
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "version.lib")
-#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
 // todo review
 #pragma comment(lib, "hid.lib")
 #endif
@@ -108,7 +108,7 @@ static BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPA
 static BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
-#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
 static INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 #endif
 
@@ -1661,12 +1661,12 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
     case DevRfidlerCom:
     case DevMicroDevBoard:
     case DevOtherSerial:
-        lpMenuName = MAKEINTRESOURCE(IDR_PORT_CONTEXT);
+        lpMenuName = MAKEINTRESOURCE(IDR_COMPORT_CONTEXT);
         break;
     case DevMicroBootloader:
         lpMenuName = MAKEINTRESOURCE(IDR_DEV_CONTEXT);
-#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
-        defaultitem = ID_CONTEXT_OPEN_FOR_REFLASH;
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
+//        defaultitem = ID_CONTEXT_OPEN_FOR_REFLASH;
 #endif
         break;
     case DevUnconfigRfidlerCom:
@@ -1685,7 +1685,7 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
             SetMenuDefaultItem(hMenuTrackPopup, defaultitem, FALSE);
         }
 
-#if !defined(ENABLE_BOOTLOADER_FLASH) && !defined(_DEBUG)
+#if !defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) && !defined(_DEBUG)
         switch (dev->DeviceType()) {
         case DevRfidlerCom:
         case DevMicroDevBoard:
@@ -1718,7 +1718,7 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
             //case ID_CONTEXT_COPYALL_DETAILS: // possible future fn, needs ListView iterator & string info buffers
                 ContextMenuClipboardSelect(hWnd, dev, selection);
                 break;
-#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
             case ID_CONTEXT_OPEN_FOR_REFLASH:
                 if (!dev->DeleteOnUnlock()) {
                     // launch Bootloader Flash dialog
@@ -1761,7 +1761,7 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, Mo
             // todo future enhancement, have a default menu item
             break;
         case DevMicroBootloader:
-#if defined(ENABLE_BOOTLOADER_FLASH) || defined(_DEBUG)
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
             {
                 // launch Bootloader Flash dialog
                 BootloaderParams bl;
@@ -1881,6 +1881,7 @@ void BootloaderStatus(HWND hWndStatus, const TCHAR *format, ...)
 }
 
 
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
 INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     /* IDD_BOOTLOADERFLASH */
@@ -1983,6 +1984,7 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
 
     return 0;
 }   /* BootloaderDlgProc() */
+#endif
 
 
 /* end of file rfidmonitor.cpp */

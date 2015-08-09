@@ -76,11 +76,11 @@ typedef BOOL (WINAPI *LPFNSetupDiGetDevicePropertyW)(HDEVINFO DeviceInfoSet,
 
 /* 
   Configure in-development features:
-  ENABLE_BOOTLOADER_FLASH - menu for talking to RFIDler (or Bitwhacker32) in Bootloader mode
+  ENABLE_BOOTLOADER_FLASH_DIALOGS - dialogs & menus for talking to RFIDler (or Bitwhacker32) in Bootloader mode
 
   Any features listed here are not complete or tested!
   */
-//#define ENABLE_BOOTLOADER_FLASH
+//#define ENABLE_BOOTLOADER_FLASH_DIALOGS
 
 
 // arbitrary different numbers for different timers

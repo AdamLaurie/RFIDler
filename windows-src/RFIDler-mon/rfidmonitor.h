@@ -40,6 +40,8 @@
 
 #include <Windows.h>
 #include <tchar.h>
+#include <assert.h>
+
 #include <SetupAPI.h>
 #include <CommCtrl.h>
 
@@ -105,6 +107,7 @@ public:
         optDefaultShowFlags(0), optShowFlags(0), optDefaultNotifyFlags(0), optNotifyFlags(0), optHaveValueFlags(0),
         optNeedSaveFlags(0),
         optViewSortOrder(lvDispName), optViewStyleButton(ID_VIEW_DETAILS),
+        optWindowLayoutVer(0), // change this when main window layout changes - used to validate restored Window position/size
         optHexFileHistoryCount(0), optTimerRegistrySave(0)
         {
             // initial What to show options (bit flags):
@@ -123,9 +126,11 @@ public:
 
             optNotifyFlags = optDefaultNotifyFlags;
 
-            // which default registry should be saved
-            // individual flags are cleared if previously saved values are recovered
-            // first save is triggered by first user change of settings
+            /* Which default registry should be saved.
+               Individual flags are cleared if previously saved values are recovered.
+               First save is triggered by first user change of settings,
+               or if some of the expected old values were recovered.
+            */
             optNeedSaveShowFlags = TRUE;
             optNeedSaveNotifyFlags = TRUE;
             optNeedSaveWindowPlace = TRUE;
@@ -146,7 +151,7 @@ public:
     void ReadRegistryValues();
     void SetShowOptionsAndRegistrySave(const MonOptions &newValues, BOOL &aShowSettingsChanged);
     void SetNotifyOptionsAndRegistrySave(const MonOptions &newValues);
-    void RegistrySaveChangedValues();
+    void RegistrySaveChangedValues(BOOL destroyWindow);
 
     void KickRegSaveTimer();
     void CancelRegSaveTimer();
@@ -254,6 +259,7 @@ private:
     static const int optKMaxHexFileHistoryCount = 10;
     // values
     RECT        optWindowPlace;
+    unsigned    optWindowLayoutVer;
     int         optViewSortOrder;
     int         optViewStyleButton;    // LV_VIEW_ICON, LV_VIEW_SMALLICON, LV_VIEW_DETAILS, LV_VIEW_TILE
     int         optHexFileHistoryCount;

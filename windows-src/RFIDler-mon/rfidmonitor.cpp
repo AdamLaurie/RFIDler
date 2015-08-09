@@ -667,7 +667,7 @@ BOOL CALLBACK MonitorDlgProc (
             break;
         case REGISTRY_SAVE_MAGICNUMBER:
             if (DevTracker) {
-                DevTracker->GetOptions().RegistrySaveChangedValues();
+                DevTracker->GetOptions().RegistrySaveChangedValues(FALSE);
             }
             handled++;
             break;
@@ -681,7 +681,7 @@ BOOL CALLBACK MonitorDlgProc (
 
     case WM_DESTROY: /* cleanup & exit */
         if (DevTracker) {
-            DevTracker->GetOptions().RegistrySaveChangedValues();
+            DevTracker->GetOptions().RegistrySaveChangedValues(TRUE);
             DevTracker->Cleanup();
             delete DevTracker;
             DevTracker = NULL;

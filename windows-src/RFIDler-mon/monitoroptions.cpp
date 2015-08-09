@@ -53,6 +53,7 @@ static const TCHAR *KRegKeySortOrder = _T("SortOrder");
 static const TCHAR *KRegKeyViewStyle = _T("ViewStyle");
 static const TCHAR *KRegKeyWinPosX = _T("WinPosX");
 static const TCHAR *KRegKeyWinPosY = _T("WinPosY");
+static const TCHAR *KRegKeyWinLayoutVer = _T("WinLayout");
 static const TCHAR *KRegKeyWinSizeCX = _T("WinSizeCX");
 static const TCHAR *KRegKeyWinSizeCY = _T("WinSizeCY");
 static const TCHAR *KRegKeyMRUHexFile = _T("MRU_HexFile");
@@ -71,54 +72,57 @@ void MonOptions::ReadRegistryValues()
                 DWORD temp;
                 DWORD valtype;
                 DWORD valsize = sizeof(temp);
+                int tint; // temp converted to int
 
                 // what optional stuff to show
-                RegQueryValueEx(hk3, KRegKeyShowFlags, 0, &valtype, (BYTE*)&temp, &valsize);
-                if (REG_DWORD == valtype) {
-                    optShowFlags = temp;
-                }
-                // whether to flash window or chime
-                RegQueryValueEx(hk3, KRegKeyNotifyFlags, 0, &valtype, (BYTE*)&temp, &valsize);
-                if (REG_DWORD == valtype) {
-                    optNotifyFlags = temp;
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyShowFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                    tint = (int) temp;
+                    if (0 == (tint & ~optKAllShowFlags)) {
+                        optShowFlags = temp;
+                        optNeedSaveShowFlags = FALSE;
+                    }
                 }
 
-                RegQueryValueEx(hk3, KRegKeyWinPosX, 0, &valtype, (BYTE*)&temp, &valsize);
-                if (REG_DWORD == valtype) {
+                // when to flash window title for notifications
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyNotifyFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                    tint = (int) temp;
+                    if (0 == (tint & ~optKAllNotifyFlags)) {
+                        optNotifyFlags = temp;
+                        optNeedSaveNotifyFlags = FALSE;
+                    }
+                }
+
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                     optWindowPlace.left = temp;
-                    RegQueryValueEx(hk3, KRegKeyWinPosY, 0, &valtype, (BYTE*)&temp, &valsize);
-                    if (REG_DWORD == valtype) {
+                    if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                         optWindowPlace.top = temp;
-                        RegQueryValueEx(hk3, KRegKeyWinSizeCX, 0, &valtype, (BYTE*)&temp, &valsize);
-                        if (REG_DWORD == valtype) {
+                        if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinSizeCX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                             optWindowPlace.right = temp;
-                            RegQueryValueEx(hk3, KRegKeyWinSizeCY, 0, &valtype, (BYTE*)&temp, &valsize);
-                            if (REG_DWORD == valtype) {
+                            if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinSizeCY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                                 optWindowPlace.bottom = temp;
-                                optHaveWindowPlace = TRUE;
+                                // check that saved window position / size from same window layout?
+                                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinLayoutVer, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp == optWindowLayoutVer)) {
+                                    optHaveWindowPlace = TRUE;
+                                    optNeedSaveWindowPlace = FALSE;
+                                }
                             }
                         }
                     }
                 }
-                RegQueryValueEx(hk3, KRegKeySortOrder, 0, &valtype, (BYTE*)&temp, &valsize);
-                if ((REG_DWORD == valtype) && (temp <= lvDispMaxSort)) {
+
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeySortOrder, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp <= lvDispMaxSort)) {
                     optViewSortOrder = temp;
-                } else {
-                    // save good value at some point
-                    temp = optViewSortOrder;
-                    RegSetValueEx(hk3, KRegKeySortOrder, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+                    optNeedSaveViewSortOrder = FALSE;
                 }
-                RegQueryValueEx(hk3, KRegKeyViewStyle, 0, &valtype, (BYTE*)&temp, &valsize);
-                if (REG_DWORD == valtype) {
+
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyViewStyle, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                     switch (temp) {
                     case ID_VIEW_LARGE_ICONS:
                     case ID_VIEW_SMALL_ICONS:
                     case ID_VIEW_DETAILS:
-                    case ID_VIEW_TILES:
-                        optViewStyleButton = temp; break; // valid value
-                    default: // save good value at some point
-                        temp = optViewStyleButton;
-                        RegSetValueEx(hk3, KRegKeyViewStyle, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+                    case ID_VIEW_TILES: // valid value
+                        optViewStyleButton = temp;
+                        optNeedSaveViewStyleButton = FALSE;
                         break;
                     }
                 }
@@ -134,8 +138,7 @@ void MonOptions::ReadRegistryValues()
                             DWORD strsize = sizeof(fnamebuff);
 
                             StringCchPrintf(numbuff, ARRAYSIZE(numbuff), _T("%i"), j);
-                            RegQueryValueEx(hk4, numbuff, 0, &valtype, (BYTE*)&fnamebuff, &strsize);
-                            if (REG_SZ == valtype) {
+                            if ((ERROR_SUCCESS == RegQueryValueEx(hk4, numbuff, 0, &valtype, (BYTE*)&fnamebuff, &strsize)) && (REG_SZ == valtype)) {
                                 optHexFileHistory[j] = wcs_dupsubstr(fnamebuff, strsize);
                                 optHexFileHistoryCount = j;
                                 continue;
@@ -151,7 +154,12 @@ void MonOptions::ReadRegistryValues()
             RegCloseKey(hk2);
         }
         RegCloseKey(hk1);
-    }
+
+	    // plan save to registry any state that was missing or invalid on reading
+	    if (optNeedSaveFlags) {
+	        KickRegSaveTimer();
+	    }
+	}
 }
 
 
@@ -181,8 +189,14 @@ void MonOptions::SetNotifyOptionsAndRegistrySave(const MonOptions &newValues)
 }
 
 
-void MonOptions::RegistrySaveChangedValues()
+void MonOptions::RegistrySaveChangedValues(BOOL destroyWindow)
 {
+    assert(optNeedSaveFlags || destroyWindow);
+
+#ifndef _DEBUG
+    destroyWindow; // unreferenced param warning on release build
+#endif
+
     // use timer as a one-shot
     CancelRegSaveTimer();
 
@@ -220,6 +234,8 @@ void MonOptions::RegistrySaveChangedValues()
                         RegSetValueEx(hk3, KRegKeyWinSizeCX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         temp = optWindowPlace.bottom;
                         RegSetValueEx(hk3, KRegKeyWinSizeCY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+                        temp = optWindowLayoutVer;
+                        RegSetValueEx(hk3, KRegKeyWinLayoutVer, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveWindowPlace = FALSE;
                     }
 
@@ -235,7 +251,7 @@ void MonOptions::RegistrySaveChangedValues()
                         optNeedSaveViewStyleButton = FALSE;
                     }
 
-                    if (optNeedSaveHexFileHistory) {
+                    if (optNeedSaveHexFileHistory && optHexFileHistoryCount) {
                         HKEY hk4;
 
                         optNeedSaveHexFileHistory = FALSE;

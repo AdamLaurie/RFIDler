@@ -57,7 +57,7 @@
 #endif
 
 /* proclaim support for "Visual Styles" / i.e. Windows Vista Themes
- Ensure we only run on Windows XP with Common Control v6 installed,
+ Ensure we only run on Windows XP with Common Controls v6 installed,
  or later Windows version. This gives e.g. Tile View and glowing focus
  effects.
 */
@@ -406,8 +406,10 @@ BOOL CALLBACK MonitorDlgProc (
     static DeviceTracker    *DevTracker;
     static HWND             hWndLV = NULL;
     static HWND             hWndStatusBar = NULL;
+    static UINT             TbCreatedNotification = 0;
+    static ITaskbarList3*   pTbList = NULL; // Windows >= 7 Taskbar COM interface
     // data to support resizing of window
-    static AppControlPos MainControls[] =
+    static AppControlPos    MainControls[] =
     {
         { IDC_RFIDLERLIST, FLAG_TOP_NOMOVE | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
         { IDC_STATUSBAR,  FLAG_HEIGHT_FIXED | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
@@ -437,6 +439,18 @@ BOOL CALLBACK MonitorDlgProc (
 
         // setup support for resizing / moving child controls when dialog is resized
         GetInitialControlPositions(hWnd, &MainWnd);
+
+        // Check for Windows >= 7
+        if (CheckWindowsVersion(WinAtLeast7)) {
+            /* Request notification when our Taskbar button is created,
+               can occur multiple times if Windows Shell restarts.
+             */
+            TbCreatedNotification = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+            if (TbCreatedNotification) {
+                // obscurely documented secret sauce to actually get the notification
+                ChangeWindowMessageFilterEx(hWnd, TbCreatedNotification, MSGFLT_ALLOW, NULL);
+            }
+        }
 
         // create Plug & Play device tracking stuff
         DevTracker = new DeviceTracker(hWnd, hWndLV, hWndStatusBar, hInst);
@@ -686,12 +700,26 @@ BOOL CALLBACK MonitorDlgProc (
             delete DevTracker;
             DevTracker = NULL;
         }
+        // release Taskbar COM interface
+        if (pTbList) {
+            pTbList->Release();
+            pTbList = NULL;
+        }
         // close program
         PostQuitMessage (0);
         handled++;
         break;
 
     default:
+        if ((TbCreatedNotification != 0) && (TbCreatedNotification == iMsg)) {
+            // initial Taskbar button creation, or Windows Explorer has restarted
+            pTbList = NULL;
+
+            // if we get the interface then intialise (note using C++ here)
+            if (SUCCEEDED(CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTbList))) {
+                pTbList->HrInit();
+            }
+        }
         break;
     }
     	

@@ -76,7 +76,9 @@
     <ClCompile Include="devicetracker.cpp" />
     <ClCompile Include="monitoroptions.cpp" />
     <ClCompile Include="rfidmonitor.cpp" />
+    <ClCompile Include="taskbarfeatures.cpp" />
     <ClCompile Include="wcs_utilities.cpp" />
+    <ClCompile Include="windowsversion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -90,28 +92,16 @@
     <None Include="devboard.ico" />
     <None Include="devbrdbad.ico" />
     <None Include="devbrdremove.ico" />
-    <None Include="monitor00.ico" />
-    <None Include="monitor01.ico" />
-    <None Include="monitor02.ico" />
-    <None Include="monitor03.ico" />
-    <None Include="monitor10.ico" />
-    <None Include="monitor11.ico" />
-    <None Include="monitor12.ico" />
-    <None Include="monitor13.ico" />
-    <None Include="monitor20.ico" />
-    <None Include="monitor21.ico" />
-    <None Include="monitor22.ico" />
-    <None Include="monitor23.ico" />
-    <None Include="monitor30.ico" />
-    <None Include="monitor31.ico" />
-    <None Include="monitor32.ico" />
-    <None Include="monitor33.ico" />
     <None Include="otherserial.ico" />
     <None Include="otherserialremove.ico" />
     <None Include="rfidbad.ico" />
     <None Include="rfidboot.ico" />
+    <None Include="rfidler256.ico" />
     <None Include="rfidokay.ico" />
     <None Include="rfidremove.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="win-compat.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

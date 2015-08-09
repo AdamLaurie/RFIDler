@@ -28,54 +28,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="monitor11.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor00.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor01.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor02.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor03.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor10.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor12.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor13.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor20.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor21.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor22.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor23.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor30.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor31.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor32.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="monitor33.ico">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="rfidokay.ico">
       <Filter>Resource Files</Filter>
     </None>
@@ -83,9 +35,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="rfidboot.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bitwhacker.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="rfidremove.ico">
@@ -106,6 +55,9 @@
     <None Include="otherserialremove.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="rfidler256.ico">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rfidmonitor.cpp">
@@ -123,5 +75,14 @@
     <ClCompile Include="wcs_utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="taskbarfeatures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="windowsversion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="win-compat.manifest" />
   </ItemGroup>
 </Project>

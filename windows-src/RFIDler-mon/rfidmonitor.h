@@ -44,6 +44,8 @@
 
 #include <SetupAPI.h>
 #include <CommCtrl.h>
+#include <ShlObj.h>
+#include <ShObjIdl.h>
 
 #include "resource.h"
 
@@ -559,6 +561,33 @@ void PrintDebugStatus(const TCHAR *format, ...);
 
 void ReleaseString(TCHAR *&string);
 void SetStatusBarPartitions(HWND hWndStatusBar, int parts);
+
+
+// windowsversion.cpp
+
+// tests to try on Windows Version Info
+enum WinVersion {
+    WinAtLeastXP,
+    WinAtLeastVista,
+    WinAtLeast7,
+    WinAtLeast8,
+    WinAtLeast10,
+};
+
+BOOL CheckWindowsVersion(enum WinVersion);
+
+
+// taskbarfeatures.cpp
+
+enum ProgBarState {
+    PROG_START,
+    PROG_ERROR,
+    PROG_COMPLETE,
+    PROG_HIDE,
+    PROG_MAX
+};
+
+void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState);
 
 
 /* end of file rfidmonitor.h */

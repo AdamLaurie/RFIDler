@@ -75,6 +75,10 @@ const TCHAR *szMicrochipBootHwUsbId = _T("USB\\VID_04D8&PID_003C");
 const TCHAR *szMicrochipBootHidId = _T("HID\\VID_04D8&PID_003C");
 
 
+// singleton DeviceTracker
+DeviceTracker DevTracker;
+
+
 /* ******************** PROGRAM CONFIGURATION ********************* */
 /* nominal minimum window size is 300 * 250 */
 // FIXME? have min sizes for controls & then calc overall min
@@ -94,46 +98,45 @@ class BootloaderParams
 {
 public:
     DeviceInfo *blDev;
-    MonOptions *blOptions;
 };
 
 
-static BOOL CALLBACK MonitorDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
-        DLGPROC lpDialogFunc, LPARAM dwInitParam);
-static HWND InitShowControls(MonOptions *aOptions, HWND hWndTab);
-static HWND InitNotificationControls(MonOptions *aOptions, HWND hWndTab);
-static BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK MonitorDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
+        DLGPROC lpDialogFunc, LPARAM dwInitParam, BOOL showDialog);
+HWND InitShowControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
+HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
+BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 #if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
-static INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 #endif
 
-static BOOL GetProgramFilename(TCHAR **fname);
-static void CheckProgramShortcuts(const wchar_t *shortcut, BOOL *aDeskLinkExists, BOOL *aStartlinkExists);
-static BOOL CheckLinkname(const wchar_t *shortcut, int csidl);
-static wchar_t *CreateLinkname(const wchar_t *shortcut, int csidl);
-static void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL aMakeShortcut);
-static void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
+BOOL GetProgramFilename(TCHAR **fname);
+void CheckProgramShortcuts(const wchar_t *shortcut, BOOL *aDeskLinkExists, BOOL *aStartlinkExists);
+BOOL CheckLinkname(const wchar_t *shortcut, int csidl);
+wchar_t *CreateLinkname(const wchar_t *shortcut, int csidl);
+void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL aMakeShortcut);
+void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
     BOOL aDeskLinkExists, BOOL aStartlinkExists);
-static BOOL CALLBACK InstallConfigDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static ATOM RegisterMainWindow (HINSTANCE hInstance);
-static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd);
-static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd);
-static void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker);
-static void LVColumnClickAndSort(DeviceTracker *DevTracker, int newOrder, HWND hwndFrom);
-static void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip);
-static void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, MonOptions *aOptions);
-static void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV, MonOptions *aOptions);
-static void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, MonOptions *aOptions);
-static void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup);
-static void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection);
-static void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, POINT scrPt, MonOptions *aOptions);
-static DeviceInfo *DevInfoFromListItem(HWND hWndLV, int iItem);
-static DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt);
+BOOL CALLBACK InstallConfigDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+ATOM RegisterMainWindow (HINSTANCE hInstance);
+void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd);
+void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd);
+void MoveMainWindow(HWND hWnd, HINSTANCE hInst);
+void LVColumnClickAndSort(int newOrder, HWND hwndFrom);
+void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip);
+void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem);
+void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV);
+void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem);
+void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup);
+void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection);
+void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, POINT scrPt);
+DeviceInfo *DevInfoFromListItem(HWND hWndLV, int iItem);
+DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt);
 
 
 /* real code begins here ... */
@@ -243,7 +246,7 @@ public:
 };
 
 
-static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
+void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
 {
     RECT wndRect;
 
@@ -276,7 +279,7 @@ static void GetInitialControlPositions(HWND hWnd, AppWindowPos *wnd)
 
 
 // stretch / move controls in response to window resize
-static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
+void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
 {
     unsigned idx;
     HDWP hdwp;
@@ -347,12 +350,13 @@ static void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
   Otherwise hacky stuff to position main window because CW_USERDEFAULT positioning does not work for dialog based windows,
   as we don't want to be in top left corner of the screen.
   */
-void MoveMainWindow(HWND hWnd, HINSTANCE hInst, DeviceTracker *DevTracker)
+void MoveMainWindow(HWND hWnd, HINSTANCE hInst)
 {
     RECT rc;
 
     // get stored position/size from registry
-    const MonOptions &opt = DevTracker->GetOptions();
+    const MonOptions &opt = DevTracker.GetOptions();
+
     // check window parameters are recalled, & minimum window size
     if (opt.GetWindowInfo(rc) &&
             ((rc.right - rc.left) >= KMinimiumWindowSize.cx) && ((rc.bottom - rc.top) >= KMinimiumWindowSize.cy) ) {
@@ -403,7 +407,6 @@ BOOL CALLBACK MonitorDlgProc (
 {
     /* statics keep state between Windows messages */
     static HINSTANCE        hInst = 0;
-    static DeviceTracker    *DevTracker;
     static HWND             hWndLV = NULL;
     static HWND             hWndStatusBar = NULL;
     static UINT             TbCreatedNotification = 0;
@@ -453,27 +456,21 @@ BOOL CALLBACK MonitorDlgProc (
         }
 
         // create Plug & Play device tracking stuff
-        DevTracker = new DeviceTracker(hWnd, hWndLV, hWndStatusBar, hInst);
-        if (DevTracker) {
-            // Registry Settings etc are restored by DeviceTracker constructor, so we can use them now
+        DevTracker.Initialize(hWnd, hWndLV, hWndStatusBar, hInst);
 
-            // should StatusBar have 2 or 3 partitions?
-            if (hWndStatusBar) {
-                if (DevTracker->GetOptions().ShowDevBoardsOrAnySerial()) {
-                    SetStatusBarPartitions(hWndStatusBar, 3);
-                } else {
-                    SetStatusBarPartitions(hWndStatusBar, 2);
-                }
+        // Registry Settings etc are restored by DeviceTracker Initialize(), so we can use them now
+
+        // should StatusBar have 2 or 3 partitions?
+        if (hWndStatusBar) {
+            if (DevTracker.GetOptions().ShowDevBoardsOrAnySerial()) {
+                SetStatusBarPartitions(hWndStatusBar, 3);
+            } else {
+                SetStatusBarPartitions(hWndStatusBar, 2);
             }
-            DevTracker->Initialize();
-
-            // restore old window position & size if any, or use CW_USEDEFAULT positioning
-            MoveMainWindow(hWnd, hInst, DevTracker);
-        } else {
-            // Kaboom! major failure creating program resources
-            MessageBox(hWnd, _T("out of memory error"), szAppName, MB_OK);
-            EndDialog (hWnd, 0);
         }
+
+        // restore old window position & size if any, or use CW_USEDEFAULT positioning
+        MoveMainWindow(hWnd, hInst);
         return TRUE;
 
     case WM_WINDOWPOSCHANGED:
@@ -492,7 +489,7 @@ BOOL CALLBACK MonitorDlgProc (
                 place.length = sizeof(WINDOWPLACEMENT);
                 if (GetWindowPlacement(hWnd, &place) && (place.showCmd == SW_SHOWNORMAL)) {
                     // save window placement
-                    DevTracker->GetOptions().SaveWindowInfo(place.rcNormalPosition);
+                    DevTracker.GetOptions().SaveWindowInfo(place.rcNormalPosition);
                 }
             }
         }
@@ -530,27 +527,28 @@ BOOL CALLBACK MonitorDlgProc (
             case ID_VIEW_DETAILS:
             case ID_VIEW_TILES: // Tile view must be supported, as we specify comctrl32 DLL v6.0 in manifest
                 {
-                    int currentView = DevTracker->GetOptions().GetViewStyleButton();
+                    int currentView = DevTracker.GetOptions().GetViewStyleButton();
                     if (wID != currentView) {
                         // move menu check mark
                         HMENU hMenu = GetMenu(hWnd);
 
                         CheckMenuItem(hMenu, currentView, MF_UNCHECKED);
                         CheckMenuItem(hMenu, wID, MF_CHECKED);
-                        DevTracker->SetViewStyle(wID);
+                        DevTracker.SetViewStyle(wID);
                     }
                 }
                 handled++;
                 break;
 
-            case ID_INSTALL_CONFIG: // dialog IDD_CONFIGSHORTCUTS
+            case ID_SETTINGS_CONFIG_SHORTCUTS: // dialog IDD_CONFIGSHORTCUTS
                 DialogBoxParam (hInst, MAKEINTRESOURCE(IDD_CONFIGSHORTCUTS), hWnd,
-                    InstallConfigDlgProc, (LPARAM) DevTracker);
+                    InstallConfigDlgProc, 0);
                 break;
 
-            case ID_MONITOR_OPTIONS:
+            case ID_SETTINGS_DEVTYPES:
+            case ID_SETTINGS_DEVNOTIFICATIONS:
                 DialogBoxParam (hInst, MAKEINTRESOURCE(IDD_OPTIONS), hWnd,
-                    OptionsDlgProc, (LPARAM) DevTracker);
+                    OptionsDlgProc, wID);
                 break;
 
             case ID_MONITOR_EXIT:
@@ -568,7 +566,7 @@ BOOL CALLBACK MonitorDlgProc (
 
             switch(notifycode) {
             case LVN_COLUMNCLICK:
-                LVColumnClickAndSort(DevTracker, pNm->iSubItem, pNm->hdr.hwndFrom);
+                LVColumnClickAndSort(pNm->iSubItem, pNm->hdr.hwndFrom);
                 handled++;
                 break;
 
@@ -579,12 +577,12 @@ BOOL CALLBACK MonitorDlgProc (
                 break;
 
             case NM_RCLICK: // right click: device menu
-                LVRightClickContextMenu(hInst, hWnd, (LPNMITEMACTIVATE) lParam, &DevTracker->GetOptions());
+                LVRightClickContextMenu(hInst, hWnd, (LPNMITEMACTIVATE) lParam);
                 handled++;
                 break;
 
             case LVN_ITEMACTIVATE:
-                LVItemDoubleClick(hInst, hWnd, (LPNMITEMACTIVATE)lParam, &DevTracker->GetOptions());
+                LVItemDoubleClick(hInst, hWnd, (LPNMITEMACTIVATE)lParam);
                 handled++;
                 break;
 
@@ -652,15 +650,13 @@ BOOL CALLBACK MonitorDlgProc (
     case WM_CONTEXTMENU: // Context Menu for ListView (should only be that VK_APPS or Shift+F10 come here)
         if (wParam == (WPARAM) hWndLV) {
             if ((lParam == 0xFFFFFFFF) && (ListView_GetSelectedCount(hWndLV) > 0)) {
-                LVSelectedItemContextMenu(hInst, hWnd, hWndLV, &DevTracker->GetOptions());
+                LVSelectedItemContextMenu(hInst, hWnd, hWndLV);
             }
         }
         break;
 
     case WM_DEVICECHANGE:
-        if (DevTracker) {
-            DevTracker->OnDeviceChange((UINT) wParam, lParam);
-        }
+        DevTracker.OnDeviceChange((UINT) wParam, lParam);
         handled++;
         break;
 
@@ -668,21 +664,15 @@ BOOL CALLBACK MonitorDlgProc (
         switch (wParam)
         {
         case DEV_RESCAN_TIMER_MAGICNUMBER:
-            if (DevTracker) {
-                DevTracker->ScanRfidlerDevices();
-            }
+            DevTracker.ScanRfidlerDevices();
             handled++;
             break;
         case ARRIVAL_TIMER_MAGICNUMBER:
-            if (DevTracker) {
-                DevTracker->UpdateArrivedAndRemovedDevices();
-            }
+            DevTracker.UpdateArrivedAndRemovedDevices();
             handled++;
             break;
         case REGISTRY_SAVE_MAGICNUMBER:
-            if (DevTracker) {
-                DevTracker->GetOptions().RegistrySaveChangedValues(FALSE);
-            }
+            DevTracker.GetOptions().RegistrySaveChangedValues(FALSE);
             handled++;
             break;
         }
@@ -694,12 +684,9 @@ BOOL CALLBACK MonitorDlgProc (
         break;
 
     case WM_DESTROY: /* cleanup & exit */
-        if (DevTracker) {
-            DevTracker->GetOptions().RegistrySaveChangedValues(TRUE);
-            DevTracker->Cleanup();
-            delete DevTracker;
-            DevTracker = NULL;
-        }
+        DevTracker.GetOptions().RegistrySaveChangedValues(TRUE);
+        DevTracker.Cleanup();
+
         // release Taskbar COM interface
         if (pTbList) {
             pTbList->Release();
@@ -729,7 +716,7 @@ BOOL CALLBACK MonitorDlgProc (
 
 
 HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
-        DLGPROC lpDialogFunc, LPARAM dwInitParam)
+        DLGPROC lpDialogFunc, LPARAM dwInitParam, BOOL showDialog)
 {
     TCITEM tcItem;
 
@@ -747,8 +734,11 @@ HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTempl
         GetClientRect(hWndTab, &rc);
         TabCtrl_AdjustRect(hWndTab, FALSE, &rc);
         SetWindowPos(child, 0, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
-        // show first tab
-        if (itemId == 0) {
+        // select & show initial tab
+        if (showDialog) {
+            if (itemId != 0) {
+            	TabCtrl_SetCurSel(hWndTab, itemId);
+            }
             ShowWindow(child, SW_SHOW);
         }
     }
@@ -756,17 +746,17 @@ HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTempl
 }
 
 
-HWND InitShowControls(MonOptions *aOptions, HWND hWndTab)
+HWND InitShowControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog)
 {
     return InitTabbedDialog(hWndTab, 0, _T("Show Devices"), MAKEINTRESOURCE( IDD_WHATTOWATCH ),
-        ShowOptionsDlgProc, (LPARAM) aOptions);
+        ShowOptionsDlgProc, (LPARAM) newOptions, showDialog);
 }
 
 
-HWND InitNotificationControls(MonOptions *aOptions, HWND hWndTab)
+HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog)
 {
     return InitTabbedDialog(hWndTab, 1, _T("Device Notifications"), MAKEINTRESOURCE( IDD_NOTIFICATIONS ),
-        NotificationsDlgProc, (LPARAM) aOptions);
+        NotificationsDlgProc, (LPARAM) newOptions, showDialog);
 }
 
 
@@ -943,7 +933,6 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     const int KNumPropPages = 2;
     static HWND hWndOptionsPage[KNumPropPages] = { NULL, NULL };
-    static DeviceTracker *DevTracker;
     static MonOptions   *newOptions;
     static BOOL         ApplyEnabled[KNumPropPages] = { FALSE, FALSE };
     static int          currPage = 0;
@@ -956,14 +945,21 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         for (int i = 0; i < KNumPropPages; i++) {
             ApplyEnabled[i] = FALSE;
         }
-        DevTracker = (DeviceTracker*) lParam;
+
         // new copy of current options
-        newOptions = new MonOptions(DevTracker->GetOptions());
+        newOptions = new MonOptions(DevTracker.GetOptions());
         hWndTab = GetDlgItem(hWnd, IDC_TABOPTIONS);
 
-        currPage = 0;
-        hWndOptionsPage[0] = InitShowControls(newOptions, hWndTab);
-        hWndOptionsPage[1] = InitNotificationControls(newOptions, hWndTab);
+        // select initial dialog page
+        switch (lParam)
+        {
+		default:
+        case ID_SETTINGS_DEVTYPES:         currPage = 0; break;
+        case ID_SETTINGS_DEVNOTIFICATIONS: currPage = 1; break;
+        }
+
+        hWndOptionsPage[0] = InitShowControls(newOptions, hWndTab, 0 == currPage);
+        hWndOptionsPage[1] = InitNotificationControls(newOptions, hWndTab, 1 == currPage);
         { 
             /* mark Tab control as parent, dialog pages should already have this via DS_CONTROL
                This should ensure tab key moves through all the controls correctly.
@@ -983,7 +979,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             switch (wID)
             {
             case IDOK:
-                DevTracker->SetOptions(*newOptions, DeviceTracker::SetAll);
+                DevTracker.SetOptions(*newOptions, DeviceTracker::SetAll);
                 // fall through
             case IDCANCEL:
                 EndDialog(hWnd, wID);
@@ -993,7 +989,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 EnableWindow(GetDlgItem(hWnd, IDC_APPLY), FALSE);
                 ApplyEnabled[currPage] = FALSE;
                 // only apply changes to currently visible options page
-                DevTracker->SetOptions(*newOptions,
+                DevTracker.SetOptions(*newOptions,
                     (currPage == 0) ? DeviceTracker::SetShowOptions : DeviceTracker::SetNotifyOptions);
                 handled++;
                 break;
@@ -1246,21 +1242,19 @@ BOOL CALLBACK InstallConfigDlgProc (
     HWND hWnd,
     UINT iMsg,
     WPARAM wParam,
-    LPARAM lParam
+    LPARAM // lParam
 )
 {
-    const wchar_t *shortcut = _T("RFIDler Monitor.lnk");
-    static DeviceTracker *DevTracker;
-    static TCHAR        *fname = NULL;
-    static BOOL         deskLinkExists;
-    static BOOL         startlinkExists;
+    const wchar_t   *shortcut = _T("RFIDler Monitor.lnk");
+    static TCHAR    *fname = NULL;
+    static BOOL     deskLinkExists;
+    static BOOL     startlinkExists;
 
     int handled = 0;
 
     // Dialog for configuring program shortcuts
     switch (iMsg) {
     case WM_INITDIALOG:
-        DevTracker = (DeviceTracker*) lParam;
         // init displayed path
         if (!fname) {
             GetProgramFilename(&fname);
@@ -1460,9 +1454,9 @@ void SetStatusBarPartitions(HWND hWndStatusBar, int parts)
 }
 
 
-void LVColumnClickAndSort(DeviceTracker *DevTracker, int sortColumn, HWND hwndFrom)
+void LVColumnClickAndSort(int sortColumn, HWND hwndFrom)
 {
-    int oldOrder = DevTracker->GetViewSortOrder();
+    int oldOrder = DevTracker.GetViewSortOrder();
     int sortOrder = sortColumn;
     BOOL reverse = false;
 
@@ -1473,7 +1467,7 @@ void LVColumnClickAndSort(DeviceTracker *DevTracker, int sortColumn, HWND hwndFr
     }
 
     // remember sort order, trigger timed state save
-    DevTracker->SetViewSortOrder(sortOrder);
+    DevTracker.SetViewSortOrder(sortOrder);
     // actually ysort items
     ListView_SortItems(hwndFrom, DeviceInfo::CompareProc, (LPARAM)(sortOrder));
 
@@ -1524,7 +1518,7 @@ void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip)
 }
 
 
-void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, MonOptions *aOptions)
+void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
 {
 #ifdef _DEBUG
     PrintDebugStatus(_T("NM_RCLICK iItem = %i, iSubItem = %i, lParam = %p, point = %i,%i\n"),
@@ -1539,12 +1533,12 @@ void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmit
         lpnmitem->iItem, lpnmitem->ptAction);
 
     if (dev) {
-        ContextMenuPopup(hInst, hWnd, lpnmitem->hdr.hwndFrom, dev, lpnmitem->ptAction, aOptions);
+        ContextMenuPopup(hInst, hWnd, lpnmitem->hdr.hwndFrom, dev, lpnmitem->ptAction);
     }
 }
 
 
-void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV, MonOptions *aOptions)
+void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV)
 {
     int count = ListView_GetItemCount(hWndLV);
     int i;
@@ -1558,7 +1552,7 @@ void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV, MonOptio
             if (dev && ListView_GetItemPosition(hWndLV, i, &cliPt)) {
                 cliPt.x += 40;  // move menu origin to not hide item text
                 cliPt.y += 8;
-                ContextMenuPopup(hInst, hWnd, hWndLV, dev, cliPt, aOptions);
+                ContextMenuPopup(hInst, hWnd, hWndLV, dev, cliPt);
             }
             break;
         }
@@ -1568,7 +1562,7 @@ void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV, MonOptio
 
 void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup)
 {
-    // BUG: this doesn't have any effect
+    // BUG: this doesn't have any effect, from documentation we expect this text to show when ListView is empty
     StringCchCopy(emptyMarkup->szMarkup, L_MAX_URL_LENGTH, _T("No connected RFIDlers"));
     emptyMarkup->dwFlags = EMF_CENTERED;
 }
@@ -1647,7 +1641,7 @@ void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection)
 }
 
 
-void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, POINT scrPt, MonOptions *aOptions)
+void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, POINT scrPt)
 {
     assert(dev);
     int defaultitem = 0;
@@ -1724,14 +1718,10 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
                     // launch Bootloader Flash dialog
                     BootloaderParams bl;
                     bl.blDev = dev;
-                    bl.blOptions = aOptions;
                     DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOOTLOADERFLASH), hWnd, BootloaderDlgProc,
                         (LPARAM) &bl);
                 }
                 break;
-#else
-            // suppress unreferenced variable warnings
-            aOptions;
 #endif
             }
         }
@@ -1741,7 +1731,7 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
 }
 
 
-void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, MonOptions *aOptions)
+void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
 {
      // launch default menu action, if any
 #ifdef _DEBUG
@@ -1766,7 +1756,6 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, Mo
                 // launch Bootloader Flash dialog
                 BootloaderParams bl;
                 bl.blDev = dev;
-                bl.blOptions = aOptions;
                 DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOOTLOADERFLASH), hWnd, BootloaderDlgProc,
                     (LPARAM) &bl);
             }
@@ -1774,7 +1763,6 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem, Mo
             // suppress unreferenced variable warnings
             hInst;
             hWnd;
-            aOptions;
 #endif
             break;
         case DevUnconfigRfidlerCom:
@@ -1846,9 +1834,10 @@ void BootloaderEnableProgramControls(HWND hDlg, BOOL enable)
 }
 
 
-BOOL InitHexFileList(HWND hDlg, MonOptions *aOptions)
+BOOL InitHexFileList(HWND hDlg)
 {
-    int historyCount = aOptions->HexFileHistoryCount();
+    MonOptions& options = DevTracker.GetOptions();
+    int historyCount = options.HexFileHistoryCount();
     BOOL result = FALSE;
 
     if (historyCount) {
@@ -1856,7 +1845,7 @@ BOOL InitHexFileList(HWND hDlg, MonOptions *aOptions)
 
         // populate file history
         for (int i = 0; i < historyCount; i++) {
-            TCHAR *filename = aOptions->HexFileHistory(i);
+            TCHAR *filename = options.HexFileHistory(i);
             if (-1 != SendMessage(hWndFileList, CB_ADDSTRING, 0, (LPARAM) filename)) {
                 result = TRUE;
             }
@@ -1910,7 +1899,7 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
                     BootloaderEnableBaseControls(hDlg, TRUE);
                     BootloaderStatus(hWndReport, _T("Bootloader device opened"));
 
-                    if (InitHexFileList(hDlg, bl->blOptions)) {
+                    if (InitHexFileList(hDlg)) {
                         BootloaderEnableProgramControls(hDlg, TRUE);
                     }
                 } else {

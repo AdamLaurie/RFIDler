@@ -42,7 +42,6 @@
 #include <strsafe.h>
 
 
-DeviceTracker *DeviceInfo::gdevTracker;
 // Configured & listed RFIDlers
 int DeviceInfo::iCountRfidlers = 0;
 // Microchip USB serial if enabled
@@ -58,15 +57,8 @@ int DeviceInfo::iCountOtherSerial = 0;
 
 
 
-
-// init class static data
-void DeviceInfo::SetDeviceTracker(DeviceTracker *devTracker)
-{
-    gdevTracker = devTracker;
-}
-
-
-// new DeviceInfo object, transfers ownership of strings, 
+// new DeviceInfo object, transfers ownership of strings
+// TODO add bustype attribute, and make Location() report e.g. Bluetooth
 DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType, 
     enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortName,
     wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
@@ -76,7 +68,7 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
     DeviceInfo *newDev = NULL;
 
     // decide if new device should be DevArrived rather than DevPresent
-    if ((aDevState == DevPresent) && !gdevTracker->CheckInitialScanFlag(aDevType)) {
+    if ((aDevState == DevPresent) && !DevTracker.CheckInitialScanFlag(aDevType)) {
         aDevState = DevArrived;
     }
 
@@ -92,13 +84,13 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
         if (aDevNext) {
             aDevNext->devPrev = newDev;
         }
-        gdevTracker->SetPortList(newDev);
+        DevTracker.SetPortList(newDev);
 
         StringCbPrintf(buffer, sizeof(buffer), 
             (newDev->DeviceState() == DevArrived) ? _T("%s 0min") : _T("%s"), newDev->StateName());
 
         // display update shouldn't fail, but check anyway
-        if (!gdevTracker->AddViewItem(newDev->DisplayName(), newDev->devImage,
+        if (!DevTracker.AddViewItem(newDev->DisplayName(), newDev->devImage,
                 newDev->DevTypeName(), buffer, newDev->LocationString(), aSerialnumber,
                 (LPARAM)newDev)) {
             newDev->Destroy();
@@ -110,7 +102,7 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
             }
 
             // update DeviceTracker counts, decide on notifications 
-            gdevTracker->DetermineArrivalNotifications(aDevType, aDevState);
+            DevTracker.DetermineArrivalNotifications(aDevType, aDevState);
         }
     }
 
@@ -159,7 +151,7 @@ void DeviceInfo::IncDeviceTypeCount()
 }
 
 
-DeviceInfo *DeviceInfo::DeleteDevice()
+DeviceInfo *DeviceInfo::DeleteDevice(BOOL destroyWindow)
 {
     DeviceInfo *next = devNext;
 
@@ -169,10 +161,12 @@ DeviceInfo *DeviceInfo::DeleteDevice()
     }
 
     // update DeviceTracker counts, decide on notifications
-    gdevTracker->DetermineRemovalNotifications(devType, devState, DevNotConnected);
+    if (!destroyWindow) {
+        DevTracker.DetermineRemovalNotifications(devType, devState, DevNotConnected);
+    }
 
     // remove device from display
-    gdevTracker->RemoveViewItem((LPARAM)this);
+    DevTracker.RemoveViewItem((LPARAM)this);
 
     // delete device object, or if locked mark it for delete
     Destroy();
@@ -218,7 +212,7 @@ void DeviceInfo::Destroy()
         if (devPrev) {
             devPrev->devNext = devNext;
         } else {
-            gdevTracker->SetPortList(devNext);
+            DevTracker.SetPortList(devNext);
         }
 
         delete this;
@@ -300,6 +294,13 @@ const TCHAR *DeviceInfo::DevTypeName()
     case DevUnconfigMicroDevBoard:
         return _T("dev board");
     case DevOtherSerial:
+        // distinguish modems & serial ports
+        if (devSerialType == SerialModem) {
+            return _T("modem");
+        }
+        if (devSerialType == SerialMultiport) {
+            return _T("multiport");
+        }
         return _T("serial");
     case DevMicroBootloader:
         return _T("Bootloader");
@@ -504,7 +505,7 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
                 PrintDebugStatus(_T("Change state to removed\n"));
 #endif
                 // update DeviceTracker counts, decide on notifications
-                gdevTracker->DetermineRemovalNotifications(devType, devState, DevRemoved);
+                DevTracker.DetermineRemovalNotifications(devType, devState, DevRemoved);
 
                 devState = DevRemoved;
                 devElapsed = 0;
@@ -521,9 +522,9 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
                 devDeleteOnUnlock = FALSE; // device has returned, no longer need to delete
 
                 // update DeviceTracker counts, decide on notifications 
-                gdevTracker->DetermineArrivalNotifications(devType, aDevState);
+                DevTracker.DetermineArrivalNotifications(devType, aDevState);
 
-                devState = gdevTracker->CheckInitialScanFlag(devType) ? DevPresent : DevArrived;
+                devState = DevTracker.CheckInitialScanFlag(devType) ? DevPresent : DevArrived;
                 devTimestamp = aNow;
                 devElapsed = 0;
                 chgState = TRUE;
@@ -539,7 +540,7 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
             SetDeviceIcon();
 
             // update port status & icon on display
-            gdevTracker->UpdateViewItemIconAndState(devImage, buffer, (LPARAM)this);
+            DevTracker.UpdateViewItemIconAndState(devImage, buffer, (LPARAM)this);
         }
     }
 
@@ -569,14 +570,14 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
         }
 
         // update DeviceTracker counts, decide on notifications 
-        gdevTracker->DetermineRemovalNotifications(devType, devState, DevRemoved);
-        gdevTracker->DetermineArrivalNotifications(aDevType, devState);
+        DevTracker.DetermineRemovalNotifications(devType, devState, DevRemoved);
+        DevTracker.DetermineArrivalNotifications(aDevType, devState);
 
         // rely on FindDevMatchBySernum() to enforce type change restrictions
         SetDeviceIcon();
 
         // update port status & icon on display
-        gdevTracker->UpdateViewItemIconAndType(devImage, DevTypeName(), (LPARAM)this);
+        DevTracker.UpdateViewItemIconAndType(devImage, DevTypeName(), (LPARAM)this);
 
         // installing driver can add/change name
         if ((aPortName) && (!devPortName || wcscmp(devPortName, aPortName))) {
@@ -600,7 +601,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
         }
 
         if (nameChanged) {
-            gdevTracker->UpdateViewItemPortName(DisplayName(), (LPARAM)this);
+            DevTracker.UpdateViewItemPortName(DisplayName(), (LPARAM)this);
         }
     }
 
@@ -617,7 +618,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
             if (devPortName) {
                 devPortNumber = aPortNumber;
                 // NB should reorder devices to reflect updated portname
-                gdevTracker->UpdateViewItemPortName(devPortName, (LPARAM)this);
+                DevTracker.UpdateViewItemPortName(devPortName, (LPARAM)this);
             }
         }
     }
@@ -628,7 +629,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
             devUsbHub = aUsbHub;
             devUsbPort = aUsbPort;
             // update displayed usb location
-            gdevTracker->UpdateViewItemLocation(LocationString(), (LPARAM)this);
+            DevTracker.UpdateViewItemLocation(LocationString(), (LPARAM)this);
         }
     }
 
@@ -637,7 +638,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
         if (devSerialNumber) {
             devIsWinSerial = aIsWinSerial;
             // NB should reorder devices to reflect updated serial number
-            gdevTracker->UpdateViewItemSerialNumber(devSerialNumber, (LPARAM)this);
+            DevTracker.UpdateViewItemSerialNumber(devSerialNumber, (LPARAM)this);
         }
     }
 
@@ -664,7 +665,7 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
 
             devElapsed = t2.LowPart;
             StringCbPrintf(buffer, sizeof(buffer), _T("%s %imin"), StateName(), t2.LowPart);
-            gdevTracker->UpdateViewItemState(buffer, (LPARAM)this);
+            DevTracker.UpdateViewItemState(buffer, (LPARAM)this);
         }
         return TRUE;
     } else {
@@ -679,7 +680,7 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
                 return FALSE;
             }
         }
-        gdevTracker->UpdateViewItemState(StateName(), (LPARAM)this);
+        DevTracker.UpdateViewItemState(StateName(), (LPARAM)this);
         return TRUE;
     }
 }

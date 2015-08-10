@@ -104,12 +104,12 @@ enum lvCol { lvDispName = 0, lvDispType, lvDispState, lvDispLocus, lvDispSernum,
 class MonOptions {
 public:
     // new instance with default values
-    MonOptions(HWND hWndMain) :                  
-        optHwndMain(hWndMain), // window to send timer messages too
+    MonOptions() :                  
+        optHwndMain(NULL),
         optDefaultShowFlags(0), optShowFlags(0), optDefaultNotifyFlags(0), optNotifyFlags(0), optHaveValueFlags(0),
         optNeedSaveFlags(0),
         optViewSortOrder(lvDispName), optViewStyleButton(ID_VIEW_DETAILS),
-        optWindowLayoutVer(0), // change this when main window layout changes - used to validate restored Window position/size
+        optWindowLayoutVer( 0 ), // change this when main window layout changes - used to validate restored Window position/size
         optHexFileHistoryCount(0), optTimerRegistrySave(0)
         {
             // initial What to show options (bit flags):
@@ -149,6 +149,9 @@ public:
                 optHexFileHistory[i] = NULL;
             }
         }
+
+    // window to send timer messages to
+    void SetHwndMain(HWND hWndMain) { optHwndMain = hWndMain; }
 
     void ReadRegistryValues();
     void SetShowOptionsAndRegistrySave(const MonOptions &newValues, BOOL &aShowSettingsChanged);
@@ -273,13 +276,13 @@ private:
 
 enum DevState { DevArrived, DevPresent, DevRemoved, DevAbsent, DevNotConnected };
 enum DevType {
-                DevRfidlerCom,          // Rfidler COM (serial) port
-                DevMicroDevBoard,       // Microchip Dev Board serial port
-                DevMicroBootloader,     // Microchip Dev Board bootloader
-                DevUnconfigRfidlerCom,  // unconfigured Rfidler COM port, driver not (yet) installed
-                DevUnconfigMicroDevBoard,       // unconfigured Microchip Dev Board, driver not (yet) installed
-            /* temporary USB parent for HID Bootloader, gives access to USB location */
-                DevMicroBootShadow,
+                DevRfidlerCom,              // Rfidler COM (serial) port
+                DevMicroDevBoard,           // Microchip Dev Board serial port
+                DevMicroBootloader,         // Microchip Dev Board bootloader
+                DevUnconfigRfidlerCom,      // unconfigured Rfidler COM port, driver not (yet) installed
+                DevUnconfigMicroDevBoard,   // unconfigured Microchip Dev Board, driver not (yet) installed
+                DevMicroBootShadow,         // USB parent for HID Bootloader, gives access to USB location
+                // non-Rfidler things ...
                 DevOtherSerial,
                 DevUnknown };
 
@@ -288,9 +291,9 @@ enum DevImage { DevImgRfidlerOk = 0, DevImgRfidlerUnconfig, DevImgRfidlerRemoved
                 DevImgOtherSerialOk, DevImgOtherSerialRemoved };
 enum SerialType { SerialNone, SerialPort, SerialModem, SerialMultiport };
 
+
 class DeviceInfo {
 public:
-    static void SetDeviceTracker(DeviceTracker *devTracker);
     static DeviceInfo *NewDevice(enum DevType aDevType, 
         enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortname,
         wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
@@ -309,7 +312,7 @@ public:
     const TCHAR *DisplayName();
     const TCHAR *InfoTip();
     // manage delete and allow GUI to lock against object delete eg whilst showing Context Menu
-    DeviceInfo *DeleteDevice();
+    DeviceInfo *DeleteDevice(BOOL destroyWindow);
     void LockForContextMenu();
     void UnlockForContextMenu();
     
@@ -362,7 +365,6 @@ private:
     void UpdateDeviceTypeCount(int delta);
 
 private:
-    static DeviceTracker *gdevTracker;
     static int iCountRfidlers;
     static int iCountDevBoards;
     static int iCountBootloaders;
@@ -404,9 +406,9 @@ private:
 
 class DeviceTracker {
 public:
-    DeviceTracker(HWND HWndMain, HWND HWndListView, HWND HWndStatusBar, HINSTANCE HInst) :        
-        mHWndMain(HWndMain), mHWndListView(HWndListView), mHWndStatusBar(HWndStatusBar), mHInst(HInst),
-        mOptions(HWndMain),
+    DeviceTracker() :        
+        mHWndMain(NULL), mHWndListView(NULL), mHWndStatusBar(NULL), mHInst(NULL),
+        mOptions(),
         mListDevices(NULL), mNeedDevicesResort(FALSE), mSortType(lvDispName),
         mInitialiseRfidler(TRUE), mInitialiseUnconfig(TRUE), mInitialiseMicroSer(TRUE),
         mInitialiseAnySerial(TRUE),
@@ -419,11 +421,9 @@ public:
         mHNotifySerial(NULL), mTimerDevScan(0), mTimerArrival(0),
         mImageList(NULL), mImageListSm(NULL)
         {
-            // read any saved options from registry
-            mOptions.ReadRegistryValues();
         }
 
-    void Initialize();
+    void Initialize(HWND HWndMain, HWND HWndListView, HWND HWndStatusBar, HINSTANCE HInst);
     void Cleanup();
 
     void OnDeviceChange(UINT uiType, LPARAM lParam);
@@ -554,6 +554,10 @@ extern const TCHAR *szMicrochipBootHwUsbId;   // "USB\\VID_04D8&PID_003C"
 extern const TCHAR *szMicrochipBootHidId;     // "HID\\VID_04D8&PID_003C"
 
 extern const DWORD KArrivalOrRemovalTimeLimit;
+
+// singleton DeviceTracker
+extern DeviceTracker DevTracker;
+
 
 #if defined(_DEBUG)
 void PrintDebugStatus(const TCHAR *format, ...);

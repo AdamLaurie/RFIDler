@@ -38,7 +38,7 @@
     <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\WinDDK\7600.16385.1\lib\win7\i386</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\WinDDK\7600.16385.1\inc</IncludePath>
     <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\WinDDK\7600.16385.1\lib\win7\i386</LibraryPath>
   </PropertyGroup>
@@ -88,7 +88,6 @@
     <ResourceCompile Include="rfidlermonitor.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bitwhacker.ico" />
     <None Include="devboard.ico" />
     <None Include="devbrdbad.ico" />
     <None Include="devbrdremove.ico" />

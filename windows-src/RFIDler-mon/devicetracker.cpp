@@ -436,7 +436,7 @@ void DeviceTracker::InitListColumns(const TCHAR **columns, const int *widths, un
 }
 
 
-void DeviceTracker::Initialize()
+void DeviceTracker::Initialize(HWND HWndMain, HWND HWndListView, HWND HWndStatusBar, HINSTANCE HInst)
 {
     // icons for device view
     const int iconList[] = { IDI_RFIDOKAY, IDI_RFIDBAD, IDI_RFIDREMOVE,
@@ -447,6 +447,14 @@ void DeviceTracker::Initialize()
             _T("Serial number") };
     const int    colwidth[] = { 100, 70, 100, 100, 122 };
 
+    mHWndMain = HWndMain;
+    mHWndListView = HWndListView;
+    mHWndStatusBar = HWndStatusBar;
+    mHInst = HInst;
+    mOptions.SetHwndMain(HWndMain);
+
+    // read any saved options from registry
+    mOptions.ReadRegistryValues();
 
 #if defined(USE_SETUP_DEVICE_API_ADAPTATION)
     /* SetupDiGetDeviceProperty() api is new in Windows Vista
@@ -461,8 +469,6 @@ void DeviceTracker::Initialize()
         }
     }
 #endif
-
-    DeviceInfo::SetDeviceTracker(this);
 
     // enable tooltips, in all display views, also full row select
     ListView_SetExtendedListViewStyle(mHWndListView, LVS_EX_INFOTIP  | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT);
@@ -544,15 +550,9 @@ void DeviceTracker::Cleanup()
         ImageList_Destroy(mImageListSm);
     }
 
-    // free our device list
-    {
-        DeviceInfo *devPtr = mListDevices;
-
-        while (devPtr) {
-            // BUGBUG: actually free the memory
-            devPtr = devPtr->DeviceNext();
-        }
-        mListDevices = NULL;
+    // free our device list (an object is orphaned if somehow locked for Context Menu tracking at this point)
+    while (mListDevices) {
+        mListDevices = mListDevices->DeleteDevice(TRUE);
     }
 
     UnregisterForDevNotifications();
@@ -1365,7 +1365,7 @@ void DeviceTracker::CleanupOrphanedDevices(FILETIME &aNow, unsigned aScanId)
         }
 
         if (unlink) {
-            item = item->DeleteDevice();
+            item = item->DeleteDevice(FALSE);
         } else {
             item = item->DeviceNext();
         }
@@ -1398,7 +1398,7 @@ void DeviceTracker::CleanupDevicesAfterOptionsChange()
         }
 
         if (unlink) {
-            item = item->DeleteDevice();
+            item = item->DeleteDevice(FALSE);
         } else {
             item = item->DeviceNext();
         }
@@ -1496,7 +1496,7 @@ void DeviceTracker::UpdateArrivalOrRemovalState(FILETIME &now)
         }
 
         if (unlink) {
-            item = item->DeleteDevice();
+            item = item->DeleteDevice(FALSE);
         } else {
             item = item->DeviceNext();
         }

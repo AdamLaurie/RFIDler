@@ -94,6 +94,9 @@ class MonOptions;
 class DeviceInfo;
 class DeviceTracker;
 
+extern const DWORD KArrivalOrRemovalTimeDefault;
+extern const DWORD KArrivalOrRemovalTimeMaximum;
+
 
 enum lvCol { lvDispName = 0, lvDispType, lvDispState, lvDispLocus, lvDispSernum, 
              lvRevDispName, lvRevDispType, lvRevDispState, lvRevDispLocus, lvRevDispSernum, lvDispMaxSort = lvRevDispSernum };
@@ -109,6 +112,7 @@ public:
         optDefaultShowFlags(0), optShowFlags(0), optDefaultNotifyFlags(0), optNotifyFlags(0), optHaveValueFlags(0),
         optNeedSaveFlags(0),
         optViewSortOrder(lvDispName), optViewStyleButton(ID_VIEW_DETAILS),
+        optArrivalOrRemovalTime(KArrivalOrRemovalTimeDefault),
         optWindowLayoutVer( 0 ), // change this when main window layout changes - used to validate restored Window position/size
         optHexFileHistoryCount(0), optTimerRegistrySave(0)
         {
@@ -139,6 +143,7 @@ public:
             optNeedSaveViewSortOrder = TRUE;
             optNeedSaveViewStyleButton = TRUE;
             optNeedSaveHexFileHistory = FALSE;
+            optNeedSaveArrivalTime = TRUE;
 
             optWindowPlace.left = 0;
             optWindowPlace.top = 0;
@@ -197,6 +202,10 @@ public:
     void SaveWindowInfo(const RECT &rc);
     void SaveViewSortOrder(int order);
     void SaveViewStyleButton(int newStyleButton);
+
+    // access values
+    unsigned GetArrivalOrRemovalTime() const { return optArrivalOrRemovalTime; }
+    void SetArrivalOrRemovalTime(unsigned arrivalOrRemovalTime, BOOL saveChange);
 
 private:
     HWND        optHwndMain;
@@ -259,6 +268,7 @@ private:
             BOOL optNeedSaveViewSortOrder:1;
             BOOL optNeedSaveViewStyleButton:1;
             BOOL optNeedSaveHexFileHistory:1;
+            BOOL optNeedSaveArrivalTime:1;
         };
     };
     static const int optKMaxHexFileHistoryCount = 10;
@@ -267,6 +277,7 @@ private:
     unsigned    optWindowLayoutVer;
     int         optViewSortOrder;
     int         optViewStyleButton;    // LV_VIEW_ICON, LV_VIEW_SMALLICON, LV_VIEW_DETAILS, LV_VIEW_TILE
+    unsigned    optArrivalOrRemovalTime;
     int         optHexFileHistoryCount;
     wchar_t    *optHexFileHistory[optKMaxHexFileHistoryCount];
 
@@ -552,8 +563,6 @@ extern const TCHAR *szRfidlerHwUsbId;         // "USB\\VID_1D50&PID_6098"
 extern const TCHAR *szMicrochipSerialHwUsbId; // "USB\\VID_04D8&PID_000A"
 extern const TCHAR *szMicrochipBootHwUsbId;   // "USB\\VID_04D8&PID_003C"
 extern const TCHAR *szMicrochipBootHidId;     // "HID\\VID_04D8&PID_003C"
-
-extern const DWORD KArrivalOrRemovalTimeLimit;
 
 // singleton DeviceTracker
 extern DeviceTracker DevTracker;

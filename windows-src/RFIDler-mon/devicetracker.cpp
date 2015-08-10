@@ -443,8 +443,9 @@ void DeviceTracker::Initialize(HWND HWndMain, HWND HWndListView, HWND HWndStatus
             IDI_RFIDBOOT, IDI_DEVBOARD, IDI_DEVBOARDREMOVE, IDI_DEVBOARDBAD,
             IDI_OTHERSERIALOK, IDI_OTHERSERIALREMOVE };
     // column headings for view
-    const TCHAR *columns[] = { _T("Name"), _T("Device"), _T("State"), _T("USB Location"),
+    const TCHAR *columns[] = { _T("Name"), _T("Device"), _T("State"), _T("Location"),
             _T("Serial number") };
+    // TODO? use these as defaults, but persist & restore col widths
     const int    colwidth[] = { 100, 70, 100, 100, 122 };
 
     mHWndMain = HWndMain;
@@ -602,7 +603,7 @@ void DeviceTracker::ScanRfidlerDevices()
 void DeviceTracker::ScanForDevChanges()
 {
     // unique id for each scan, to allow old entries to be identified
-    static unsigned scanId = 31415926;
+    static unsigned scanId = 31415926;  // arbitrary initial value
     SYSTEMTIME st;
     FILETIME   ft;
 
@@ -1438,6 +1439,8 @@ void DeviceTracker::SetOptions(const MonOptions& aOptions, SetMode setmode)
 
         // copy new values, and setup saving changes to the registry 
         mOptions.SetShowOptionsAndRegistrySave(aOptions, showSettingsChanged);
+        // handle any change to the Arrival / Removal display time
+        mOptions.SetArrivalOrRemovalTime(aOptions.GetArrivalOrRemovalTime(), TRUE);
     }
 
     if ((SetAll == setmode) || (SetNotifyOptions == setmode)) {
@@ -1456,7 +1459,7 @@ void DeviceTracker::SetOptions(const MonOptions& aOptions, SetMode setmode)
 
 /*
    On plugging / unplugging devices are put into DevArrived / DevRemoved state
-   for X minutes. Set by KArrivalOrRemovalTimeLimit.
+   for X minutes. Set by ArrivalOrRemovalTime maintained by an options setting.
    Then the devices switches to DevPresent, or DevRemoved/ not listed state, 
    depending on if 'show not present' option is set.
 */
@@ -1483,7 +1486,7 @@ void DeviceTracker::UpdateArrivalOrRemovalState(FILETIME &now)
         case DevRemoved:
         case DevArrived:
             // update display with elapsed time
-            if (item->UpdateTimeInState(now, mOptions.ShowNotPresent(), KArrivalOrRemovalTimeLimit)) {
+            if (item->UpdateTimeInState(now, mOptions.ShowNotPresent(), mOptions.GetArrivalOrRemovalTime())) {
                 dState = item->DeviceState();
                 // still in this state?
                 if ((dState == DevRemoved) || (dState == DevArrived)) {

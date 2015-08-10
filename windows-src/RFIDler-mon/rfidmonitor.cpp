@@ -85,8 +85,8 @@ DeviceTracker DevTracker;
 static const SIZE KMinimiumWindowSize = { 300, 250 };
 
 /* how long a device is shown in Removed or Arrived state */
-/* Note that the value in the Options dialog text should be kept in sync */
-const DWORD KArrivalOrRemovalTimeLimit = 5;
+const DWORD KArrivalOrRemovalTimeDefault = 5;
+const DWORD KArrivalOrRemovalTimeMaximum = 30;
 
 
 
@@ -760,18 +760,32 @@ HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDia
 }
 
 
-void SetShowOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions)
+void SetShowOptionsArrivalTime(HWND hWnd, MonOptions *aOptions)
+{
+    TCHAR arrivalString[8];
+
+    // setup arrival time edit control
+    StringCbPrintf(arrivalString, sizeof(arrivalString), _T("%u"), aOptions->GetArrivalOrRemovalTime());
+    SetDlgItemText(hWnd, IDC_ARRIVAL_REMOVAL_TIME, arrivalString);
+}
+
+
+void SetShowOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions, BOOL setEditControls)
 {
     SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, 
         aOptions->ShowNonConfig() ? BST_CHECKED : BST_UNCHECKED, 0);
     SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, 
         aOptions->ShowNotPresent() ? BST_CHECKED : BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SHOW_BITWHACKER), BM_SETCHECK, 
+    SendMessage(GetDlgItem(hWnd, IDC_SHOW_DEV_BOARDS), BM_SETCHECK, 
         aOptions->ShowDevBoards() ? BST_CHECKED : BST_UNCHECKED, 0);        
     SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, 
         aOptions->ShowRecentDisc() ? BST_CHECKED : BST_UNCHECKED, 0);        
     SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, 
         aOptions->ShowAnySerial() ? BST_CHECKED : BST_UNCHECKED, 0);        
+
+    if (setEditControls) {
+        SetShowOptionsArrivalTime(hWnd, aOptions);
+    }
 }
 
 
@@ -786,7 +800,9 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
         hWndParentDlg = GetParent(GetParent(hWnd));
         newOptions = (MonOptions *) lParam;
-        SetShowOptionsCheckBoxes(hWnd, newOptions);
+        SetShowOptionsCheckBoxes(hWnd, newOptions, TRUE);
+        // setup buddy range
+        SendMessage(GetDlgItem(hWnd, IDC_ARRIVAL_BUDDY), UDM_SETRANGE, 0, MAKELPARAM(1, KArrivalOrRemovalTimeMaximum));
         EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
         return TRUE;
 
@@ -803,19 +819,19 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
             case IDC_CHECK_SHOW_ALL:                
                 if (newOptions->SetShowFlagsToAll()) {
                     enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions);
+                    SetShowOptionsCheckBoxes(hWnd, newOptions, FALSE);
                 }
                 break;
             case IDC_CHECK_SHOW_NONE:
                 if (newOptions->SetShowFlagsToNone()) {
                     enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions);
+                    SetShowOptionsCheckBoxes(hWnd, newOptions, FALSE);
                 }
                 break;
             case IDC_DEFAULT:
                 if (newOptions->SetShowFlagsToDefault()) {
                     enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions);
+                    SetShowOptionsCheckBoxes(hWnd, newOptions, TRUE);
                 }
                 break;
             case IDC_SHOW_UNCONFIG:
@@ -826,8 +842,8 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
                 newOptions->SetShowNotPresent((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_ALL));
                 enableApply = TRUE;
                 break;
-            case IDC_SHOW_BITWHACKER:
-                newOptions->SetShowDevBoards((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_BITWHACKER));
+            case IDC_SHOW_DEV_BOARDS:
+                newOptions->SetShowDevBoards((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_DEV_BOARDS));
                 enableApply = TRUE;
                 break;
             case IDC_SHOW_RECENTDISC:
@@ -838,7 +854,30 @@ BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
                 newOptions->SetShowAnySerial((BOOL) IsDlgButtonChecked(hWnd, IDC_OTHERSERIAL));
                 enableApply = TRUE;
                 break;
+            case IDC_ARRIVAL_REMOVAL_TIME:
+                // TODO make edit control not read-only, validate values
+                break;
             }
+
+            if (enableApply && hWndParentDlg) {
+                SendMessage(hWndParentDlg, WM_APP, 0, 0);
+            }
+        }
+        break;
+
+    case WM_NOTIFY:
+        {
+            int wID = LOWORD (wParam);
+            int wNotification = ((NMHDR*)lParam)->code;
+            //HWND hChild = ((NMHDR*)lParam)->hwndFrom;
+            BOOL enableApply = FALSE; // whether change of options should enable Apply button
+
+            if ((wID == IDC_ARRIVAL_BUDDY) && (wNotification == UDN_DELTAPOS)) {
+                NMUPDOWN *updown = (NMUPDOWN*) lParam;
+                newOptions->SetArrivalOrRemovalTime(updown->iPos + updown->iDelta, FALSE);
+                enableApply = TRUE;
+            }
+
             if (enableApply && hWndParentDlg) {
                 SendMessage(hWndParentDlg, WM_APP, 0, 0);
             }

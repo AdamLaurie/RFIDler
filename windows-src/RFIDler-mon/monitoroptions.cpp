@@ -45,8 +45,6 @@ static const TCHAR *KRegistryBase = _T("SOFTWARE");
 static const TCHAR *KRegVendor = _T("TonyNaggs");
 static const TCHAR *KRegProgramName = _T("RfidlerMonitor");
 
-//static const TCHAR *KRegKeyMask = _T("Mask");
-//static const TCHAR *KRegKeyOptions = _T("Options");
 static const TCHAR *KRegKeyShowFlags = _T("ShowFlags");
 static const TCHAR *KRegKeyNotifyFlags = _T("Notifications");
 static const TCHAR *KRegKeySortOrder = _T("SortOrder");
@@ -57,6 +55,7 @@ static const TCHAR *KRegKeyWinLayoutVer = _T("WinLayout");
 static const TCHAR *KRegKeyWinSizeCX = _T("WinSizeCX");
 static const TCHAR *KRegKeyWinSizeCY = _T("WinSizeCY");
 static const TCHAR *KRegKeyMRUHexFile = _T("MRU_HexFile");
+static const TCHAR *KRegKeyArrivalTime = _T("ArrivalTime");
 
 
 
@@ -92,6 +91,7 @@ void MonOptions::ReadRegistryValues()
                     }
                 }
 
+                // previous window position, size, and layout
                 if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                     optWindowPlace.left = temp;
                     if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
@@ -110,11 +110,21 @@ void MonOptions::ReadRegistryValues()
                     }
                 }
 
+                // device Arrival / removal time
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyArrivalTime, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                    if (temp <= KArrivalOrRemovalTimeMaximum) {
+                        optArrivalOrRemovalTime = temp;
+                        optNeedSaveArrivalTime = FALSE;
+                    }
+                }
+
+                // device list sort order
                 if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeySortOrder, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp <= lvDispMaxSort)) {
                     optViewSortOrder = temp;
                     optNeedSaveViewSortOrder = FALSE;
                 }
 
+                // device list style
                 if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyViewStyle, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
                     switch (temp) {
                     case ID_VIEW_LARGE_ICONS:
@@ -155,11 +165,11 @@ void MonOptions::ReadRegistryValues()
         }
         RegCloseKey(hk1);
 
-	    // plan save to registry any state that was missing or invalid on reading
-	    if (optNeedSaveFlags) {
-	        KickRegSaveTimer();
-	    }
-	}
+        // plan save to registry any state that was missing or invalid on reading
+        if (optNeedSaveFlags) {
+            KickRegSaveTimer();
+        }
+    }
 }
 
 
@@ -185,6 +195,18 @@ void MonOptions::SetNotifyOptionsAndRegistrySave(const MonOptions &newValues)
         optNotifyFlags = newValues.optNotifyFlags;
         optNeedSaveNotifyFlags = TRUE;
         KickRegSaveTimer();
+    }
+}
+
+
+void MonOptions::SetArrivalOrRemovalTime(unsigned arrivalOrRemovalTime, BOOL saveChange)
+{
+    if ((arrivalOrRemovalTime < KArrivalOrRemovalTimeMaximum) && (optArrivalOrRemovalTime != arrivalOrRemovalTime)) {
+        optArrivalOrRemovalTime = arrivalOrRemovalTime;
+        if (saveChange) {
+            optNeedSaveArrivalTime = TRUE;
+            KickRegSaveTimer();
+        }
     }
 }
 
@@ -237,6 +259,13 @@ void MonOptions::RegistrySaveChangedValues(BOOL destroyWindow)
                         temp = optWindowLayoutVer;
                         RegSetValueEx(hk3, KRegKeyWinLayoutVer, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
                         optNeedSaveWindowPlace = FALSE;
+                    }
+
+                    // device Arrival / removal time
+                    if (optNeedSaveArrivalTime) {
+                        temp = optArrivalOrRemovalTime;
+                        RegSetValueEx(hk3, KRegKeyArrivalTime, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+                        optNeedSaveArrivalTime = FALSE;
                     }
 
                     if (optNeedSaveViewSortOrder) {
@@ -358,8 +387,9 @@ BOOL MonOptions::SetShowFlagsToNone()
 
 BOOL MonOptions::SetShowFlagsToDefault()
 {
-    if (optShowFlags != optDefaultShowFlags) {
+    if ((optShowFlags != optDefaultShowFlags) || (optArrivalOrRemovalTime != KArrivalOrRemovalTimeDefault)) {
         optShowFlags = optDefaultShowFlags;
+        optArrivalOrRemovalTime = KArrivalOrRemovalTimeDefault;
         return TRUE;
     }
     return FALSE;

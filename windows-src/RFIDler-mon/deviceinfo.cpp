@@ -38,7 +38,6 @@
 
 #include "rfidmonitor.h"
 
-#include <assert.h>
 #include <strsafe.h>
 
 
@@ -58,7 +57,8 @@ int DeviceInfo::iCountOtherSerial = 0;
 
 
 // new DeviceInfo object, transfers ownership of strings
-// TODO add bustype attribute, and make Location() report e.g. Bluetooth
+// TODO add bustype attribute, and make Location() report e.g. Bluetooth, drop aUsbValid flag
+// TODO add USB segment count, maybe have a consolidated bus info object?
 DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType, 
     enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortName,
     wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
@@ -664,12 +664,12 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
             TCHAR   buffer[20];
 
             devElapsed = t2.LowPart;
-            StringCbPrintf(buffer, sizeof(buffer), _T("%s %imin"), StateName(), t2.LowPart);
+            StringCbPrintf(buffer, sizeof(buffer), _T("%s %i min"), StateName(), t2.LowPart);
             DevTracker.UpdateViewItemState(buffer, (LPARAM)this);
         }
         return TRUE;
     } else {
-        // > 10s elapsed
+        // device arrival / removal time has expired
         if (devState == DevArrived) {
             devState = DevPresent;
         } else {
@@ -686,6 +686,7 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
 }
 
 
+// DevicePath is used to open HID devices
 wchar_t const *DeviceInfo::DevicePath()
 {
     if (!devDevicePath) {

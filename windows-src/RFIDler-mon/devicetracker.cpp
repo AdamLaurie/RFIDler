@@ -42,8 +42,8 @@
 #include <devguid.h>
 #define INITGUID
 #include <DEVPKEY.H>
-#include <assert.h>
-#include <strsafe.h>
+// headers from DDK
+#include <wdmguid.h>
 
 
 /*
@@ -65,6 +65,9 @@
     Any printable key  Moves the selection to the item matching prefix letters in the beginning of the label.
                        (generates LVN_INCREMENTALSEARCHW message, not currently handled)
 */
+
+
+DeviceInfo *DeviceTracker::mListDevices = NULL;
 
 
 void DeviceTracker::SetViewStyle(int viewButton)
@@ -124,8 +127,8 @@ void DeviceTracker::RemoveViewItem(LPARAM lParam)
 }
 
 
-BOOL DeviceTracker::AddViewItem(const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
-            const TCHAR *aState, const TCHAR *aUsbLocation, const TCHAR *aSerialNumber, LPARAM lParam)
+BOOL DeviceTracker::AddViewItem(const wchar_t *aName, enum DevImage aImage, const wchar_t *aDevType, 
+            const wchar_t *aState, const wchar_t *aUsbLocation, const wchar_t *aSerialNumber, LPARAM lParam)
 {
     LVITEM lvItem;
     int    itemId = -1;
@@ -181,7 +184,7 @@ BOOL DeviceTracker::AddViewItem(const TCHAR *aName, enum DevImage aImage, const 
 }
 
 
-void DeviceTracker::UpdateViewItemPortName(const TCHAR *aName, LPARAM lParam)
+void DeviceTracker::UpdateViewItemPortName(const wchar_t *aName, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -195,7 +198,7 @@ void DeviceTracker::UpdateViewItemPortName(const TCHAR *aName, LPARAM lParam)
 }
 
 
-void DeviceTracker::UpdateViewItemIconAndState(enum DevImage aImage, const TCHAR *aState, LPARAM lParam)
+void DeviceTracker::UpdateViewItemIconAndState(enum DevImage aImage, const wchar_t *aState, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -222,7 +225,7 @@ void DeviceTracker::UpdateViewItemIconAndState(enum DevImage aImage, const TCHAR
 }
 
 
-void DeviceTracker::UpdateViewItemIconAndType(enum DevImage aImage, const TCHAR *aType, LPARAM lParam)
+void DeviceTracker::UpdateViewItemIconAndType(enum DevImage aImage, const wchar_t *aType, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -249,7 +252,7 @@ void DeviceTracker::UpdateViewItemIconAndType(enum DevImage aImage, const TCHAR 
 }
 
 
-void DeviceTracker::UpdateViewItemState(const TCHAR *aState, LPARAM lParam)
+void DeviceTracker::UpdateViewItemState(const wchar_t *aState, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -263,7 +266,7 @@ void DeviceTracker::UpdateViewItemState(const TCHAR *aState, LPARAM lParam)
 }
 
 
-void DeviceTracker::UpdateViewItemLocation(const TCHAR *aUsbLocation, LPARAM lParam)
+void DeviceTracker::UpdateViewItemLocation(const wchar_t *aUsbLocation, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -277,7 +280,7 @@ void DeviceTracker::UpdateViewItemLocation(const TCHAR *aUsbLocation, LPARAM lPa
 }
 
 
-void DeviceTracker::UpdateViewItemSerialNumber(const TCHAR *aSerialNumber, LPARAM lParam)
+void DeviceTracker::UpdateViewItemSerialNumber(const wchar_t *aSerialNumber, LPARAM lParam)
 {
     int itemId = FindViewItem(lParam);
 
@@ -420,7 +423,7 @@ HIMAGELIST DeviceTracker::InitImageList(int cx, int cy, unsigned count, const in
 }
 
 
-void DeviceTracker::InitListColumns(const TCHAR **columns, const int *widths, unsigned count)
+void DeviceTracker::InitListColumns(const wchar_t **columns, const int *widths, unsigned count)
 {
     LVCOLUMN lvcol;
     unsigned i;
@@ -443,7 +446,7 @@ void DeviceTracker::Initialize(HWND HWndMain, HWND HWndListView, HWND HWndStatus
             IDI_RFIDBOOT, IDI_DEVBOARD, IDI_DEVBOARDREMOVE, IDI_DEVBOARDBAD,
             IDI_OTHERSERIALOK, IDI_OTHERSERIALREMOVE };
     // column headings for view
-    const TCHAR *columns[] = { _T("Name"), _T("Device"), _T("State"), _T("Location"),
+    const wchar_t *columns[] = { _T("Name"), _T("Device"), _T("State"), _T("Location"),
             _T("Serial number") };
     // TODO? use these as defaults, but persist & restore col widths
     const int    colwidth[] = { 100, 70, 100, 100, 122 };
@@ -626,7 +629,8 @@ void DeviceTracker::ScanForDevChanges()
 }
 
 
-BOOL DeviceTracker::GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &DevGuid)
+BOOL DeviceTracker::GetDeviceGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &DevGuid,
+    CONST DEVPROPKEY PropKey, DWORD Property)
 {
     DWORD size;
     BOOL result;
@@ -636,7 +640,7 @@ BOOL DeviceTracker::GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &
         DEVPROPTYPE PropType;
         result = mSetupDiGetDevicePropertyW(DeviceInfoSet,
                                         &DeviceInfoData,
-                                        &DEVPKEY_Device_ClassGuid,
+                                        &PropKey,
                                         &PropType,
                                         (PBYTE)&DevGuid,
                                         sizeof(GUID),
@@ -649,8 +653,9 @@ BOOL DeviceTracker::GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &
 #endif
         // use Windows XP api, note gets GUID in REG_SZ form
         DWORD type;
-        TCHAR guidStringBuffer[40];
-        result = SetupDiGetDeviceRegistryProperty(DeviceInfoSet, &DeviceInfoData, SPDRP_CLASSGUID,
+        wchar_t guidStringBuffer[40];
+
+        result = SetupDiGetDeviceRegistryProperty(DeviceInfoSet, &DeviceInfoData, Property,
             &type, (PBYTE) guidStringBuffer, sizeof(guidStringBuffer), &size) && (type == REG_SZ);
         // convert guid string to GUID (Unicode build only)
         if (result && (S_OK != IIDFromString(guidStringBuffer, &DevGuid))) {
@@ -659,6 +664,18 @@ BOOL DeviceTracker::GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &
     }
 
     return result;
+}
+
+
+BOOL DeviceTracker::GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &DevGuid)
+{
+    return GetDeviceGUID(DeviceInfoSet, DeviceInfoData, DevGuid, DEVPKEY_Device_ClassGuid, SPDRP_CLASSGUID);
+}
+
+
+BOOL DeviceTracker::GetDeviceBusTypeGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &BusGuid)
+{
+    return GetDeviceGUID(DeviceInfoSet, DeviceInfoData, BusGuid, DEVPKEY_Device_BusTypeGuid, SPDRP_BUSTYPEGUID);
 }
 
 
@@ -676,7 +693,7 @@ BOOL DeviceTracker::GetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA 
 }
 
 
-BOOL DeviceTracker::CheckDeviceId(const wchar_t *aHwId, DWORD size, const TCHAR *aRefHwId)
+BOOL DeviceTracker::CheckDeviceId(const wchar_t *aHwId, DWORD size, const wchar_t *aRefHwId)
 {
     DWORD len = _tcslen(aRefHwId);
 
@@ -691,17 +708,18 @@ BOOL DeviceTracker::CheckDeviceId(const wchar_t *aHwId, DWORD size, const TCHAR 
    aNormalPort -> GUID_DEVCLASS_PORTS
 */
 void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
-    SerialType aSerialType, FILETIME &aNow, unsigned aScanId)
+    SerialPortType aPortType, FILETIME &aNow, unsigned aScanId)
 {
     DWORD size = 0;
     wchar_t *devInstanceId = NULL;
 
+    // devInstanceId is set to persistent static buffer
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
         // set default non-match result
         enum DevType dType = mOptions.ShowAnySerial() ? DevOtherSerial : DevUnknown;
 
         // examine serial device
-        if (aSerialType == SerialPort) {
+        if (aPortType == SerialPort) {
             if (CheckDeviceId(devInstanceId, size, szRfidlerHwUsbId)) {
                 dType = DevRfidlerCom;
             } else if (mOptions.ShowDevBoardsOrAnySerial() && CheckDeviceId(devInstanceId, size, szMicrochipSerialHwUsbId)) {
@@ -713,7 +731,7 @@ void DeviceTracker::CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
         if (dType != DevUnknown) {
             // Get (RFIDler / Microchip / other) USB Serial device details
             AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, 
-                aSerialType, aNow, aScanId);
+                aPortType, aNow, aScanId);
         }
     }
 }
@@ -725,19 +743,9 @@ void DeviceTracker::CheckHidDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &Devi
     wchar_t *devInstanceId = NULL;
 
     if (GetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, &devInstanceId, &size)) {
-        enum DevType dType = DevUnknown;
-
         if (CheckDeviceId(devInstanceId, size, szMicrochipBootHidId)) {
-            // HID Bootloader
-            dType = DevMicroBootloader;
-        } else if (CheckDeviceId(devInstanceId, size, szMicrochipBootHwUsbId)) {
-            // USB parent of Bootloader, give us the USB port & hub
-            dType = DevMicroBootShadow;
-        }
-
-        if (dType != DevUnknown) {
-            // device details
-            AddOrUpdateDevice(dType, DeviceInfoSet, DeviceInfoData, devInstanceId, size, SerialNone, aNow, aScanId);
+            // found HID Bootloader, process details
+            AddOrUpdateDevice(DevMicroBootloader, DeviceInfoSet, DeviceInfoData, devInstanceId, size, SerialNone, aNow, aScanId);
         }
     }
 }
@@ -864,7 +872,7 @@ void DeviceTracker::ScanSerialDevices(FILETIME &aNow, unsigned aScanId)
        'Show Any Serial' needs to include Modems & Multiport Serial devices
     */
     const GUID *serialGuid[] = { &GUID_DEVCLASS_PORTS, &GUID_DEVCLASS_MODEM, &GUID_DEVCLASS_MULTIPORTSERIAL };
-    const SerialType serialTypes[] = { SerialPort, SerialModem, SerialMultiport };
+    const SerialPortType portTypes[] = { SerialPort, SerialModem, SerialMultiport };
     int maxGuid = mOptions.ShowAnySerial() ? ARRAYSIZE(serialGuid) : 1;
 
     if (mOptions.ShowNotPresent()) {
@@ -883,7 +891,7 @@ void DeviceTracker::ScanSerialDevices(FILETIME &aNow, unsigned aScanId)
             while (SetupDiEnumDeviceInfo(DeviceInfoSet, DeviceIndex, &DeviceInfoData)) {
                 DeviceIndex++;
         
-                CheckSerialDevice(DeviceInfoSet, DeviceInfoData, serialTypes[i], aNow, aScanId);
+                CheckSerialDevice(DeviceInfoSet, DeviceInfoData, portTypes[i], aNow, aScanId);
             } // while
 
             SetupDiDestroyDeviceInfoList(DeviceInfoSet);
@@ -895,7 +903,7 @@ void DeviceTracker::ScanSerialDevices(FILETIME &aNow, unsigned aScanId)
 // returns DevPresent or DevAbsent, optionally returns PDO path too
 enum DevState DeviceTracker::GetDevPresentStatus(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData)
 {
-    static  wchar_t     pdoNameBuffer[1024];
+    static  wchar_t pdoNameBuffer[1024];
     BOOL result;
     DWORD size;
 
@@ -925,11 +933,30 @@ enum DevState DeviceTracker::GetDevPresentStatus(HDEVINFO DeviceInfoSet, SP_DEVI
 }
 
 
-BOOL DeviceTracker::GetDevUsbLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, unsigned &usbHub, unsigned &usbPort)
+void DeviceTracker::UnpackUSBLocation(DeviceLocation& location, wchar_t* devLocationString)
 {
-    static  wchar_t     devLocationBuffer[1024];
+    // typical string = "Port_#0001.Hub_#0006"
+    wchar_t  *str = NULL;
+    unsigned offset = 0;
+
+    if (wcs_consumeprefix(devLocationString, L"Port_#", &offset)) {
+        location.devUsbPort = wcstoul(devLocationString + offset, &str, 10);
+        if ((errno == 0) && wcs_consumeprefix(str, L".Hub_#", &offset)) {
+            location.devUsbHub = wcstoul(str + offset, &str, 10);
+            if (errno == 0) {
+                location.devBusType = BusUSB; // success
+            }
+        }
+    }
+}
+
+
+DeviceLocation DeviceTracker::GetUSBDeviceLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData)
+{
+    static wchar_t  devLocationBuffer[1024];
     DWORD size;
     BOOL result;
+    DeviceLocation  location;
 
 #if defined(USE_SETUP_DEVICE_API_ADAPTATION)
     if (mSetupDiGetDevicePropertyW) {
@@ -949,69 +976,176 @@ BOOL DeviceTracker::GetDevUsbLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &D
 #endif
         DWORD type;
         result = SetupDiGetDeviceRegistryProperty(DeviceInfoSet, &DeviceInfoData, SPDRP_LOCATION_INFORMATION,
-            &type, (PBYTE) &devLocationBuffer, sizeof(devLocationBuffer), &size)
+            &type, (PBYTE) &devLocationBuffer, sizeof(devLocationBuffer) - 1, &size)
             && (type == REG_SZ);
     }
 
     if (result) {
-        // typical string = "Port_#0001.Hub_#0006"
-        wchar_t* str = NULL;
-
-        size /= sizeof(wchar_t); // bytes to wchar
-        if (wcs_consumeprefix(devLocationBuffer, L"Port_#", &str, size)) {
-            usbPort = wcstoul(str, &str, 10);
-            if ((errno == 0) && wcs_consumeprefix(str, L".Hub_#", &str, size - (str - devLocationBuffer))) {
-                usbHub = wcstoul(str, &str, 10);
-                if (errno == 0) {
-                    return TRUE;
-                }
-            }
-        }
+        devLocationBuffer[size/sizeof(wchar_t)] = 0; // safety, should already be 0 terminated
+        UnpackUSBLocation(location, devLocationBuffer);
     }
-    return FALSE;
+
+    return location;
 }
 
 
-wchar_t *DeviceTracker::GetContainerId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData)
+DeviceLocation DeviceTracker::GetDeviceLocationFromBusGUID(GUID &BusGUID)
 {
-    static  wchar_t containerIdBuffer[50];
-    BOOL result;
-    DWORD size;
+    DeviceLocation location;
 
-#if defined(USE_SETUP_DEVICE_API_ADAPTATION)
-    if (mSetupDiGetDevicePropertyW) {
-        DEVPROPTYPE PropType;
-        GUID guidTemp;
-        result = mSetupDiGetDevicePropertyW(DeviceInfoSet,
-                                        &DeviceInfoData,
-                                        &DEVPKEY_Device_BaseContainerId,
-                                        &PropType,
-                                        (PBYTE)&guidTemp,
-                                        sizeof(guidTemp),
-                                        &size,
-                                        0)
-                    && (PropType == DEVPROP_TYPE_GUID);
-        if (result) {
-            // convert to string
-            StringCbPrintf(containerIdBuffer, sizeof(containerIdBuffer),
-                L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                guidTemp.Data1, guidTemp.Data2, guidTemp.Data3,
-                guidTemp.Data4[0], guidTemp.Data4[1], guidTemp.Data4[2],
-                guidTemp.Data4[3], guidTemp.Data4[4], guidTemp.Data4[5],
-                guidTemp.Data4[6], guidTemp.Data4[7]);
-        }
-    } else {
-#elif defined(USE_SETUP_DEVICE_REGISTRY)
-    {
-#endif
-        DWORD type;
-        result = SetupDiGetDeviceRegistryProperty(DeviceInfoSet, &DeviceInfoData, SPDRP_BASE_CONTAINERID,
-            &type, (PBYTE) &containerIdBuffer, sizeof(containerIdBuffer), &size)
-            && (type == REG_SZ);
+    /* 
+        GUID_BUS_TYPE_USB shouldn't reach here.
+        Otherwise, we don't handle these bus types:
+        GUID_BUS_TYPE_INTERNAL
+        GUID_BUS_TYPE_LPTENUM
+        GUID_BUS_TYPE_USBPRINT
+        GUID_BUS_TYPE_DOT4PRT
+        GUID_BUS_TYPE_SERENUM
+        GUID_BUS_TYPE_HID
+        GUID_BUS_TYPE_AVC
+        GUID_BUS_TYPE_IRDA
+        */
+
+    // check plausible(?) bus types for a serial port
+    if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_PCMCIA)) {
+        location.devBusType = BusPCMCIA;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_PCI)) {
+        location.devBusType = BusPCI;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_ISAPNP)) {
+        location.devBusType = BusISAPNP;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_EISA)) {
+        location.devBusType = BusEISA;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_MCA)) {
+        location.devBusType = BusMCA;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_1394)) {
+        location.devBusType = BusFirewire;
+    } else if (IsEqualGUID(BusGUID, GUID_BUS_TYPE_SD)) {
+        location.devBusType = BusSD;
     }
 
-    // on success dupe the string
-    return result ? _wcsdup(containerIdBuffer) : NULL;
+    return location;
+}
+
+
+// HID or NMWCD look for parent USB node in CurrentControlSet of Registry
+// HID device, look for parent USB node for hub & port details in CurrentControlSet of Registry
+DeviceLocation DeviceTracker::GetDeviceUSBRegistryLocation(const wchar_t *VIDstring, const wchar_t *serialString)
+{
+    wchar_t  registryKeyName[64];
+    wchar_t  locationBuffer[64];
+    wchar_t  serialNumberKey[32];
+
+    DeviceLocation location;
+    wchar_t *lastAmp;
+    HKEY hKey;
+
+    // where to look - HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB + \VID_xxxx&PID_xxxx
+    locationBuffer[0] = 0;
+    StringCbPrintf(registryKeyName, sizeof(registryKeyName), _T("SYSTEM\\CurrentControlSet\\Enum\\USB\\%.17s"), VIDstring);
+    StringCbCopy(serialNumberKey, sizeof(serialNumberKey), serialString);
+
+    // crop last '&' and device interface id from serial number
+    lastAmp = wcsrchr(serialNumberKey, '&');
+    if (lastAmp) {
+        *lastAmp = 0;
+    }
+
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, registryKeyName, 0, KEY_READ, &hKey)) {
+        // search subkeys for matching serial number
+#define MAX_KEY_LENGTH 255
+        TCHAR    achKey[MAX_KEY_LENGTH];   // buffer for subkey name
+        DWORD    cbName;                   // size of name string
+        TCHAR    achClass[MAX_PATH] = TEXT("");  // buffer for class name
+        DWORD    cchClassName = MAX_PATH;  // size of class string
+        DWORD    cSubKeys=0;               // number of subkeys
+        DWORD    cbMaxSubKey;              // longest subkey size
+        DWORD    cchMaxClass;              // longest class string
+        DWORD    cValues;              // number of values for key
+        DWORD    cchMaxValue;          // longest value name
+        DWORD    cbMaxValueData;       // longest value data
+        DWORD    cbSecurityDescriptor; // size of security descriptor
+        FILETIME ftLastWriteTime;      // last write time
+        DWORD i, retCode;
+        BOOL match = FALSE;
+
+        // Get the class name and the value count.
+        retCode = RegQueryInfoKey(
+            hKey,                    // key handle
+            achClass,                // buffer for class name
+            &cchClassName,           // size of class string
+            NULL,                    // reserved
+            &cSubKeys,               // number of subkeys
+            &cbMaxSubKey,            // longest subkey size
+            &cchMaxClass,            // longest class string
+            &cValues,                // number of values for this key
+            &cchMaxValue,            // longest value name
+            &cbMaxValueData,         // longest value data
+            &cbSecurityDescriptor,   // security descriptor
+            &ftLastWriteTime);       // last write time
+
+        // Enumerate the subkeys, until matching serial number found or RegEnumKeyEx fails.
+        for (i = 0; (i < cSubKeys) && !match; i++) {
+            cbName = MAX_KEY_LENGTH;
+            retCode = RegEnumKeyEx(hKey, i, achKey, &cbName, NULL, NULL, NULL, &ftLastWriteTime);
+            if (ERROR_SUCCESS == retCode) {
+                DWORD valtype;
+                DWORD valsize = sizeof(locationBuffer);
+                HKEY hKey2;
+
+                retCode = RegOpenKeyEx(hKey, achKey, 0, KEY_READ, &hKey2);
+
+                if (ERROR_SUCCESS == retCode) {
+                    // get ParentIdPrefix value, & compare with target serial number
+                    retCode = RegQueryValueEx(hKey2, _T("ParentIdPrefix"), 0, &valtype, (BYTE*)&locationBuffer, &valsize);
+                    if ((ERROR_SUCCESS == retCode) && (REG_SZ == valtype) && (0 == _wcsicmp(locationBuffer, serialNumberKey))) {
+                        match = TRUE; // exit loop
+                        valsize = sizeof(locationBuffer);
+
+                        // now get usb Location value
+                        retCode = RegQueryValueEx(hKey2, _T("LocationInformation"), 0, &valtype, (BYTE*)&locationBuffer, &valsize);
+                        if ((ERROR_SUCCESS == retCode) && (REG_SZ == valtype)) {
+                            //PrintDebugStatus(TEXT("LocationInformation %s\n"), locationBuffer);
+                            UnpackUSBLocation(location, locationBuffer);
+                        }
+                    }
+
+                    RegCloseKey(hKey2);
+                }
+
+                // DEBUG - PrintDebugStatus(TEXT("(%d) %s %u\n"), i+1, achKey, retCode);
+            }
+        }
+
+#undef MAX_KEY_LENGTH
+        RegCloseKey(hKey);
+    }
+
+    return location;
+}
+
+
+DeviceLocation DeviceTracker::GetDeviceLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, DeviceSerialNumber &aSerialNumber)
+{
+    unsigned        offsetToVID = 0;
+    DeviceLocation  location;
+
+    if (wcs_checkprefix(aSerialNumber.devHardwareId, _T("USB\\"))) {
+        location = GetUSBDeviceLocation(DeviceInfoSet, DeviceInfoData);
+    } else {
+        GUID    BusGuid;
+
+        if (wcs_checkprefix(aSerialNumber.devHardwareId, _T("BTHENUM\\"))) {
+            location.devBusType = BusBluetooth; // Widcomm / Broadcom Bluetooth drivers
+        } else if (wcs_consumeprefix(aSerialNumber.devHardwareId, _T("HID\\"), &offsetToVID) ||
+                    wcs_consumeprefix(aSerialNumber.devHardwareId, _T("NMWCD\\"), &offsetToVID)) {
+            // HID or Nokia Mobile Wireless Communications Device
+            location = GetDeviceUSBRegistryLocation(aSerialNumber.devHardwareId + offsetToVID, aSerialNumber.devSerialString);
+        } else if (GetDeviceBusTypeGUID(DeviceInfoSet, DeviceInfoData, BusGuid)) {
+            location = GetDeviceLocationFromBusGUID(BusGuid);
+        }
+    }
+
+    return location;
 }
 
 
@@ -1101,24 +1235,22 @@ wchar_t* DeviceTracker::GetPortname(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &Dev
 
 
 // extract serial number from Device InstanceId, winSernum set if windows (enumerator) generated it
-void DeviceTracker::GetSerialnumber(const wchar_t *devInstanceId, DWORD size, BOOL &isWinSerial,
-    wchar_t **serialNumber, wchar_t **devId)
+DeviceSerialNumber  DeviceTracker::GetSerialnumber(const wchar_t *devInstanceId, DWORD size)
 {
     // extract & dupe serial number
-    size_t i;
-    size_t serpos = 0;
-    
-    isWinSerial = FALSE;
+    size_t              i;
+    size_t              serpos = 0;
+    DeviceSerialNumber  serialNumber;
 
     // find last '\' in string, carefully in case no zero terminator
     for (i = 0; (i < size) && devInstanceId[i] != L'\0'; i++) {
         switch (devInstanceId[i]) {
         case L'&':
-            isWinSerial = TRUE;
+            serialNumber.devIsWinSerial = TRUE;
             break;
         case L'\\':
             serpos = i + 1;
-            isWinSerial = FALSE;
+            serialNumber.devIsWinSerial = FALSE;
             break;
         }
     }
@@ -1126,9 +1258,10 @@ void DeviceTracker::GetSerialnumber(const wchar_t *devInstanceId, DWORD size, BO
     // extract serialnumber
     // Note prefix part of string is similar to hardwareid string, but lacks e.g. USB device revision
     if (serpos) {        
-        *serialNumber = wcs_dupsubstr(devInstanceId + serpos, size - serpos);
-        *devId = wcs_dupsubstr(devInstanceId, serpos - 1);
+        serialNumber.devSerialString = wcs_dupsubstr(devInstanceId + serpos, size - serpos);
+        serialNumber.devHardwareId = wcs_dupsubstr(devInstanceId, serpos - 1);
     }
+    return serialNumber;
 }
 
 
@@ -1169,12 +1302,6 @@ DeviceInfo *DeviceTracker::FindDevMatchBySernum(enum DevType aDevType, wchar_t *
                     cmpSernum = TRUE;
                 }
                 break;
-            case DevMicroBootloader:
-            case DevMicroBootShadow:
-                if ((dType == DevMicroBootloader) || (dType == DevMicroBootShadow)) {
-                    cmpSernum = TRUE;
-                }
-                break;
             }
         }
 
@@ -1190,38 +1317,15 @@ DeviceInfo *DeviceTracker::FindDevMatchBySernum(enum DevType aDevType, wchar_t *
 }
 
 
-DeviceInfo *DeviceTracker::FindDevMatchByContainerId(enum DevType aDevType, wchar_t *aContainerId)
-{
-    DeviceInfo *devList = mListDevices;
-
-    while (devList) {
-        if (aDevType == devList->DeviceType()) {
-            const wchar_t *temp = devList->ContainerId();
-            if (temp && !wcscmp(temp, aContainerId)) {
-                return devList;
-            }
-        }
-        devList = devList->DeviceNext();
-    }
-    return NULL;
-}
-
-
 void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
-        const wchar_t *devInstanceId, DWORD size, SerialType aSerialType, FILETIME &aNow, unsigned aScanId)
+        const wchar_t *devInstanceId, DWORD size, SerialPortType aPortType, FILETIME &aNow, unsigned aScanId)
 {
-    enum DevState   dState;
-    wchar_t         *portname = NULL;
-    wchar_t         *serialNumber = NULL;
-    wchar_t         *hardwareId = NULL;
-    wchar_t         *containerId = NULL;
-    wchar_t         *friendlyname = NULL;
-    unsigned        usbHub = 0, usbPort = 0;
-    BOOL            added = FALSE;
-    BOOL            usbValid = FALSE;
-    BOOL            isWinSerial = FALSE;
-    DeviceInfo      *devItem = NULL;
-    int             portnumber = -1;
+    enum DevState       dState;
+    DeviceLocation      location;
+    DevicePortDetails   portDetails;
+    DeviceSerialNumber  serialNumber;
+    BOOL                added = FALSE;
+    DeviceInfo          *devItem = NULL;
 
     if (mOptions.ShowNotPresent()) {
         // get device present status: DevPresent or DevAbsent
@@ -1230,78 +1334,54 @@ void DeviceTracker::AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfo
         dState = DevPresent;
     }
     
-    // find serial number element of devInstanceId
-    if (aDevType != DevMicroBootShadow) {
-        GetSerialnumber(devInstanceId, size, isWinSerial, &serialNumber, &hardwareId);
-    }
+    // split devInstanceId into HardwareId (bus + vid, pid & function) and Serial Number string (& flag if Windows generated)
+    serialNumber = GetSerialnumber(devInstanceId, size);
 
-    if ((aDevType == DevMicroBootloader) || (aDevType == DevMicroBootShadow)) {
-        // get ContainerId - indicates merged object for HID & USB aspects of Bootloader
-        containerId = GetContainerId(DeviceInfoSet, DeviceInfoData);
-        devItem = FindDevMatchByContainerId(DevMicroBootloader, containerId);
-    } else {
-        devItem = FindDevMatchBySernum(aDevType, serialNumber);
-    }
+    devItem = FindDevMatchBySernum(aDevType, serialNumber.devSerialString);
 
     // get more details for new or Present device
-    if ((!devItem) || (dState == DevPresent) || (aDevType == DevMicroBootShadow)) {
-        // USB hub & port are easy to get for USB/... devices but not for HID/...
-        if (DevMicroBootloader != aDevType) {
-            usbValid = GetDevUsbLocation(DeviceInfoSet, DeviceInfoData, usbHub, usbPort);
-        }
+    if ((!devItem) || (dState == DevPresent)) {
+        // USB hub & port are easy to get for USB/... devices, harder for HID/...
+        location = GetDeviceLocation(DeviceInfoSet, DeviceInfoData, serialNumber);
 
-        if ( (DevRfidlerCom == aDevType) || (DevMicroDevBoard == aDevType) || (DevOtherSerial == aDevType)) {
-            wchar_t *valpos = NULL;
-            // get COM port name
-            portname = GetPortname(DeviceInfoSet, DeviceInfoData);
-            if (DevOtherSerial == aDevType) {
-                if (!portname || (0 != wcsncmp(portname, _T("COM"), 3))) {
-                    // LPT port presumably => not interesting
-                    return;
+        switch (aDevType) // get COM port name
+        {
+        case DevRfidlerCom:
+        case DevMicroDevBoard:
+        case DevOtherSerial:
+            {
+                unsigned offset = 0;
+                portDetails.devPortName = GetPortname(DeviceInfoSet, DeviceInfoData);
+                if (DevOtherSerial == aDevType) {
+                    if (!portDetails.devPortName || (0 != wcsncmp(portDetails.devPortName, _T("COM"), 3))) {
+                        // LPT port presumably => not interesting
+                        return;
+                    }
+                    // get friendly name, if any
+                    portDetails.devFriendlyName = GetFriendlyName(DeviceInfoSet, DeviceInfoData);
                 }
-                // get friendlyname
-                friendlyname = GetFriendlyName(DeviceInfoSet, DeviceInfoData);
+                if (portDetails.devPortName && wcs_consumeprefix(portDetails.devPortName, _T("COM"), &offset)) {
+                    portDetails.devPortNumber = wcstoul(portDetails.devPortName + offset, NULL, 10);
+                }
             }
-            if (portname && wcs_consumeprefix(portname, _T("COM"), &valpos, wcslen(portname))) {
-                portnumber = wcstoul(valpos, NULL, 10);
-            }
+            break;
         }
     }
 
     if (devItem) {
         // device in list, so update connected state, COM port name, USB location, ..
-        devItem->UpdateDevice((aDevType == DevMicroBootShadow) ? DevMicroBootloader : aDevType,
-            dState, aNow, portname, portnumber, usbHub, usbPort, usbValid, serialNumber,
-            aScanId, isWinSerial);
-
-        if (aDevType == DevMicroBootloader) {
-            if (!devItem->HardwareId()) {
-                // transfer memory ownership
-                devItem->UpdateHardwareId(hardwareId);
-                hardwareId = NULL;
-            }
-        }
+        devItem->UpdateDevice(aDevType, dState, aNow, portDetails, location, serialNumber, aScanId);
     } else {
-        DeviceInfo *item;
-
         // create new device object, & add to display
-        item = DeviceInfo::NewDevice(
-            (aDevType == DevMicroBootShadow) ? DevMicroBootloader : aDevType, dState, aNow,
-            serialNumber, portname, friendlyname, hardwareId, portnumber,
-            containerId, usbHub, usbPort,
-            usbValid, aScanId, mListDevices, isWinSerial, aSerialType);
-
-        if (item) {
-            added = TRUE;
-        }
+        added = DeviceInfo::AddDeviceToList(aDevType, dState, aNow, portDetails, location, serialNumber, aScanId, aPortType);
     }
 
+    // cleanup memory
     if (!added) {
-        ReleaseString(portname);
-        ReleaseString(serialNumber);
-        ReleaseString(containerId);
-        ReleaseString(friendlyname);
-        ReleaseString(hardwareId);
+        ReleaseString(portDetails.devPortName);
+        ReleaseString(serialNumber.devSerialString);
+        ReleaseString(portDetails.devFriendlyName);
+        ReleaseString(serialNumber.devHardwareId);
     }
 }
 
@@ -1484,16 +1564,30 @@ void DeviceTracker::UpdateArrivalOrRemovalState(FILETIME &now)
             break;
 
         case DevRemoved:
-        case DevArrived:
             // update display with elapsed time
-            if (item->UpdateTimeInState(now, mOptions.ShowNotPresent(), mOptions.GetArrivalOrRemovalTime())) {
-                dState = item->DeviceState();
-                // still in this state?
-                if ((dState == DevRemoved) || (dState == DevArrived)) {
-                    mDevicesInArrivalState = TRUE;
+            if (!item->UpdateTimeInState(now, mOptions.GetArrivalOrRemovalTime())) {
+                // time expired
+                if (mOptions.ShowNotPresent()) {
+                    item->SetDeviceAbsent();
+                    UpdateViewItemState(item->StateName(), (LPARAM)item);
+                } else {
+                    unlink = TRUE;
                 }
             } else {
-                unlink = TRUE;
+                // still in DevRemoved state?
+                mDevicesInArrivalState = TRUE;
+            }
+            break;
+
+        case DevArrived:
+            // update display with elapsed time, use default time for limit before DevPresent State
+            if (!item->UpdateTimeInState(now, KArrivalOrRemovalTimeDefault)) {
+                // time expired
+                item->SetDevicePresent();
+                UpdateViewItemState(item->StateName(), (LPARAM)item);
+            } else {
+                // still in DevArrived state?
+                mDevicesInArrivalState = TRUE;
             }
             break;
         }
@@ -1523,7 +1617,7 @@ void DeviceTracker::UpdateStatusBarAndWinFlashNotifications()
   */
 void DeviceTracker::StatusBarRefresh()
 {
-    static TCHAR statusBuffer[1024];
+    static wchar_t statusBuffer[1024];
 
     // TODO? change icon overlay in system tray?
 

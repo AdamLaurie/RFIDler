@@ -38,8 +38,6 @@
 #include "rfidmonitor.h"
 
 #include <ShlObj.h>
-#include <assert.h>
-#include <strsafe.h>
 #include <uxtheme.h> 
 
 
@@ -68,11 +66,10 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 // various global constant
 
-const TCHAR *szAppName = _T("RFIDler Monitor");
-const TCHAR *szRfidlerHwUsbId = _T("USB\\VID_1D50&PID_6098");
-const TCHAR *szMicrochipSerialHwUsbId = _T("USB\\VID_04D8&PID_000A");
-const TCHAR *szMicrochipBootHwUsbId = _T("USB\\VID_04D8&PID_003C");
-const TCHAR *szMicrochipBootHidId = _T("HID\\VID_04D8&PID_003C");
+const wchar_t *szAppName = _T("RFIDler Monitor");
+const wchar_t *szRfidlerHwUsbId = _T("USB\\VID_1D50&PID_6098");
+const wchar_t *szMicrochipSerialHwUsbId = _T("USB\\VID_04D8&PID_000A");
+const wchar_t *szMicrochipBootHidId = _T("HID\\VID_04D8&PID_003C");
 
 
 // singleton DeviceTracker
@@ -103,7 +100,7 @@ public:
 
 BOOL CALLBACK MonitorDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
+HWND InitTabbedDialog(HWND hWndTab, int itemId, wchar_t *tabTitle, LPCWSTR lpTemplateName,
         DLGPROC lpDialogFunc, LPARAM dwInitParam, BOOL showDialog);
 HWND InitShowControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
 HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
@@ -115,12 +112,12 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam
 INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 #endif
 
-BOOL GetProgramFilename(TCHAR **fname);
+BOOL GetProgramFilename(wchar_t **fname);
 void CheckProgramShortcuts(const wchar_t *shortcut, BOOL *aDeskLinkExists, BOOL *aStartlinkExists);
 BOOL CheckLinkname(const wchar_t *shortcut, int csidl);
 wchar_t *CreateLinkname(const wchar_t *shortcut, int csidl);
 void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL aMakeShortcut);
-void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
+void CreateProgramShortcuts(const wchar_t *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
     BOOL aDeskLinkExists, BOOL aStartlinkExists);
 BOOL CALLBACK InstallConfigDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 ATOM RegisterMainWindow (HINSTANCE hInstance);
@@ -179,11 +176,11 @@ int WINAPI WinMain (
 
 ATOM RegisterMainWindow (HINSTANCE hInstance)
 {
-    WNDCLASSEX	WndClass;
+    WNDCLASSEX  WndClass;
 
     WndClass.cbSize        = sizeof (WndClass);
     WndClass.style         = CS_HREDRAW | CS_VREDRAW;
-    WndClass.lpfnWndProc   = DefDlgProc;		//MainWndProc;
+    WndClass.lpfnWndProc   = DefDlgProc;                // MainWndProc;
     WndClass.cbClsExtra    = 0;
     WndClass.cbWndExtra    = DLGWINDOWEXTRA;
     WndClass.hInstance     = hInstance;
@@ -202,10 +199,10 @@ ATOM RegisterMainWindow (HINSTANCE hInstance)
 
 #if defined(_DEBUG)
 // printf formatted messages to debug port
-void PrintDebugStatus(const TCHAR *format, ...)
+void PrintDebugStatus(const wchar_t *format, ...)
 {
     HRESULT hr;
-    static TCHAR msgbuff[1024];
+    static wchar_t msgbuff[1024];
     va_list argptr;
     va_start(argptr, format);
 
@@ -428,7 +425,7 @@ BOOL CALLBACK MonitorDlgProc (
     int  handled = 0;
 
     switch (iMsg) {
-    case WM_INITDIALOG:	/* from CreateDialog() */
+    case WM_INITDIALOG: /* from CreateDialog() */
         hInst = (HINSTANCE) lParam;
 
         // set System Menu Icon for dialog
@@ -709,13 +706,13 @@ BOOL CALLBACK MonitorDlgProc (
         }
         break;
     }
-    	
+
     // 1 = handled here, 0 = pass to default handling
     return handled;
 }   /* MonitorDlgProc() */
 
 
-HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTemplateName,
+HWND InitTabbedDialog(HWND hWndTab, int itemId, wchar_t *tabTitle, LPCWSTR lpTemplateName,
         DLGPROC lpDialogFunc, LPARAM dwInitParam, BOOL showDialog)
 {
     TCITEM tcItem;
@@ -737,7 +734,7 @@ HWND InitTabbedDialog(HWND hWndTab, int itemId, TCHAR *tabTitle, LPCWSTR lpTempl
         // select & show initial tab
         if (showDialog) {
             if (itemId != 0) {
-            	TabCtrl_SetCurSel(hWndTab, itemId);
+                TabCtrl_SetCurSel(hWndTab, itemId);
             }
             ShowWindow(child, SW_SHOW);
         }
@@ -762,7 +759,7 @@ HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDia
 
 void SetShowOptionsArrivalTime(HWND hWnd, MonOptions *aOptions)
 {
-    TCHAR arrivalString[8];
+    wchar_t arrivalString[8];
 
     // setup arrival time edit control
     StringCbPrintf(arrivalString, sizeof(arrivalString), _T("%u"), aOptions->GetArrivalOrRemovalTime());
@@ -992,7 +989,7 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         // select initial dialog page
         switch (lParam)
         {
-		default:
+        default:
         case ID_SETTINGS_DEVTYPES:         currPage = 0; break;
         case ID_SETTINGS_DEVNOTIFICATIONS: currPage = 1; break;
         }
@@ -1097,14 +1094,14 @@ BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 
 /* retry wrapper around GetModuleFileName() with growing buffer */
-BOOL GetProgramFilename(TCHAR **fname)
+BOOL GetProgramFilename(wchar_t **fname)
 {
     unsigned sz = 64;
     DWORD    res;
-    TCHAR    *f;
+    wchar_t  *f;
 
     do {
-        f = (TCHAR *) calloc(sz, sizeof(TCHAR));
+        f = (wchar_t *) calloc(sz, sizeof(wchar_t));
         if (f == NULL) {
             /* OOM */
             return FALSE;
@@ -1116,7 +1113,7 @@ BOOL GetProgramFilename(TCHAR **fname)
 
             // try to shrink allocation 
             if ( (sz - res) >= 16) {
-                TCHAR *f2 = (TCHAR *) realloc(f, res * sizeof(TCHAR));
+                wchar_t *f2 = (wchar_t *) realloc(f, res * sizeof(wchar_t));
                 if (f2) {
                     f = f2;
                 }
@@ -1235,7 +1232,7 @@ void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL
 }
 
 
-void CreateProgramShortcuts(const TCHAR *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
+void CreateProgramShortcuts(const wchar_t *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
     BOOL aDeskLinkExists, BOOL aStartlinkExists)
 {
     const wchar_t *desc = _T("RFIDler Monitor");
@@ -1285,7 +1282,7 @@ BOOL CALLBACK InstallConfigDlgProc (
 )
 {
     const wchar_t   *shortcut = _T("RFIDler Monitor.lnk");
-    static TCHAR    *fname = NULL;
+    static wchar_t  *fname = NULL;
     static BOOL     deskLinkExists;
     static BOOL     startlinkExists;
 
@@ -1366,7 +1363,7 @@ BOOL CALLBACK InstallConfigDlgProc (
 }   /* InatallConfigDlgProc() */
 
 
-void ReleaseString(TCHAR *&string)
+void ReleaseString(wchar_t *&string)
 {
     if (string) {
         free(string);
@@ -1375,8 +1372,8 @@ void ReleaseString(TCHAR *&string)
 }
 
 // program description and copyright licensing info
-static const TCHAR *helpTitle = _T("Help About RFIDLer Monitor %u.%u.%u");
-static const TCHAR *helpText =
+static const wchar_t *helpTitle = _T("Help About RFIDLer Monitor %u.%u.%u");
+static const wchar_t *helpText =
     _T("RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n")
     _T("Windows driver for USB serial ports, usbser.sys.\r\n")
     _T("\r\n")
@@ -1423,13 +1420,13 @@ static const TCHAR *helpText =
 INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lParam */)
 {
 #define KTitleSize 100
-    static TCHAR dialogTitle[KTitleSize];
+    static wchar_t dialogTitle[KTitleSize];
 
     switch (iMsg) {
     case WM_INITDIALOG:
         {
-            TCHAR *fname = NULL;
-            BOOL gotfileversion = FALSE;
+            wchar_t *fname = NULL;
+            BOOL    gotfileversion = FALSE;
 
             // get version number from exe
             if (GetProgramFilename(&fname)) {
@@ -1475,9 +1472,9 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
     case WM_COMMAND: 
         switch (LOWORD(wParam)) {
         case IDOK :
-	    EndDialog (hDlg, wParam);
-	    /* handled message */
-	    return 1;
+            EndDialog (hDlg, wParam);
+            /* handled message */
+            return 1;
         }
         break;
     }
@@ -1547,7 +1544,7 @@ void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip)
 
     if (dev) {
         // with our DeviceInfo pointer we can now get the tooltip message
-        const TCHAR *infoTip = dev->InfoTip();
+        const wchar_t *infoTip = dev->InfoTip();
 
         StringCchPrintf(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, _T("%s"), infoTip);
 #ifdef _DEBUG
@@ -1609,8 +1606,8 @@ void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup)
 
 void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection)
 {
-    const TCHAR *strings[5] = { NULL, NULL, NULL, NULL, NULL };
-    const TCHAR *string;
+    const wchar_t *strings[5] = { NULL, NULL, NULL, NULL, NULL };
+    const wchar_t *string;
     int i = 0;
 
     switch(selection) {
@@ -1647,7 +1644,7 @@ void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection)
         }
 
         HGLOBAL hglbCopy;
-        hglbCopy = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));
+        hglbCopy = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar_t));
 
         if (hglbCopy && OpenClipboard(hWndLV)) {
             EmptyClipboard();
@@ -1692,15 +1689,17 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
 
     switch (dev->DeviceType()) {
     case DevRfidlerCom:
+        lpMenuName = MAKEINTRESOURCE(IDR_RFIDLER_CONTEXT);
+        defaultitem = ID_CONTEXT_RFIDLER_DETAILS;
+        break;
     case DevMicroDevBoard:
     case DevOtherSerial:
         lpMenuName = MAKEINTRESOURCE(IDR_COMPORT_CONTEXT);
+        defaultitem = ID_CONTEXT_PORT_DETAILS;
         break;
     case DevMicroBootloader:
-        lpMenuName = MAKEINTRESOURCE(IDR_DEV_CONTEXT);
-#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
-//        defaultitem = ID_CONTEXT_OPEN_FOR_REFLASH;
-#endif
+        lpMenuName = MAKEINTRESOURCE(IDR_BOOTLOADER_CONTEXT);
+        defaultitem = ID_CONTEXT_BOOTLOADER_DETAILS;
         break;
     case DevUnconfigRfidlerCom:
     case DevUnconfigMicroDevBoard:
@@ -1719,18 +1718,12 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
         }
 
 #if !defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) && !defined(_DEBUG)
+        // disable development feature for release build
         switch (dev->DeviceType()) {
         case DevRfidlerCom:
-        case DevMicroDevBoard:
-        case DevOtherSerial:
-            break;
         case DevMicroBootloader:
             // disable BOOTLOADER FLASH menu item
             RemoveMenu(hMenuTrackPopup, ID_CONTEXT_OPEN_FOR_REFLASH, MF_BYCOMMAND); 
-            break;
-        case DevUnconfigRfidlerCom:
-        case DevUnconfigMicroDevBoard:
-        default:
             break;
         }
 #endif
@@ -1750,6 +1743,17 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
             case ID_CONTEXT_COPYPORT_NAME:
             //case ID_CONTEXT_COPYALL_DETAILS: // possible future fn, needs ListView iterator & string info buffers
                 ContextMenuClipboardSelect(hWnd, dev, selection);
+                break;
+            case ID_CONTEXT_PORT_DETAILS: // TODO implement this !!!
+            case ID_CONTEXT_RFIDLER_DETAILS:
+            case ID_CONTEXT_BOOTLOADER_DETAILS:
+#pragma warning("implement Device Details dialog")
+                break;
+            case ID_CONTEXT_REBOOT_FOR_REFLASH:
+#pragma warning("implement opening COM port & rebooting Rfidler for Bootloader")
+                break;
+            case ID_CONTEXT_BOOTLOADER_REBOOT:
+#pragma warning("implement opening Bootloader & rebooting Rfidler")
                 break;
 #if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
             case ID_CONTEXT_OPEN_FOR_REFLASH:
@@ -1884,7 +1888,7 @@ BOOL InitHexFileList(HWND hDlg)
 
         // populate file history
         for (int i = 0; i < historyCount; i++) {
-            TCHAR *filename = options.HexFileHistory(i);
+            wchar_t *filename = options.HexFileHistory(i);
             if (-1 != SendMessage(hWndFileList, CB_ADDSTRING, 0, (LPARAM) filename)) {
                 result = TRUE;
             }
@@ -1895,10 +1899,10 @@ BOOL InitHexFileList(HWND hDlg)
 
 
 // printf formatted messages to report area of installer's window
-void BootloaderStatus(HWND hWndStatus, const TCHAR *format, ...)
+void BootloaderStatus(HWND hWndStatus, const wchar_t *format, ...)
 {
     HRESULT hr;
-    static TCHAR msgbuff[1024];
+    static wchar_t msgbuff[1024];
     va_list argptr;
     va_start(argptr, format);
 
@@ -1997,9 +2001,9 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
             }
             break;
         case IDOK:
-	    EndDialog (hDlg, wParam);
-	    /* handled message */
-	    return 1;
+            EndDialog (hDlg, wParam);
+            /* handled message */
+            return 1;
         }
         break;
 

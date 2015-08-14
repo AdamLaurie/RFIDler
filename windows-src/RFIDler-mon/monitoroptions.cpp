@@ -37,133 +37,123 @@
 
 
 #include "rfidmonitor.h"
-#include <strsafe.h>
 
 
 // store / retrieve setting from registry in SOFTWARE\\TonyNaggs\\RfidlerMonitor
-static const TCHAR *KRegistryBase = _T("SOFTWARE");
-static const TCHAR *KRegVendor = _T("TonyNaggs");
-static const TCHAR *KRegProgramName = _T("RfidlerMonitor");
+static const wchar_t *KRegistryBase = _T("SOFTWARE");
+static const wchar_t *KRegVendor = _T("TonyNaggs");
+static const wchar_t *KRegProgramName = _T("RfidlerMonitor");
+static const wchar_t *KRegFullProgramName = _T("SOFTWARE\\TonyNaggs\\RfidlerMonitor");
 
-static const TCHAR *KRegKeyShowFlags = _T("ShowFlags");
-static const TCHAR *KRegKeyNotifyFlags = _T("Notifications");
-static const TCHAR *KRegKeySortOrder = _T("SortOrder");
-static const TCHAR *KRegKeyViewStyle = _T("ViewStyle");
-static const TCHAR *KRegKeyWinPosX = _T("WinPosX");
-static const TCHAR *KRegKeyWinPosY = _T("WinPosY");
-static const TCHAR *KRegKeyWinLayoutVer = _T("WinLayout");
-static const TCHAR *KRegKeyWinSizeCX = _T("WinSizeCX");
-static const TCHAR *KRegKeyWinSizeCY = _T("WinSizeCY");
-static const TCHAR *KRegKeyMRUHexFile = _T("MRU_HexFile");
-static const TCHAR *KRegKeyArrivalTime = _T("ArrivalTime");
+static const wchar_t *KRegKeyShowFlags = _T("ShowFlags");
+static const wchar_t *KRegKeyNotifyFlags = _T("Notifications");
+static const wchar_t *KRegKeySortOrder = _T("SortOrder");
+static const wchar_t *KRegKeyViewStyle = _T("ViewStyle");
+static const wchar_t *KRegKeyWinPosX = _T("WinPosX");
+static const wchar_t *KRegKeyWinPosY = _T("WinPosY");
+static const wchar_t *KRegKeyWinLayoutVer = _T("WinLayout");
+static const wchar_t *KRegKeyWinSizeCX = _T("WinSizeCX");
+static const wchar_t *KRegKeyWinSizeCY = _T("WinSizeCY");
+static const wchar_t *KRegKeyMRUHexFile = _T("MRU_HexFile");
+static const wchar_t *KRegKeyArrivalTime = _T("ArrivalTime");
 
 
 
 void MonOptions::ReadRegistryValues()
 {
     // read registry values
-    HKEY hk1, hk2, hk3;
+    HKEY programKey;
 
-    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegistryBase, 0, KEY_ALL_ACCESS, &hk1)) {
-        // create vendor and application keys
-        if (ERROR_SUCCESS == RegOpenKeyEx(hk1, KRegVendor, 0, KEY_ALL_ACCESS, &hk2)) {
-            if (ERROR_SUCCESS == RegOpenKeyEx(hk2, KRegProgramName, 0, KEY_ALL_ACCESS, &hk3)) {
-                DWORD temp;
-                DWORD valtype;
-                DWORD valsize = sizeof(temp);
-                int tint; // temp converted to int
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegFullProgramName, 0, KEY_READ, &programKey)) {
+        // vendor and application keys exist
+        DWORD temp;
+        DWORD valtype;
+        DWORD valsize = sizeof(temp);
+        int tint; // temp converted to int
+        HKEY hk;
 
-                // what optional stuff to show
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyShowFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                    tint = (int) temp;
-                    if (0 == (tint & ~optKAllShowFlags)) {
-                        optShowFlags = temp;
-                        optNeedSaveShowFlags = FALSE;
-                    }
-                }
-
-                // when to flash window title for notifications
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyNotifyFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                    tint = (int) temp;
-                    if (0 == (tint & ~optKAllNotifyFlags)) {
-                        optNotifyFlags = temp;
-                        optNeedSaveNotifyFlags = FALSE;
-                    }
-                }
-
-                // previous window position, size, and layout
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                    optWindowPlace.left = temp;
-                    if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinPosY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                        optWindowPlace.top = temp;
-                        if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinSizeCX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                            optWindowPlace.right = temp;
-                            if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinSizeCY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                                optWindowPlace.bottom = temp;
-                                // check that saved window position / size from same window layout?
-                                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyWinLayoutVer, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp == optWindowLayoutVer)) {
-                                    optHaveWindowPlace = TRUE;
-                                    optNeedSaveWindowPlace = FALSE;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // device Arrival / removal time
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyArrivalTime, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                    if (temp <= KArrivalOrRemovalTimeMaximum) {
-                        optArrivalOrRemovalTime = temp;
-                        optNeedSaveArrivalTime = FALSE;
-                    }
-                }
-
-                // device list sort order
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeySortOrder, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp <= lvDispMaxSort)) {
-                    optViewSortOrder = temp;
-                    optNeedSaveViewSortOrder = FALSE;
-                }
-
-                // device list style
-                if ((ERROR_SUCCESS == RegQueryValueEx(hk3, KRegKeyViewStyle, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
-                    switch (temp) {
-                    case ID_VIEW_LARGE_ICONS:
-                    case ID_VIEW_SMALL_ICONS:
-                    case ID_VIEW_DETAILS:
-                    case ID_VIEW_TILES: // valid value
-                        optViewStyleButton = temp;
-                        optNeedSaveViewStyleButton = FALSE;
-                        break;
-                    }
-                }
-
-                {
-                    HKEY hk4;
-
-                    if (ERROR_SUCCESS == RegOpenKeyEx(hk3, KRegKeyMRUHexFile, 0, KEY_ALL_ACCESS, &hk4)) {
-                        wchar_t fnamebuff[1024];
-                        TCHAR numbuff[4];
-
-                        for (int j = 0; j < optHexFileHistoryCount; j++) {
-                            DWORD strsize = sizeof(fnamebuff);
-
-                            StringCchPrintf(numbuff, ARRAYSIZE(numbuff), _T("%i"), j);
-                            if ((ERROR_SUCCESS == RegQueryValueEx(hk4, numbuff, 0, &valtype, (BYTE*)&fnamebuff, &strsize)) && (REG_SZ == valtype)) {
-                                optHexFileHistory[j] = wcs_dupsubstr(fnamebuff, strsize);
-                                optHexFileHistoryCount = j;
-                                continue;
-                            }
-                            break;
-                        }
-                        RegCloseKey(hk4);
-                    }
-                }
-
-                RegCloseKey(hk3);
+        // what optional stuff to show
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyShowFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+            tint = (int) temp;
+            if (0 == (tint & ~optKAllShowFlags)) {
+                optShowFlags = temp;
+                optNeedSaveShowFlags = FALSE;
             }
-            RegCloseKey(hk2);
         }
-        RegCloseKey(hk1);
+
+        // when to flash window title for notifications
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyNotifyFlags, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+            tint = (int) temp;
+            if (0 == (tint & ~optKAllNotifyFlags)) {
+                optNotifyFlags = temp;
+                optNeedSaveNotifyFlags = FALSE;
+            }
+        }
+
+        // previous window position, size, and layout
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyWinPosX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+            optWindowPlace.left = temp;
+            if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyWinPosY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                optWindowPlace.top = temp;
+                if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyWinSizeCX, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                    optWindowPlace.right = temp;
+                    if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyWinSizeCY, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+                        optWindowPlace.bottom = temp;
+                        // check that saved window position / size from same window layout?
+                        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyWinLayoutVer, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp == optWindowLayoutVer)) {
+                            optHaveWindowPlace = TRUE;
+                            optNeedSaveWindowPlace = FALSE;
+                        }
+                    }
+                }
+            }
+        }
+
+        // device Arrival / removal time
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyArrivalTime, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+            if (temp <= KArrivalOrRemovalTimeMaximum) {
+                optArrivalOrRemovalTime = temp;
+                optNeedSaveArrivalTime = FALSE;
+            }
+        }
+
+        // device list sort order
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeySortOrder, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype) && (temp <= lvDispMaxSort)) {
+            optViewSortOrder = temp;
+            optNeedSaveViewSortOrder = FALSE;
+        }
+
+        // device list style
+        if ((ERROR_SUCCESS == RegQueryValueEx(programKey, KRegKeyViewStyle, 0, &valtype, (BYTE*)&temp, &valsize)) && (REG_DWORD == valtype)) {
+            switch (temp) {
+            case ID_VIEW_LARGE_ICONS:
+            case ID_VIEW_SMALL_ICONS:
+            case ID_VIEW_DETAILS:
+            case ID_VIEW_TILES: // valid value
+                optViewStyleButton = temp;
+                optNeedSaveViewStyleButton = FALSE;
+                break;
+            }
+        }
+
+        if (ERROR_SUCCESS == RegOpenKeyEx(programKey, KRegKeyMRUHexFile, 0, KEY_READ, &hk)) {
+            wchar_t fnamebuff[1024];
+            wchar_t numbuff[4];
+
+            for (int j = 0; j < optHexFileHistoryCount; j++) {
+                DWORD strsize = sizeof(fnamebuff);
+
+                StringCchPrintf(numbuff, ARRAYSIZE(numbuff), _T("%i"), j);
+                if ((ERROR_SUCCESS == RegQueryValueEx(hk, numbuff, 0, &valtype, (BYTE*)&fnamebuff, &strsize)) && (REG_SZ == valtype)) {
+                    optHexFileHistory[j] = wcs_dupsubstr(fnamebuff, strsize);
+                    optHexFileHistoryCount = j;
+                    continue;
+                }
+                break;
+            }
+            RegCloseKey(hk);
+        }
+        RegCloseKey(programKey);
 
         // plan save to registry any state that was missing or invalid on reading
         if (optNeedSaveFlags) {
@@ -224,77 +214,19 @@ void MonOptions::RegistrySaveChangedValues(BOOL destroyWindow)
 
     if (optNeedSaveFlags) {
         HKEY hk1, hk2, hk3;
-        DWORD disp;
+        DWORD disp = 0;
 
-        if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegistryBase, 0, 
-                KEY_ALL_ACCESS, &hk1)) {
-            // create vendor and application keys
+        if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegFullProgramName, 0, KEY_ALL_ACCESS, &hk1)) {
+            // keys already exist
+            DoSaveChangedValues(hk1);
+            RegCloseKey(hk1);
+        } else if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, KRegistryBase, 0, KEY_ALL_ACCESS, &hk1)) {
+            // first save: need to create vendor and application keys
             if (ERROR_SUCCESS == RegCreateKeyEx(hk1, KRegVendor, 0, _T(""),
                     REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk2, &disp)) {
-                if (ERROR_SUCCESS == RegCreateKeyEx(hk2, KRegProgramName, 0, _T(""),
-                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk3, &disp)) {
-                    DWORD temp;
-
-                    if (optNeedSaveShowFlags) {
-                        temp = optShowFlags;
-                        RegSetValueEx(hk3, KRegKeyShowFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveShowFlags = FALSE;
-                    }
-
-                    if (optNeedSaveNotifyFlags) {
-                        temp = optNotifyFlags;
-                        RegSetValueEx(hk3, KRegKeyNotifyFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveNotifyFlags = FALSE;
-                    }
-
-                    if (optNeedSaveWindowPlace) {
-                        temp = optWindowPlace.left;
-                        RegSetValueEx(hk3, KRegKeyWinPosX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        temp = optWindowPlace.top;
-                        RegSetValueEx(hk3, KRegKeyWinPosY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        temp = optWindowPlace.right;
-                        RegSetValueEx(hk3, KRegKeyWinSizeCX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        temp = optWindowPlace.bottom;
-                        RegSetValueEx(hk3, KRegKeyWinSizeCY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        temp = optWindowLayoutVer;
-                        RegSetValueEx(hk3, KRegKeyWinLayoutVer, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveWindowPlace = FALSE;
-                    }
-
-                    // device Arrival / removal time
-                    if (optNeedSaveArrivalTime) {
-                        temp = optArrivalOrRemovalTime;
-                        RegSetValueEx(hk3, KRegKeyArrivalTime, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveArrivalTime = FALSE;
-                    }
-
-                    if (optNeedSaveViewSortOrder) {
-                        temp = optViewSortOrder;
-                        RegSetValueEx(hk3, KRegKeySortOrder, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveViewSortOrder = FALSE;
-                    }
-
-                    if (optNeedSaveViewStyleButton) {
-                        temp = optViewStyleButton;
-                        RegSetValueEx(hk3, KRegKeyViewStyle, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
-                        optNeedSaveViewStyleButton = FALSE;
-                    }
-
-                    if (optNeedSaveHexFileHistory && optHexFileHistoryCount) {
-                        HKEY hk4;
-
-                        optNeedSaveHexFileHistory = FALSE;
-                        if (ERROR_SUCCESS == RegCreateKeyEx(hk3, KRegKeyMRUHexFile, 0, _T(""),
-                                REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk4, &disp)) {
-                            TCHAR numbuff[4];
-                            for (int j = 0; j < optHexFileHistoryCount; j++) {
-                                StringCchPrintf(numbuff, ARRAYSIZE(numbuff), _T("%i"), j);
-                                RegSetValueEx(hk4, numbuff, 0, REG_SZ, (BYTE*)&optHexFileHistory[j], 
-                                    (wcslen(optHexFileHistory[j]) + 1) * sizeof(wchar_t));
-                            }
-                            RegCloseKey(hk4);
-                        }
-                    }
+                if (ERROR_SUCCESS == RegCreateKeyEx(hk2, KRegProgramName, 0, _T(""), REG_OPTION_NON_VOLATILE,
+                            KEY_ALL_ACCESS, NULL, &hk3, &disp)) {
+                    DoSaveChangedValues(hk3);
                     RegCloseKey(hk3);
                 }
                 RegCloseKey(hk2);
@@ -302,6 +234,75 @@ void MonOptions::RegistrySaveChangedValues(BOOL destroyWindow)
             RegCloseKey(hk1);
         }
     } // if optNeedSaveFlags
+}
+
+
+void MonOptions::DoSaveChangedValues(HKEY programKey)
+{
+    DWORD temp;
+    DWORD disp = 0;
+
+    if (optNeedSaveShowFlags) {
+        temp = optShowFlags;
+        RegSetValueEx(programKey, KRegKeyShowFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveShowFlags = FALSE;
+    }
+
+    if (optNeedSaveNotifyFlags) {
+        temp = optNotifyFlags;
+        RegSetValueEx(programKey, KRegKeyNotifyFlags, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveNotifyFlags = FALSE;
+    }
+
+    if (optNeedSaveWindowPlace) {
+        temp = optWindowPlace.left;
+        RegSetValueEx(programKey, KRegKeyWinPosX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        temp = optWindowPlace.top;
+        RegSetValueEx(programKey, KRegKeyWinPosY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        temp = optWindowPlace.right;
+        RegSetValueEx(programKey, KRegKeyWinSizeCX, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        temp = optWindowPlace.bottom;
+        RegSetValueEx(programKey, KRegKeyWinSizeCY, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        temp = optWindowLayoutVer;
+        RegSetValueEx(programKey, KRegKeyWinLayoutVer, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveWindowPlace = FALSE;
+    }
+
+    // device Arrival / removal time
+    if (optNeedSaveArrivalTime) {
+        temp = optArrivalOrRemovalTime;
+        RegSetValueEx(programKey, KRegKeyArrivalTime, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveArrivalTime = FALSE;
+    }
+
+    if (optNeedSaveViewSortOrder) {
+        temp = optViewSortOrder;
+        RegSetValueEx(programKey, KRegKeySortOrder, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveViewSortOrder = FALSE;
+    }
+
+    if (optNeedSaveViewStyleButton) {
+        temp = optViewStyleButton;
+        RegSetValueEx(programKey, KRegKeyViewStyle, 0, REG_DWORD, (BYTE*)&temp, sizeof(temp));
+        optNeedSaveViewStyleButton = FALSE;
+    }
+
+    if (optNeedSaveHexFileHistory && optHexFileHistoryCount) {
+        HKEY hk;
+
+        optNeedSaveHexFileHistory = FALSE;
+        if (ERROR_SUCCESS == RegCreateKeyEx(programKey, KRegKeyMRUHexFile, 0, _T(""),
+                REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk, &disp)) {
+            wchar_t numbuff[4];
+
+            for (int j = 0; j < optHexFileHistoryCount; j++) {
+                StringCchPrintf(numbuff, ARRAYSIZE(numbuff), _T("%i"), j);
+                RegSetValueEx(hk, numbuff, 0, REG_SZ, (BYTE*)&optHexFileHistory[j], 
+                    (wcslen(optHexFileHistory[j]) + 1) * sizeof(wchar_t));
+            }
+            RegCloseKey(hk);
+        }
+    }
 }
 
 

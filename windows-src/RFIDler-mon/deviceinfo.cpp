@@ -38,8 +38,6 @@
 
 #include "rfidmonitor.h"
 
-#include <strsafe.h>
-
 
 // Configured & listed RFIDlers
 int DeviceInfo::iCountRfidlers = 0;
@@ -57,14 +55,11 @@ int DeviceInfo::iCountOtherSerial = 0;
 
 
 // new DeviceInfo object, transfers ownership of strings
-// TODO add bustype attribute, and make Location() report e.g. Bluetooth, drop aUsbValid flag
-// TODO add USB segment count, maybe have a consolidated bus info object?
-DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType, 
-    enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortName,
-    wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
-    unsigned aUsbHub, unsigned aUsbPort, BOOL aUsbValid, unsigned aScanId, DeviceInfo *aDevNext,
-    BOOL aIsWinSerial, SerialType aSerialType)
+BOOL DeviceInfo::AddDeviceToList(enum DevType aDevType, enum DevState aDevState, FILETIME aNow,
+    DevicePortDetails& aPortDetails, DeviceLocation& aLocation, DeviceSerialNumber& aSerialNumber, unsigned aScanId,
+    SerialPortType aPortType)
 {
+    DeviceInfo *devNext = DeviceTracker::GetPortList();
     DeviceInfo *newDev = NULL;
 
     // decide if new device should be DevArrived rather than DevPresent
@@ -72,26 +67,23 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
         aDevState = DevArrived;
     }
 
-    newDev = new DeviceInfo(aDevType, aDevState, aNow, aSerialnumber, aPortName,
-        aPortNumber, aContainerId, aFriendlyName, aHardwareId,
-        aUsbHub, aUsbPort, aUsbValid, aScanId, aDevNext,
-        aIsWinSerial, aSerialType);
+    newDev = new DeviceInfo(aDevType, aDevState, aNow, aPortDetails, aLocation, aSerialNumber, aScanId, devNext, aPortType);
 
     if (newDev) {
-        TCHAR   buffer[20];
+        wchar_t buffer[20];
 
         // update double linked list
-        if (aDevNext) {
-            aDevNext->devPrev = newDev;
+        if (devNext) {
+            devNext->devPrev = newDev;
         }
-        DevTracker.SetPortList(newDev);
+        DeviceTracker::SetPortList(newDev);
 
         StringCbPrintf(buffer, sizeof(buffer), 
-            (newDev->DeviceState() == DevArrived) ? _T("%s 0min") : _T("%s"), newDev->StateName());
+            (newDev->DeviceState() == DevArrived) ? _T("%s 0 min") : _T("%s"), newDev->StateName());
 
         // display update shouldn't fail, but check anyway
         if (!DevTracker.AddViewItem(newDev->DisplayName(), newDev->devImage,
-                newDev->DevTypeName(), buffer, newDev->LocationString(), aSerialnumber,
+                newDev->DevTypeName(), buffer, newDev->LocationString(), aSerialNumber.devSerialString,
                 (LPARAM)newDev)) {
             newDev->Destroy();
             newDev = NULL;
@@ -106,7 +98,7 @@ DeviceInfo *DeviceInfo::NewDevice(enum DevType aDevType,
         }
     }
 
-    return newDev;
+    return newDev ? TRUE : FALSE;
 }
 
 
@@ -151,7 +143,7 @@ void DeviceInfo::IncDeviceTypeCount()
 }
 
 
-DeviceInfo *DeviceInfo::DeleteDevice(BOOL destroyWindow)
+DeviceInfo *DeviceInfo::DeleteDevice(BOOL skipNotifications)
 {
     DeviceInfo *next = devNext;
 
@@ -161,7 +153,7 @@ DeviceInfo *DeviceInfo::DeleteDevice(BOOL destroyWindow)
     }
 
     // update DeviceTracker counts, decide on notifications
-    if (!destroyWindow) {
+    if (!skipNotifications) {
         DevTracker.DetermineRemovalNotifications(devType, devState, DevNotConnected);
     }
 
@@ -198,11 +190,10 @@ void DeviceInfo::Destroy()
         devDeleteOnUnlock = TRUE;
     } else {
         // release all strings here
-        ReleaseString(devSerialNumber);
-        ReleaseString(devPortName);
-        ReleaseString(devContainerId);
-        ReleaseString(devFriendlyName);
-        ReleaseString(devHardwareId);
+        ReleaseString(devSerialNumber.devSerialString);
+        ReleaseString(devPortDetails.devPortName);
+        ReleaseString(devPortDetails.devFriendlyName);
+        ReleaseString(devSerialNumber.devHardwareId);
         ReleaseString(devDevicePath);
 
         // unlink
@@ -212,7 +203,7 @@ void DeviceInfo::Destroy()
         if (devPrev) {
             devPrev->devNext = devNext;
         } else {
-            DevTracker.SetPortList(devNext);
+            DeviceTracker::SetPortList(devNext);
         }
 
         delete this;
@@ -263,7 +254,7 @@ void DeviceInfo::SetDeviceIcon()
 }
 
 
-const TCHAR *DeviceInfo::StateName()
+const wchar_t *DeviceInfo::StateName()
 {
     switch (devState)
     {
@@ -283,7 +274,7 @@ const TCHAR *DeviceInfo::StateName()
 }
 
 
-const TCHAR *DeviceInfo::DevTypeName()
+const wchar_t *DeviceInfo::DevTypeName()
 {
     switch (devType)
     {
@@ -295,13 +286,15 @@ const TCHAR *DeviceInfo::DevTypeName()
         return _T("dev board");
     case DevOtherSerial:
         // distinguish modems & serial ports
-        if (devSerialType == SerialModem) {
+        switch (devPortType)
+        {
+        case SerialModem:
             return _T("modem");
-        }
-        if (devSerialType == SerialMultiport) {
+        case SerialMultiport:
             return _T("multiport");
+        default:
+            return _T("serial");
         }
-        return _T("serial");
     case DevMicroBootloader:
         return _T("Bootloader");
     default:
@@ -311,27 +304,55 @@ const TCHAR *DeviceInfo::DevTypeName()
 }
 
 
-const TCHAR *DeviceInfo::LocationString()
+const wchar_t *DeviceInfo::LocationString()
 {
-    static TCHAR   locus[30];
+    static wchar_t  locus[30];
 
-    if (devUsbValid) {
+    switch (devLocation.devBusType)
+    {
+    case BusUSB:
         ZeroMemory(locus, sizeof(locus));
-        StringCbPrintf(locus, sizeof(locus), _T("USB hub %i port %i"), devUsbHub, devUsbPort);
+        StringCbPrintf(locus, sizeof(locus), _T("USB hub %i port %i"), devLocation.devUsbHub, devLocation.devUsbPort);
         return locus;
+
+    case BusBluetooth:
+        return _T("Bluetooth");
+
+    case BusPCI:
+        return _T("PCI bus");
+
+    case BusPCMCIA:
+        return _T("PCMCIA bus");
+
+    case BusISAPNP:
+        return _T("ISA PNP");
+
+    case BusEISA:
+        return _T("EISA bus");
+
+    case BusMCA:
+        return _T("MCA bus");
+
+    case BusFirewire:
+        return _T("Firewire");
+
+    case BusSD:
+        return _T("SD card");
+
+    default:
+        return NULL;
     }
-    return NULL;
 }
 
 
-const TCHAR *DeviceInfo::DisplayName()
+const wchar_t *DeviceInfo::DisplayName()
 {
     switch (devType)
     {
     case DevRfidlerCom:
     case DevMicroDevBoard:
     case DevOtherSerial:
-        return devPortName;
+        return devPortDetails.devPortName;
     case DevMicroBootloader:
         return _T("HID bootloader");
     case DevUnconfigRfidlerCom:
@@ -345,10 +366,10 @@ const TCHAR *DeviceInfo::DisplayName()
 
 
 // compose details about device into infotip/tooltip
-const TCHAR *DeviceInfo::InfoTip()
+const wchar_t *DeviceInfo::InfoTip()
 {
-    static TCHAR   infotipBuffer[1024];
-    TCHAR *desc = NULL;
+    static wchar_t  infotipBuffer[1024];
+    wchar_t *desc = NULL;
 
     infotipBuffer[0] = 0;
 
@@ -370,7 +391,7 @@ const TCHAR *DeviceInfo::InfoTip()
         desc = _T("Microchip USB COM port, driver not installed");
         break;
     case DevOtherSerial:
-        desc = devFriendlyName;
+        desc = devPortDetails.devFriendlyName;
         break;
     default:
         assert(0);
@@ -381,30 +402,33 @@ const TCHAR *DeviceInfo::InfoTip()
     }
 
     // describe serial port type, based on Windows GUID for ports, modem or multiport serial card
-    if (devSerialType != SerialNone) {
-        desc = NULL;
-        if (devSerialType == SerialPort) {
-            desc = _T("\nSerial Port");
-        } else if (devSerialType == SerialModem) {
-            desc = _T("\nModem");
-        } else if (devSerialType == SerialMultiport) {
-            desc = _T("\nMultiport Serial Device");
-        }
-        if (desc) {
-            wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
-        }
+    desc = NULL;
+    switch (devPortType)
+    {
+    case SerialPort:
+        desc = _T("\nSerial Port");
+        break;
+    case SerialModem:
+        desc = _T("\nModem");
+        break;
+    case SerialMultiport:
+        desc = _T("\nMultiport Serial Device");
+        break;
+    }
+    if (desc) {
+        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
     }
 
-    if (devHardwareId) {
+    if (devSerialNumber.devHardwareId) {
         wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), _T("\nHardwareId = "));
-        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), devHardwareId);
+        wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), devSerialNumber.devHardwareId);
     }
 
-    if (devSerialNumber) {
-        if (devIsWinSerial) {
+    if (devSerialNumber.devSerialString) {
+        if (devSerialNumber.devIsWinSerial) {
             desc = _T("\nWindows generated serial number");
         } else {
-            desc = _T("\nBuilt-in device serial number");
+            desc = _T("\nSerial number from device");
         }
         wcscat_s(infotipBuffer, ARRAYSIZE(infotipBuffer), desc);
     }
@@ -424,14 +448,14 @@ int CALLBACK DeviceInfo::CompareProc(DeviceInfo *dev1, DeviceInfo *dev2, LPARAM 
     switch (primaryKey) {
     case lvDispName: 
     case lvRevDispName:
-        if (dev1->devPortName) {
-            if (!dev2 ->devPortName) {
+        if (dev1->devPortDetails.devPortName) {
+            if (!dev2 ->devPortDetails.devPortName) {
                 result = -1;
             } else {
-                result = dev1->devPortNumber - dev2->devPortNumber;
+                result = dev1->devPortDetails.devPortNumber - dev2->devPortDetails.devPortNumber;
             }
         } else {
-            if (dev2 ->devPortName) {
+            if (dev2 ->devPortDetails.devPortName) {
                 result = 1;
             }
         }
@@ -452,33 +476,33 @@ int CALLBACK DeviceInfo::CompareProc(DeviceInfo *dev1, DeviceInfo *dev2, LPARAM 
 
     case lvDispLocus: // USB location
     case lvRevDispLocus:
-        if (dev1->devUsbValid) {
-            if (dev2->devUsbValid) {
-                result = dev1->devUsbHub - dev2->devUsbHub;
+        if (dev1->devLocation.devBusType == BusUSB) {
+            if (dev2->devLocation.devBusType == BusUSB) {
+                result = dev1->devLocation.devUsbHub - dev2->devLocation.devUsbHub;
                 if (result == 0) {
-                    result = dev1->devUsbPort - dev2->devUsbPort;
+                    result = dev1->devLocation.devUsbPort - dev2->devLocation.devUsbPort;
                 }
             } else {
                 result = -1;
             }
         } else {
-            if (dev2->devUsbValid) {
-                result = 1;
-            }
+            // arbitrary order for bus types
+            result = (int)dev2->devLocation.devBusType;
+            result -= (int)dev1->devLocation.devBusType;
         }
         break;
 
     case lvDispSernum: // serialnumber
     case lvRevDispSernum:
     default:
-        if (dev1->devSerialNumber) {
-            if (dev2->devSerialNumber) {
-                result = wcscmp(dev1->devSerialNumber, dev2->devSerialNumber);
+        if (dev1->devSerialNumber.devSerialString) {
+            if (dev2->devSerialNumber.devSerialString) {
+                result = wcscmp(dev1->devSerialNumber.devSerialString, dev2->devSerialNumber.devSerialString);
             } else {
                 result = -1;
             }
         } else {
-            if (dev2->devSerialNumber) {
+            if (dev2->devSerialNumber.devSerialString) {
                 result = 1;
             }
         }
@@ -490,6 +514,20 @@ int CALLBACK DeviceInfo::CompareProc(DeviceInfo *dev1, DeviceInfo *dev2, LPARAM 
     }
 
     return result;
+}
+
+
+void DeviceInfo::SetDeviceAbsent()
+{
+    assert(devState == DevRemoved);
+    devState = DevAbsent;
+}
+
+
+void DeviceInfo::SetDevicePresent()
+{
+    assert(devState == DevArrived);
+    devState = DevPresent;
 }
 
 
@@ -534,7 +572,7 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
         }
 
         if (chgState) {
-            TCHAR   buffer[20];
+            wchar_t buffer[20];
 
             StringCbPrintf(buffer, sizeof(buffer), _T("%s 0min"), StateName());
             SetDeviceIcon();
@@ -549,13 +587,11 @@ void DeviceInfo::UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsig
 
 
 void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
-        FILETIME aNow, wchar_t *aPortName, int aPortNumber, unsigned aUsbHub, unsigned aUsbPort, BOOL aUsbValid,
-        wchar_t *aSerialNumber, unsigned aScanId, BOOL aIsWinSerial)
+        FILETIME aNow, DevicePortDetails& aPortDetails, DeviceLocation& aLocation,
+        DeviceSerialNumber& aSerialNumber, unsigned aScanId)
 {
     // change of device type happens when installing/removing device drivers
     if (devType != aDevType) {
-        BOOL nameChanged = FALSE;
-
 #ifdef _DEBUG
         PrintDebugStatus(_T("DevType changed (%u -> %u)\n"), devType, aDevType);
 #endif
@@ -580,27 +616,16 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
         DevTracker.UpdateViewItemIconAndType(devImage, DevTypeName(), (LPARAM)this);
 
         // installing driver can add/change name
-        if ((aPortName) && (!devPortName || wcscmp(devPortName, aPortName))) {
+        if ((devPortDetails.devPortName && !aPortDetails.devPortName) || 
+                ((aPortDetails.devPortName) && (!devPortDetails.devPortName || wcscmp(devPortDetails.devPortName, aPortDetails.devPortName)))) {
 #ifdef _DEBUG
-            PrintDebugStatus(_T("Adding PortName (%s)\n"), aPortName);
+            PrintDebugStatus(_T("Changing PortName (%s)\n"), aPortDetails.devPortName ? aPortDetails.devPortName : devPortDetails.devPortName);
 #endif
-            ReleaseString(devPortName);
+            // swap new & old port details (simplifies memory management this way)
+            DevicePortDetails temp(devPortDetails);
+            devPortDetails = aPortDetails;
+            aPortDetails = temp;
 
-            devPortName = _wcsdup(aPortName);
-            if (devPortName) {
-                devPortNumber = aPortNumber;
-                nameChanged = TRUE;
-            }
-        } else if (devPortName && !aPortName) {
-#ifdef _DEBUG
-            PrintDebugStatus(_T("Release portname (%s)\n"), devPortName);
-#endif
-            // driver uninstalled, portname removed
-            ReleaseString(devPortName);
-            nameChanged = TRUE;
-        }
-
-        if (nameChanged) {
             DevTracker.UpdateViewItemPortName(DisplayName(), (LPARAM)this);
         }
     }
@@ -611,35 +636,30 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
 
     if ((devState == DevArrived) || (devState == DevPresent)) {
         // portname has changed? eg by user in Device Manager
-        if ((aPortName) && (!devPortName || wcscmp(devPortName, aPortName))) {
-            ReleaseString(devPortName);
+        if ((aPortDetails.devPortName) && (!devPortDetails.devPortName || wcscmp(devPortDetails.devPortName, aPortDetails.devPortName))) {
+            // swap new & old port details (simplifies memory management this way)
+            DevicePortDetails temp(devPortDetails);
+            devPortDetails = aPortDetails;
+            aPortDetails = temp;
 
-            devPortName = _wcsdup(aPortName);
-            if (devPortName) {
-                devPortNumber = aPortNumber;
-                // NB should reorder devices to reflect updated portname
-                DevTracker.UpdateViewItemPortName(devPortName, (LPARAM)this);
-            }
+            DevTracker.UpdateViewItemPortName(DisplayName(), (LPARAM)this);
         }
     }
 
-    if (aUsbValid) {
-        if ((devUsbValid != aUsbValid) || (devUsbHub != aUsbHub) || (devUsbPort != aUsbPort)) {
-            devUsbValid = aUsbValid;
-            devUsbHub = aUsbHub;
-            devUsbPort = aUsbPort;
-            // update displayed usb location
-            DevTracker.UpdateViewItemLocation(LocationString(), (LPARAM)this);
-        }
+    if ((devLocation.devBusType != aLocation.devBusType) || (devLocation.devUsbHub != aLocation.devUsbHub) || (devLocation.devUsbPort != aLocation.devUsbPort)) {
+        devLocation = aLocation;
+        // update displayed bus, usb hub/port location
+        DevTracker.UpdateViewItemLocation(LocationString(), (LPARAM)this);
     }
 
-    if (!devSerialNumber && aSerialNumber) {
-        devSerialNumber = _wcsdup(aSerialNumber);
-        if (devSerialNumber) {
-            devIsWinSerial = aIsWinSerial;
-            // NB should reorder devices to reflect updated serial number
-            DevTracker.UpdateViewItemSerialNumber(devSerialNumber, (LPARAM)this);
-        }
+    // TODO is this required?
+    if (!devSerialNumber.devSerialString && aSerialNumber.devSerialString) {
+        DeviceSerialNumber temp(devSerialNumber);
+        devSerialNumber = aSerialNumber;
+        aSerialNumber = temp;
+
+        // NB should reorder devices to reflect updated serial number
+        DevTracker.UpdateViewItemSerialNumber(devSerialNumber.devSerialString, (LPARAM)this);
     }
 
     devScanId = aScanId;
@@ -647,7 +667,7 @@ void DeviceInfo::UpdateDevice(enum DevType aDevType, enum DevState aDevState,
 
 
 // update time, returns TRUE device is still valid FALSE if no longer visible
-BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limit)
+BOOL DeviceInfo::UpdateTimeInState(FILETIME now, DWORD limit)
 {
     ULARGE_INTEGER t1, t2;
 
@@ -661,7 +681,7 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
 
     if (t2.LowPart <= limit) {
         if (devElapsed != t2.LowPart) {
-            TCHAR   buffer[20];
+            wchar_t buffer[20];
 
             devElapsed = t2.LowPart;
             StringCbPrintf(buffer, sizeof(buffer), _T("%s %i min"), StateName(), t2.LowPart);
@@ -669,19 +689,7 @@ BOOL DeviceInfo::UpdateTimeInState(FILETIME now, BOOL showNotPresent, DWORD limi
         }
         return TRUE;
     } else {
-        // device arrival / removal time has expired
-        if (devState == DevArrived) {
-            devState = DevPresent;
-        } else {
-            assert(devState == DevRemoved);
-            devState = DevAbsent;
-            if (!showNotPresent) {
-                // device should no longer be listed
-                return FALSE;
-            }
-        }
-        DevTracker.UpdateViewItemState(StateName(), (LPARAM)this);
-        return TRUE;
+        return FALSE;
     }
 }
 
@@ -714,7 +722,7 @@ wchar_t const *DeviceInfo::DevicePath()
                 devDetails->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
                 if (SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, &deviceInterface, devDetails, size, &size, NULL)) {
                     // wcsstr variant that ignores case
-                    const wchar_t *match = wcs_istr(devDetails->DevicePath, devSerialNumber);
+                    const wchar_t *match = wcs_istr(devDetails->DevicePath, devSerialNumber.devSerialString);
                     if (match) {
                         devDevicePath = wcs_dupsubstr(devDetails->DevicePath, size); // todo size - 4?
                         foundPath = TRUE;

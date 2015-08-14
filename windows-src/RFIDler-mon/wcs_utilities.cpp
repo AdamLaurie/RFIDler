@@ -85,16 +85,28 @@ const wchar_t* wcs_istr(const wchar_t* pString, const wchar_t* pSubStr)
 }
 
 
-// if string has expected prefix the return the rest of the string, otherwise NULL
-BOOL wcs_consumeprefix(wchar_t* String, const wchar_t* SubStr, wchar_t** OutStr, DWORD maxsize)
+// exact string prefix?
+BOOL wcs_checkprefix(const wchar_t* String, const wchar_t* SubStr)
 {
     size_t len = wcslen(SubStr);
 
-    if ((len <= maxsize) && (0 == _wcsnicmp(String, SubStr, len))) {
-        *OutStr = String + len;
+    if (0 == wcsncmp(String, SubStr, len)) {
         return TRUE;
     }
-    *OutStr = NULL;
+    return FALSE;
+}
+
+
+// if string has expected prefix then return offset to the rest of the string, otherwise NULL
+BOOL wcs_consumeprefix(const wchar_t* String, const wchar_t* SubStr, unsigned* Offset)
+{
+    size_t len = wcslen(SubStr);
+
+    if (0 == wcsncmp(String, SubStr, len)) {
+        *Offset = len;
+        return TRUE;
+    }
+    *Offset = 0;
     return FALSE;
 }
 

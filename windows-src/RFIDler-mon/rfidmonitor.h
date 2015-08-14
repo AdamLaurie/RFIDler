@@ -46,6 +46,7 @@
 #include <CommCtrl.h>
 #include <ShlObj.h>
 #include <ShObjIdl.h>
+#include <strsafe.h>
 
 #include "resource.h"
 
@@ -208,6 +209,9 @@ public:
     void SetArrivalOrRemovalTime(unsigned arrivalOrRemovalTime, BOOL saveChange);
 
 private:
+    void DoSaveChangedValues(HKEY programKey);
+
+private:
     HWND        optHwndMain;
     // disable warning about anonymous struct/union
 #pragma warning(disable: 4201)
@@ -279,7 +283,7 @@ private:
     int         optViewStyleButton;    // LV_VIEW_ICON, LV_VIEW_SMALLICON, LV_VIEW_DETAILS, LV_VIEW_TILE
     unsigned    optArrivalOrRemovalTime;
     int         optHexFileHistoryCount;
-    wchar_t    *optHexFileHistory[optKMaxHexFileHistoryCount];
+    wchar_t     *optHexFileHistory[optKMaxHexFileHistoryCount];
 
     unsigned    optTimerRegistrySave;
 };
@@ -292,7 +296,6 @@ enum DevType {
                 DevMicroBootloader,         // Microchip Dev Board bootloader
                 DevUnconfigRfidlerCom,      // unconfigured Rfidler COM port, driver not (yet) installed
                 DevUnconfigMicroDevBoard,   // unconfigured Microchip Dev Board, driver not (yet) installed
-                DevMicroBootShadow,         // USB parent for HID Bootloader, gives access to USB location
                 // non-Rfidler things ...
                 DevOtherSerial,
                 DevUnknown };
@@ -300,41 +303,73 @@ enum DevType {
 enum DevImage { DevImgRfidlerOk = 0, DevImgRfidlerUnconfig, DevImgRfidlerRemoved, DevImgRfidlerBoot,
                 DevImgDevBoardOk, DevImgDevBoardRemoved, DevImgDevBoardUnconfig,
                 DevImgOtherSerialOk, DevImgOtherSerialRemoved };
-enum SerialType { SerialNone, SerialPort, SerialModem, SerialMultiport };
+enum SerialPortType { SerialNone, SerialPort, SerialModem, SerialMultiport };
+enum DevBusType { BusUnknown, BusUSB, BusBluetooth, BusPCI, BusPCMCIA, BusISAPNP, BusEISA, BusMCA, BusFirewire, BusSD };
+
+
+struct DeviceLocation {
+    DeviceLocation() :
+        devBusType(BusUnknown), devUsbHub(0), devUsbPort(0)
+        {}
+
+    enum DevBusType devBusType;
+    unsigned        devUsbHub;
+    unsigned        devUsbPort;
+    // TODO add USB segment count
+};
+
+
+// bundle of serial port details
+struct DevicePortDetails {
+    DevicePortDetails() : devPortName(NULL), devFriendlyName(NULL), devPortNumber(0)
+    {}
+
+    wchar_t *devPortName; // eg COM12
+    wchar_t *devFriendlyName;
+    int     devPortNumber;      // COM port number eg 6
+};
+
+
+struct DeviceSerialNumber {
+    DeviceSerialNumber() : devSerialString(NULL), devHardwareId(NULL), devIsWinSerial(FALSE) {}
+
+    wchar_t *devSerialString;
+    wchar_t *devHardwareId;
+    BOOL    devIsWinSerial;
+};
 
 
 class DeviceInfo {
 public:
-    static DeviceInfo *NewDevice(enum DevType aDevType, 
-        enum DevState aDevState, FILETIME aNow, wchar_t *aSerialnumber, wchar_t *aPortname,
-        wchar_t *aFriendlyName, wchar_t *aHardwareId, int aPortNumber, wchar_t *aContainerId,
-        unsigned aUsbHub, unsigned aUsbPort, BOOL aUsbValid, unsigned aScanId, DeviceInfo *aDevNext,
-        BOOL aIsWinSerial, SerialType aSerialType);
-    void UpdateDevice(enum DevType aDevType, enum DevState aDevState,
-            FILETIME aNow, wchar_t *aPortname, int aPortNumber, unsigned aUsbHub, unsigned aUsbPort,
-            BOOL aUsbValid, wchar_t *aSerialNumber, unsigned aScanId, BOOL aIsWinSerial);
-    void UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsigned aScanId);
-    BOOL UpdateTimeInState(FILETIME ft, BOOL showNotPresent, DWORD limit);
-    void UpdateHardwareId(wchar_t *aHardwareId) { devHardwareId = aHardwareId; }
+    static BOOL AddDeviceToList(enum DevType aDevType, enum DevState aDevState, FILETIME aNow,
+        DevicePortDetails& aPortDetails, DeviceLocation& aLocation, DeviceSerialNumber& aSerialNumber, unsigned aScanId,
+        SerialPortType aPortType);
 
-    const TCHAR *StateName();
-    const TCHAR *DevTypeName();
-    const TCHAR *LocationString();
-    const TCHAR *DisplayName();
-    const TCHAR *InfoTip();
+    void UpdateDevice(enum DevType aDevType, enum DevState aDevState,
+            FILETIME aNow, DevicePortDetails& aPortDetails, DeviceLocation& aLocation, DeviceSerialNumber& aSerialNumber,
+            unsigned aScanId);
+    void UpdateDeviceState(enum DevState aDevState, FILETIME aNow, unsigned aScanId);
+    void SetDeviceAbsent();
+    void SetDevicePresent();
+    BOOL UpdateTimeInState(FILETIME ft, DWORD limit);
+
+    const wchar_t *StateName();
+    const wchar_t *DevTypeName();
+    const wchar_t *LocationString();
+    const wchar_t *DisplayName();
+    const wchar_t *InfoTip();
     // manage delete and allow GUI to lock against object delete eg whilst showing Context Menu
-    DeviceInfo *DeleteDevice(BOOL destroyWindow);
+    DeviceInfo *DeleteDevice(BOOL skipNotifications);
     void LockForContextMenu();
     void UnlockForContextMenu();
     
     // getters
     enum DevType DeviceType() const { return devType; }
     enum DevState DeviceState() const { return devState; }
-    const wchar_t *SerialNumber() const { return devSerialNumber; }
-    const wchar_t *ContainerId() const { return devContainerId; }
-    const wchar_t *PortName() const { return devPortName; }
-    const wchar_t *HardwareId() const { return devHardwareId; }
-    int PortNumber() const { return devPortName ? devPortNumber : -1; }
+    const wchar_t *SerialNumber() const { return devSerialNumber.devSerialString; }
+    const wchar_t *PortName() const { return devPortDetails.devPortName; }
+    const wchar_t *HardwareId() const { return devSerialNumber.devHardwareId; }
+    int PortNumber() const { return devPortDetails.devPortName ? devPortDetails.devPortNumber : -1; }
     unsigned LastScanId() const { return devScanId; }
     DeviceInfo *DeviceNext() const { return devNext; }
     BOOL DeleteOnUnlock() const { return devDeleteOnUnlock; }
@@ -350,19 +385,15 @@ public:
 
 private:
     DeviceInfo(enum DevType aDevType, enum DevState aDevState, FILETIME aNow,
-        wchar_t *aSerialnumber, wchar_t *aPortName, int aPortNumber, wchar_t *aContainerId,
-        wchar_t *aFriendlyName, wchar_t *aHardwareId, unsigned aUsbHub,
-        unsigned aUsbPort, BOOL aUsbValid, unsigned aScanId, DeviceInfo *aDevNext,
-        BOOL aIsWinSerial, SerialType aSerialType) :
+        DevicePortDetails& aPortDetails, DeviceLocation& aLocation,
+        DeviceSerialNumber& aSerialNumber, unsigned aScanId, DeviceInfo *aDevNext,
+        SerialPortType aPortType) :
 #ifdef _DEBUG
-        devMagic(0x316f666e49766544),           // "DevInfo1"
+        devMagic(0x306f666e49766544),           // "DevInfo0"
 #endif
         devTimestamp(aNow), devType(aDevType), devState(aDevState), devImage((enum DevImage)-1),
-        devSerialNumber(aSerialnumber), devPortName(aPortName), devContainerId(aContainerId),
-        devFriendlyName(aFriendlyName), devHardwareId(aHardwareId), devDevicePath(NULL),
-        devPortNumber(aPortNumber), devUsbHub(aUsbHub), devUsbPort(aUsbPort), devUsbValid(aUsbValid),
-        devElapsed(0), devScanId(aScanId), devIsWinSerial(aIsWinSerial), devSerialType(aSerialType),
-        devLocked(FALSE),
+        devDevicePath(NULL), devPortDetails(aPortDetails), devLocation(aLocation), devSerialNumber(aSerialNumber),
+        devElapsed(0), devScanId(aScanId), devPortType(aPortType), devLocked(FALSE),
         devDeleteOnUnlock(FALSE), devPresent(FALSE), devNext(aDevNext), devPrev(NULL)
         {
             SetDeviceIcon();
@@ -384,34 +415,29 @@ private:
     static int iCountOtherSerial;
 
 #ifdef _DEBUG
-    unsigned long long devMagic;        // 64 bit magic number to identify objects in memory
+    unsigned long long  devMagic;        // 64 bit magic number to identify objects in memory
 #endif
 
-    FILETIME        devTimestamp;
-    enum DevType    devType;
-    enum DevState   devState;
-    enum DevImage   devImage;
-    wchar_t         *devSerialNumber;
-    wchar_t         *devPortName; // eg COM12
-    wchar_t         *devContainerId; // ContainerId used for HID Bootloader devices
-    wchar_t         *devFriendlyName;
-    wchar_t         *devHardwareId;
-    wchar_t         *devDevicePath;
-    int             devPortNumber;
-    unsigned        devUsbHub;
-    unsigned        devUsbPort;
-    BOOL            devUsbValid;
-    DWORD           devElapsed;   // time since DevRemoved or DevArrived started
-    unsigned        devScanId; // last device scan that touched this node
-    BOOL            devIsWinSerial;
-    SerialType      devSerialType;
-    BOOL            devLocked;     // prevent delete whilst GUI is accessing the device
-    BOOL            devDeleteOnUnlock;
-    BOOL            devPresent;
+    FILETIME            devTimestamp;       // time of last state change
+
+    enum DevType        devType;
+    enum DevState       devState;
+    enum DevImage       devImage;
+    wchar_t             *devDevicePath;     // cached device path for opening device
+    DevicePortDetails   devPortDetails;
+    DeviceLocation      devLocation;
+    DeviceSerialNumber  devSerialNumber;
+    DWORD               devElapsed;   // time since DevRemoved or DevArrived started
+    unsigned            devScanId; // last device scan that touched this node
+    SerialPortType      devPortType;
+
+    BOOL                devLocked;     // prevent delete whilst GUI is accessing the device
+    BOOL                devDeleteOnUnlock;
+    BOOL                devPresent;
 
     // double linked list
-    DeviceInfo      *devNext;
-    DeviceInfo      *devPrev;
+    DeviceInfo          *devNext;
+    DeviceInfo          *devPrev;
 };
 
 
@@ -419,8 +445,7 @@ class DeviceTracker {
 public:
     DeviceTracker() :        
         mHWndMain(NULL), mHWndListView(NULL), mHWndStatusBar(NULL), mHInst(NULL),
-        mOptions(),
-        mListDevices(NULL), mNeedDevicesResort(FALSE), mSortType(lvDispName),
+        mOptions(), mNeedDevicesResort(FALSE), mSortType(lvDispName),
         mInitialiseRfidler(TRUE), mInitialiseUnconfig(TRUE), mInitialiseMicroSer(TRUE),
         mInitialiseAnySerial(TRUE),
 #if defined(USE_SETUP_DEVICE_API_ADAPTATION)
@@ -458,17 +483,18 @@ private:
     BOOL CheckInitialScanFlag(enum DevType dType);
     void DetermineArrivalNotifications(enum DevType dType, enum DevState newState);
     void DetermineRemovalNotifications(enum DevType dType, enum DevState oldState, enum DevState newState);
-    BOOL AddViewItem(const TCHAR *aName, enum DevImage aImage, const TCHAR *aDevType, 
-            const TCHAR *aState, const TCHAR *aUsbLocation, const TCHAR *aSerialNumber, LPARAM lParam);
+    BOOL AddViewItem(const wchar_t *aName, enum DevImage aImage, const wchar_t *aDevType, 
+            const wchar_t *aState, const wchar_t *aUsbLocation, const wchar_t *aSerialNumber, LPARAM lParam);
     int FindViewItem(LPARAM lParam);
     void RemoveViewItem(LPARAM lParam);
-    void UpdateViewItemPortName(const TCHAR *aName, LPARAM lParam);
-    void UpdateViewItemIconAndState(enum DevImage aImage, const TCHAR *aState, LPARAM lParam);
-    void UpdateViewItemIconAndType(enum DevImage aImage, const TCHAR *aType, LPARAM lParam);
-    void UpdateViewItemLocation(const TCHAR *aUsbLocation, LPARAM lParam);
-    void UpdateViewItemState(const TCHAR *aState, LPARAM lParam);
-    void UpdateViewItemSerialNumber(const TCHAR *aSerialNumber, LPARAM lParam);
-    void SetPortList(DeviceInfo *listStart) { mListDevices = listStart; }
+    void UpdateViewItemPortName(const wchar_t *aName, LPARAM lParam);
+    void UpdateViewItemIconAndState(enum DevImage aImage, const wchar_t *aState, LPARAM lParam);
+    void UpdateViewItemIconAndType(enum DevImage aImage, const wchar_t *aType, LPARAM lParam);
+    void UpdateViewItemLocation(const wchar_t *aUsbLocation, LPARAM lParam);
+    void UpdateViewItemState(const wchar_t *aState, LPARAM lParam);
+    void UpdateViewItemSerialNumber(const wchar_t *aSerialNumber, LPARAM lParam);
+    static DeviceInfo *GetPortList() { return mListDevices; }
+    static void SetPortList(DeviceInfo *listStart) { mListDevices = listStart; }
 
 private:
     void RegisterForDevNotifications();
@@ -482,35 +508,42 @@ private:
     void ScanHidDevices(FILETIME &aNow, unsigned aScanId);
     void ScanSerialDevices(FILETIME &aNow, unsigned aScanId);
     void AddOrUpdateDevice(enum DevType aDevType, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
-        const wchar_t *devInstanceId, DWORD size, SerialType aSerialType, FILETIME &aNow, unsigned aScanId);
+        const wchar_t *devInstanceId, DWORD size, SerialPortType aPortType, FILETIME &aNow, unsigned aScanId);
     void KickArrivalTimer();
     void KickDevScanTimer();
     void CleanupOrphanedDevices(FILETIME &aNow, unsigned aScanId);
     void CleanupDevicesAfterOptionsChange();
     DeviceInfo *FindDevMatchBySernum(enum DevType aDevType, wchar_t *sernumber);
-    DeviceInfo *FindDevMatchByContainerId(enum DevType aDevType, wchar_t *aContainerId);
+
     HIMAGELIST InitImageList(int cx, int cy, unsigned count, const int *iconlist);
-    void InitListColumns(const TCHAR **columns, const int *widths, unsigned count);
+    void InitListColumns(const wchar_t **columns, const int *widths, unsigned count);
+    BOOL GetDeviceGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &DevGuid,
+        CONST DEVPROPKEY PropKey, DWORD Property);
     BOOL GetDeviceClassGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &DevGuid);
+    BOOL GetDeviceBusTypeGUID(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, GUID &BusGuid);
     enum DevState GetDevPresentStatus(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData);
-    BOOL GetDevUsbLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, unsigned &usbHub,
-        unsigned &usbPort);
-    wchar_t *GetContainerId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData);
+
+    void UnpackUSBLocation(DeviceLocation& location, wchar_t *devLocationString);
+    DeviceLocation GetDeviceUSBRegistryLocation(const wchar_t *VIDstring, const wchar_t *serialString);
+
+    DeviceLocation GetUSBDeviceLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData);
+    DeviceLocation GetDeviceLocationFromBusGUID(GUID &BusGuid);
+    DeviceLocation GetDeviceLocation(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, DeviceSerialNumber &aSerialNumber);
+
     wchar_t *GetFriendlyName(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData);
     void CheckSerialDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
-        SerialType aSerialType, FILETIME &aNow, unsigned aScanId);
+        SerialPortType aPortType, FILETIME &aNow, unsigned aScanId);
     void CheckHidDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, FILETIME &aNow,
         unsigned aScanId);
     void CheckClassNoneDevice(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData, FILETIME &aNow,
         unsigned aScanId);
 
     static BOOL GetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData,
-        TCHAR **DevInstance, DWORD *pSize);
-    static BOOL CheckDeviceId(const wchar_t *aHwId, DWORD size, const TCHAR *aRefHwId);
+        wchar_t **DevInstance, DWORD *pSize);
+    static BOOL CheckDeviceId(const wchar_t *aHwId, DWORD size, const wchar_t *aRefHwId);
     static wchar_t* GetPortname(HKEY devkey);
     static wchar_t* GetPortname(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA &DeviceInfoData);
-    static void GetSerialnumber(const wchar_t *devInstanceId, DWORD size, BOOL &isWinSerial,
-        wchar_t **serialNumber, wchar_t **devId);
+    static DeviceSerialNumber GetSerialnumber(const wchar_t *devInstanceId, DWORD size);
 
 private:
     MonOptions  mOptions;      // current option flags
@@ -520,7 +553,9 @@ private:
     HWND        mHWndListView;  // ListView to maintain
     HWND        mHWndStatusBar; // status bar along the bottom of the window
     HINSTANCE   mHInst;
-    DeviceInfo *mListDevices;
+
+    static DeviceInfo *mListDevices;
+
     BOOL        mNeedDevicesResort;
     enum lvCol  mSortType;
     // flags control whether new devices are DevPresent or DevArrived on arrival
@@ -553,26 +588,27 @@ private:
 
 wchar_t* wcs_dupsubstr(const wchar_t* string, size_t length);
 const wchar_t* wcs_istr(const wchar_t* pString, const wchar_t* pSubStr);
-BOOL wcs_consumeprefix(wchar_t* String, const wchar_t* SubStr, wchar_t** OutStr, DWORD maxsize);
+BOOL wcs_checkprefix(const wchar_t* String, const wchar_t* SubStr);
+BOOL wcs_consumeprefix(const wchar_t* String, const wchar_t* SubStr, unsigned* Offset);
 
 
 // rfidmonitor.cpp exported data & functions ...
 
-extern const TCHAR *szAppName;
-extern const TCHAR *szRfidlerHwUsbId;         // "USB\\VID_1D50&PID_6098"
-extern const TCHAR *szMicrochipSerialHwUsbId; // "USB\\VID_04D8&PID_000A"
-extern const TCHAR *szMicrochipBootHwUsbId;   // "USB\\VID_04D8&PID_003C"
-extern const TCHAR *szMicrochipBootHidId;     // "HID\\VID_04D8&PID_003C"
+extern const wchar_t *szAppName;
+extern const wchar_t *szRfidlerHwUsbId;         // "USB\\VID_1D50&PID_6098"
+extern const wchar_t *szMicrochipSerialHwUsbId; // "USB\\VID_04D8&PID_000A"
+extern const wchar_t *szMicrochipBootHwUsbId;   // "USB\\VID_04D8&PID_003C"
+extern const wchar_t *szMicrochipBootHidId;     // "HID\\VID_04D8&PID_003C"
 
 // singleton DeviceTracker
 extern DeviceTracker DevTracker;
 
 
 #if defined(_DEBUG)
-void PrintDebugStatus(const TCHAR *format, ...);
+void PrintDebugStatus(const wchar_t *format, ...);
 #endif
 
-void ReleaseString(TCHAR *&string);
+void ReleaseString(wchar_t *&string);
 void SetStatusBarPartitions(HWND hWndStatusBar, int parts);
 
 

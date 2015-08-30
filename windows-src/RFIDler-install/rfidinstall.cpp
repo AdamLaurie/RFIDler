@@ -1,11 +1,11 @@
 /*
-    Project: Windows RFIDler Driver Install v0.21
+    Project: Windows RFIDler Driver Install v0.3
              Graphical interface to install driver .inf & .cat files
              for Aperture Labs RFIDler LF.
 
     File: rfidinstall.cpp (renamed from rfidinstall.c)
 
-    Author: Anthony Naggs, 2014
+    Author: Anthony Naggs, 2014-2015
 
     Copyright (c) 2014-2015 Anthony Naggs.
     All rights reserved.
@@ -52,7 +52,7 @@
    to stop the Program Compatability Assistant (PCA) from appearing or interferring.
    Some older versions of the manifest tools warn about '81010002 Unrecognized Element "compatibility"'
    this is fine, and just means the tools are a little old. (Microsoft claim to have a hotfix for this
-   http://support.microsoft.com/kb/2670561 but not do have an obvious way to actually obtain the fix.)
+   http://support.microsoft.com/kb/2670561 but do not have a functioning way to actually obtain the fix.)
 
    ^^^^^^ IMPORTANT BUILD NOTES ^^^^^^
 */
@@ -117,62 +117,66 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
  */
 #if defined(_M_AMD64)
 // AMD / Intel 64 bit version of x86 => Win 64
-static const TCHAR *szAppName = _T("RFIDler LF Driver Install - x64");
+static const TCHAR *szAppName = L"RFIDler LF Driver Install - x64";
 #elif defined(_M_IA64)
 // HP / Intel Itanium (IA64) => Win 64
 // Note that the last version of tools to support IA64 was MS Visual Studio 2010.
-static const TCHAR *szAppName = _T("RFIDler LF Driver Install - Itanium");
+static const TCHAR *szAppName = L"RFIDler LF Driver Install - Itanium";
 #error Itanium build not tested
 #elif defined(_M_IX86)
 // Intel x86 => Win 32
-static const TCHAR *szAppName = _T("RFIDler LF Driver Install - x86");
+static const TCHAR *szAppName = L"RFIDler LF Driver Install - x86";
 #elif defined(_M_ARM)
-#error ARM cpu build not supported
+#error ARM cpu build not currently supported
 #else
 #error build not supported
 #endif
 
 
 // details specific to RFIDler
-#define RFIDLER_INF_NAME        _T("rfidlercdc.inf")
+#define RFIDLER_INF_NAME        L"rfidlercdc.inf"
 static const TCHAR *szRfidlerInfName = RFIDLER_INF_NAME;
-static const TCHAR *szRfidlerHardwareId = _T("USB\\VID_1D50&PID_6098");
+static const TCHAR *szRfidlerHardwareId = L"USB\\VID_1D50&PID_6098";
 
 // name of AMD64 version of installer
-#define RFIDLER_INSTALLER64_NAME    _T("rfidlerinstall-x64.exe")
+#define RFIDLER_INSTALLER64_NAME    L"rfidlerinstall-x64.exe"
 static const TCHAR *szRfidlerInstallerX64 = RFIDLER_INSTALLER64_NAME;
 
 // install update messages
 enum installUpdates {
     UPDATE_COPIED,
     UPDATE_CONNECTED,
-    UPDATE_PREVIOUS
+    UPDATE_PREVIOUS,
 };
 
 // action for each enumerated RFIDler
 enum UpdateAction {
-    MarkNonPresentForReinstall,
-    UninstallDriverWinXP,
-    DebugLogDevice,
+    MarkNotPresentRfidlersForReinstall,
+    UninstallAllRfidlers,
+    UninstallNotPresentRfidlers,
+    DebugLogDevice,                     // debug aid
 };
 
 // tests to try on Windows Version Info
 enum WinVersion {
+    WinAtLeastXP,
     WinAtLeastVista,
     WinAtLeast7,
+    WinAtLeast8,
+    WinAtLeast10,
 };
 
 // config & result info for install / uninstall thread
 typedef struct {
-    BOOL    rebootRequired;
-    int     uninstallType;
-    TCHAR   *infpath;
-    DWORD   insError;
-    HWND    hWnd;
-    BOOL    devConnected;
+    BOOL    rebootRequired;         // out: reboot required
+    int     uninstallType;          // in: button Id for uninstall action
+    TCHAR   *infpath;               // in: full path & filename for installing .inf file
+    DWORD   insError;               // out: Windows error code for function that failed
+    HWND    hWndMain;               // in: main Installer window
+    BOOL    devConnected;           // out: whether any Rfidlers were found during install
 } InstallInfo;
 
-enum ProgBarState {
+enum ProgBarState {     // control the progress bar state
     PROG_START,
     PROG_ERROR,
     PROG_COMPLETE,
@@ -180,34 +184,36 @@ enum ProgBarState {
     PROG_MAX            // for test button
 };
 
-static void MoveMainWindow(HWND hWnd, HINSTANCE hInst);
-static INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState);
-static void EnableAndFocusOnFinishButton(HWND hWnd);
-static INT_PTR CALLBACK AboutDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-static UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam);
 
-static void ReportStatus(HWND hWndStatus, const TCHAR *format, ...);
-static ATOM RegisterMainWindow (HINSTANCE hInstance);
-static BOOL FindInfPath(HWND hWnd, TCHAR **aPath);
-static BOOL GetProgramFilename(TCHAR **fname);
-static BOOL IsSafeToInstall(DWORD dwTimeout);
-static DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter);
-static DWORD WINAPI DriverUninstallThreadProc(LPVOID lpParameter);
-static BOOL UserSearchForInfFile(HWND hWnd, TCHAR **aPath, TCHAR *aInitialPath);
-static void UpdateDriverWithAction(InstallInfo *pInsInfo, const GUID *classGuid, enum UpdateAction action);
-static BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoData, const TCHAR *szHardwareId);
-static void MarkDeviceConfigForReinstall(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoData);
-static BOOL TestFileNameAndPath(const TCHAR *basePath, const TCHAR *fileName, TCHAR **outPath, const TCHAR **subDirList);
-static TCHAR *GetWinDir();
-static BOOL CheckIfInstalled();
-static void TrimDirectoryLevel(TCHAR *namebuff, size_t dirLen);
-static BOOL TestPathAndFileNameHelper(TCHAR *namebuff, size_t newsz, const TCHAR *basePath, 
-    const TCHAR *fileName, const TCHAR *subdir);
+void MoveMainWindow(HWND hWnd, HINSTANCE hInst);
+INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+BOOL LaunchInstallOrUninstall(BOOL installAction, HWND hWnd, HWND hWndStatus, HWND hWndProg, ITaskbarList3* pTbList, InstallInfo *pInsInfo, int wID);
+void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState);
+void EnableAndFocusOnFinishButton(HWND hWnd);
+INT_PTR CALLBACK AboutDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam);
+
+void ReportStatus(HWND hWndStatus, const TCHAR *format, ...);
+ATOM RegisterMainWindow (HINSTANCE hInstance);
+BOOL FindInfPath(HWND hWnd, TCHAR **aPath);
+BOOL GetProgramFilename(TCHAR **fname);
+BOOL IsSafeToInstall(DWORD dwTimeout);
+DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter);
+DWORD WINAPI DriverUninstallThreadProc(LPVOID lpParameter);
+BOOL UserSearchForInfFile(HWND hWnd, TCHAR **aPath, TCHAR *aInitialPath);
+void UpdateDriverWithAction(InstallInfo *pInsInfo, const GUID *classGuid, enum UpdateAction action);
+BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData, const TCHAR *szHardwareId);
+void MarkDeviceConfigForReinstall(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData);
+void RemoveRfidlerDevice(InstallInfo *pInsInfo, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData);
+BOOL TestFileNameAndPath(const TCHAR *basePath, const TCHAR *fileName, TCHAR **outPath, const TCHAR **subDirList);
+//TCHAR *GetWinDir();
+wchar_t *FindInstalledInf(HWND hWndMain);
+void TrimDirectoryLevel(TCHAR *namebuff, size_t dirLen);
+BOOL TestPathAndFileNameHelper(TCHAR *namebuff, size_t newsz, const TCHAR *basePath, const TCHAR *fileName, const TCHAR *subdir);
 
 #if !defined(_WIN64)
-static BOOL IsWow64();
-static BOOL IsSystemAMD64();
+BOOL IsWow64();
+BOOL IsSystemAMD64();
 #endif
 BOOL CheckWindowsVersion(enum WinVersion);
 
@@ -217,9 +223,11 @@ static void PrintDebugStatus(const TCHAR *format, ...);
 
 
 // private internal WM_ notifications
-#define WM_PRIVATE_DRIVER_UPDATE_PROGRESS       (WM_APP + 426)
-#define WM_PRIVATE_DRIVER_UPDATE_COMPLETE       (WM_APP + 427)
-#define WM_PRIVATE_DRIVER_UNINSTALL_COMPLETE    (WM_APP + 428)
+#define WM_PRIVATE_UNINSTALL_INF        (WM_APP + 424)
+#define WM_PRIVATE_UNINSTALL_COMPORT    (WM_APP + 425)
+#define WM_PRIVATE_UPDATE_PROGRESS      (WM_APP + 426)
+#define WM_PRIVATE_UPDATE_COMPLETE      (WM_APP + 427)
+#define WM_PRIVATE_UNINSTALL_COMPLETE   (WM_APP + 428)
 
 
 /* real code begins here ... */
@@ -243,7 +251,7 @@ int WINAPI WinMain (
     ClassId = RegisterMainWindow (hInstance);
 
     if (!ClassId) {
-        MessageBox(NULL, _T("Unable to create main window"), szAppName, MB_OK | MB_ICONWARNING);
+        MessageBox(NULL, L"Unable to create main window", szAppName, MB_OK | MB_ICONWARNING);
         return 3;
     }
 
@@ -273,7 +281,7 @@ ATOM RegisterMainWindow (HINSTANCE hInstance)
     WndClass.hCursor       = LoadCursor (NULL, IDC_ARROW);
     WndClass.hbrBackground = (HBRUSH) GetStockObject (LTGRAY_BRUSH);
     WndClass.lpszMenuName  = NULL;
-    WndClass.lpszClassName = _T("RFIDinstall");
+    WndClass.lpszClassName = L"RFIDinstall";
     WndClass.hIconSm       = NULL;
 
     return RegisterClassEx (&WndClass);
@@ -321,7 +329,7 @@ void MoveMainWindow(HWND hWnd, HINSTANCE hInst)
     if (GetWindowRect(hWnd, &rc)) {
         // make invisible window the same size as this, positioned with CW_USEDEFAULT
         // NB need to reference a valid Window class
-        HWND hW = CreateWindow(_T("RFIDinstall"), _T("Invisible Window"), WS_OVERLAPPEDWINDOW,
+        HWND hW = CreateWindow(L"RFIDinstall", L"Invisible Window", WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
             NULL, NULL, hInst, NULL);
         if (hW) {
@@ -346,7 +354,6 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
     static HWND     hRebootButton;
     static HWND     hWndProg;   // progress bar
     static BOOL     isWow64 = FALSE;
-    static BOOL     isSafe = FALSE;
     static BOOL     installing = FALSE; // set if install or uninstall background thread is running
     static UINT     TbCreatedNotification = 0;
     static ITaskbarList3* pTbList = NULL;
@@ -369,43 +376,62 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
         hRebootButton = GetDlgItem(hWnd, IDC_REBOOT);
         hWndProg = GetDlgItem(hWnd, IDC_INST_PROGRESS);
         SetWindowText(hWnd, szAppName);
-        insInfo.hWnd = hWnd;
+        insInfo.hWndMain = hWnd;
         insInfo.uninstallType = 0;
 #if defined(_DEBUG)
         ShowWindow(GetDlgItem(hWnd, IDC_TESTBUTTON), SW_NORMAL);
 #endif
 
+        // check Windows version; set appropriate text for IDC_WINVER_EXPLAIN and enable/disable buttons
+        // for reference old static text said "Drivers for RFIDler LF to be recognised as a serial (COM) port can install in Windows XP, Vista or 7, but in any case require Windows to accept unsigned drivers."
+        if (CheckWindowsVersion(WinAtLeast10)) {
+            SetWindowText(GetDlgItem(hWnd, IDC_WINVER_EXPLAIN),
+                L"Windows 10 supports RFIDler LF without needing to install the" RFIDLER_INF_NAME L" file.");
+            EnableWindow(GetDlgItem(hWnd, IDC_INSTALL), FALSE);
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
+        } else if (CheckWindowsVersion(WinAtLeast8)) {
+            SetWindowText(GetDlgItem(hWnd, IDC_WINVER_EXPLAIN),
+                L"Windows 8.x is not supported at this time, as it requires " RFIDLER_INF_NAME L" to have a Microsoft approved signature, although we just ask to use Microsoft's own usbser driver.");
+            EnableWindow(GetDlgItem(hWnd, IDC_INSTALL), FALSE);
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
+        } else if (CheckWindowsVersion(WinAtLeastVista)) {
+            SetWindowText(GetDlgItem(hWnd, IDC_WINVER_EXPLAIN),
+                L"Windows Vista or 7 need to be configured to accept unsigned drivers in order to accept our " RFIDLER_INF_NAME L" file.");
+        } else { // Win XP
+            SetWindowText(GetDlgItem(hWnd, IDC_WINVER_EXPLAIN),
+                L"Windows XP requires our " RFIDLER_INF_NAME L" file to be installed, it simnply directs Windows to use Microsoft's own usbser driver.");
+            // Full driver uninstall works on XP, but not >= Win Vista
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), TRUE);
+        }
+
         // Check for Windows >= 7
         if (CheckWindowsVersion(WinAtLeast7)) {
-            TbCreatedNotification = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+            TbCreatedNotification = RegisterWindowMessage(L"TaskbarButtonCreated");
             if (TbCreatedNotification) {
                 // obscurely documented secret sauce to actually get the notification
                 ChangeWindowMessageFilterEx(hWnd, TbCreatedNotification, MSGFLT_ALLOW, NULL);
             }
         }
 
-        // enable/disable buttons depending on Windows version
-        if (!CheckWindowsVersion(WinAtLeastVista)) {
-            // Full driver install works on XP, but not >= Win Vista
-            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), TRUE);
-        }
-
 #if !defined(_WIN64)
         // catch Win32 Installer running on Win x64
         isWow64 = IsWow64();
         if (isWow64) {
-            ReportStatus(hWndStatus, _T("Security error: 32-bit Installer does work on 64-bit Windows"));
+            ReportStatus(hWndStatus, L"Security error: 32-bit Installer does work on 64-bit Windows");
             EnableWindow(GetDlgItem(hWnd, IDC_INSTALL), FALSE);
-            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALL), FALSE);
-            // wait until after window is drawn to display error in MessageBox
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALL_NOT_PRESENT), FALSE);
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALL_ALL_RFIDLERS), FALSE);
+            EnableWindow(GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
+
+            // wait until after window is drawn to display error in a MessageBox
             SetTimer(hWnd, KWow64TimerMagicNumber, 500, NULL);
         }
 #endif
 
-        // restore window position & size, or use CW_USEDEFAULT positioning
+        // simulate CW_USEDEFAULT positioning
         MoveMainWindow(hWnd, hInst);
 
-        // return TRUE  unless you set the focus to a control
+        // return TRUE unless you set the focus to a control
         return TRUE;
 
 #if !defined(_WIN64)
@@ -415,25 +441,25 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
             BOOL  isAMD64 = IsSystemAMD64();
             UINT  mbflags = MB_OK;
             TCHAR errorText[1024];
-            TCHAR *errorTitle = _T("Incompatible version of RFIDler Installer");
+            TCHAR *errorTitle = L"Incompatible version of RFIDler Installer";
 
             // kill one-shot timer
             KillTimer(hWnd, wParam);
 
             // compose message depending if system is AMD64
             StringCbPrintf(errorText, sizeof(errorText),
-                _T("This (32-bit) Installer version is not allowed to change your (64-bit) system.\n\n")
+                L"This (32-bit) Installer version is not allowed to change your (64-bit) system.\n\n"
                 // NB %s below
-                _T("%sithout the installer you can:\n")
-                _T("1. connect your RFIDler LF,\n")
-                _T("2. wait for driver install to fail,\n")
-                _T("3. find the RFIDler in the Windows Device Manager\n")
-                _T("4. update the driver there.\n")
-                _T("(Install can fail due to Signed Driver policy settings,")
-                _T("see Help About text for more details.)"),
+                L"%sithout the installer you can:\n"
+                L"1. connect your RFIDler LF,\n"
+                L"2. wait for driver install to fail,\n"
+                L"3. find the RFIDler in the Windows Device Manager\n"
+                L"4. update the driver there.\n"
+                L"(Install can fail due to Signed Driver policy settings,"
+                L"see Help About text for more details.)",
 
-                isAMD64 ? _T("For AMD or Intel x64 sytems you can run ") RFIDLER_INSTALLER64_NAME _T(" instead.\n\nAlternatively w")
-                : _T("W") );
+                isAMD64 ? L"For AMD or Intel x64 sytems you can run " RFIDLER_INSTALLER64_NAME L" instead.\n\nAlternatively w"
+                : L"W" );
 
             MessageBox(hWndStatus, errorText, errorTitle, MB_ICONERROR | mbflags);
 #if !defined(_DEBUG)
@@ -463,62 +489,31 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
 
 #if defined(_DEBUG)
             HWND hChild = (HWND) lParam;
-            PrintDebugStatus(_T("wID %i  wNotification %i  hChild %p\n"), wID, wNotification, hChild);
+            PrintDebugStatus(L"wID %i  wNotification %i  hChild %p\n", wID, wNotification, hChild);
 #endif
 
             if (wNotification == BN_CLICKED) {
                 switch (wID) {
                 case IDC_INSTALL:
-                    installAction = TRUE;
-                    // fall through ...
-                case IDC_UNINSTALL:
-                case IDC_UNINSTALLDRIVER:
-                    isSafe = IsSafeToInstall(500);
-                    if (!isSafe) {
-                        // Found New Hardware Wizard might be active
-                        ReportStatus(hWndStatus, _T("Error: Windows Installer is running, retry when it has finished"));
-                    } else if (installAction && !FindInfPath(hWnd, &insInfo.infpath)) {
-                        ReportStatus(hWndStatus, _T("Error: Cannot find rfidlercrc.inf") );
-                    } else if (installAction && CheckIfInstalled()) {
-                        ReportStatus(hWndStatus, _T("Driver is already installed"));
-                    } else {
-                        {
-                            // launch background thread for installer/uninstaller
-                            HANDLE hThread;
-
-                            // uninstall button id servers to distinguish the 2 uninstall functions
-                            insInfo.uninstallType = wID;
-
-                            hThread = CreateThread(NULL, 0,
-                                        installAction ? DriverInstallThreadProc : DriverUninstallThreadProc,
-                                        &insInfo, 0, NULL);
-
-                            if(hThread) {
-                                installing = TRUE;
-                                // Okay: close handle & wait for install thread.
-                                ReportStatus(hWndStatus,
-                                    installAction ? _T("Installing driver and all connected RFIDlers ...") :
-                                    _T("Uninstalling, this will take a few moments ...") );
-                                CloseHandle(hThread);
-                                // enable/show progress bar
-                                StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, PROG_START);
-                                EnableWindow (GetDlgItem(hWnd, IDC_INSTALL), FALSE);
-                                EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALL), FALSE);
-                                EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
-                                EnableWindow (GetDlgItem(hWnd, IDC_EXIT), FALSE);
-
-                            } else {
-                                ReportStatus(hWndStatus, _T("Error: %s failed to start (error %X)"),
-                                    installAction ? _T("Install") : _T("Uninstall"),
-                                    GetLastError());
-                            }
-                        }
-                    }
-                    if (!installing) {
-                        MessageBeep(0xFFFFFFFF);
+                    if (!CheckWindowsVersion(WinAtLeast8)) {
+                        installing = LaunchInstallOrUninstall(TRUE, hWnd, hWndStatus, hWndProg, pTbList, &insInfo, wID);
                     }
                     handled++;
                     break;
+
+                case IDC_UNINSTALL_ALL_RFIDLERS:
+                case IDC_UNINSTALL_NOT_PRESENT:
+                    installing = LaunchInstallOrUninstall(FALSE, hWnd, hWndStatus, hWndProg, pTbList, &insInfo, wID);
+                    handled++;
+                    break;
+
+                case IDC_UNINSTALLDRIVER:
+                    if (!CheckWindowsVersion(WinAtLeast8)) {
+                        installing = LaunchInstallOrUninstall(FALSE, hWnd, hWndStatus, hWndProg, pTbList, &insInfo, wID);
+                    }
+                    handled++;
+                    break;
+
                 case IDC_REBOOT:
                         // unlikely that this is needed for RFIDler, nevertheless ..
                         //
@@ -531,7 +526,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                     if (insInfo.rebootRequired) {
                         #pragma warning( suppress: 28159)
                         InitiateSystemShutdownEx(NULL,
-                            _T("Reboot to complete RFIDler LF Driver install"),
+                            L"Reboot to complete RFIDler LF Driver install",
                             0, FALSE, TRUE, REASON_PLANNED_FLAG | REASON_HWINSTALL);
                     }
                     EndDialog (hWnd, 0);
@@ -550,13 +545,17 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                     {   // test various stuff: progress bar marquee mode
                         static BOOL marquee = FALSE;
                         static UINT testCount = 0;
+                        wchar_t *infPath = FindInstalledInf(hWnd);
 
-                        ReportStatus(hWndStatus, _T("CheckIfInstalled() = %u"), CheckIfInstalled());
+                        ReportStatus(hWndStatus, L"FindInstalledInf() = %s", infPath);
+                        if (infPath) {
+                            free(infPath);
+                        }
 
                         if (!FindInfPath(hWnd, &insInfo.infpath)) {
-                            ReportStatus(hWndStatus, _T("Error: Cannot find rfidlercrc.inf") );
+                            ReportStatus(hWndStatus, L"Error: Cannot find rfidlercrc.inf");
                         } else {
-                            ReportStatus(hWndStatus, _T("Found %s"), insInfo.infpath );
+                            ReportStatus(hWndStatus, L"Found %s", insInfo.infpath);
                             if (insInfo.infpath) {
                                 free(insInfo.infpath);
                                 insInfo.infpath = NULL;
@@ -574,6 +573,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
                     handled++;
                     break;
 #endif
+
                 case IDC_EXIT:
                     // do not allow close whilst install / uninstall thread is in-progress
                     if (!installing) {
@@ -586,90 +586,117 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
         } // WM_COMMAND
         break;
 
-    case WM_PRIVATE_DRIVER_UPDATE_PROGRESS:
-        // wParam should indicate how the .inf file was copied, message to display
+    case WM_PRIVATE_UNINSTALL_INF:
         {
-            const TCHAR *updateMessage [] = {
-                _T("%s copied by Windows for unconnected RFIDlers"),
-                _T("%s installed for connected RFIDlers ..."),
-                _T("updating previously installed RFIDlers"),
+            wchar_t *infPath = (wchar_t*) lParam;
+
+            if (infPath) {
+                ReportStatus(hWndStatus, L"Removed installed %s file", infPath);
+                free(infPath);
+            }
+        }
+        handled++;
+        break;
+
+    case WM_PRIVATE_UNINSTALL_COMPORT:
+        // wParam should indicate the removed COM port number
+        if (installing) {
+            ReportStatus(hWndStatus, L"Uninstalling RFIDler LF on COM%u", wParam);
+        }
+        handled++;
+        break;
+
+    case WM_PRIVATE_UPDATE_PROGRESS:
+        // wParam should indicate how the .inf file was copied, message to display
+        if (installing) {
+            const int n_messages = 3;
+            const TCHAR *updateMessage [n_messages] = {
+                L"%s copied by Windows for unconnected RFIDlers",
+                L"%s installed for connected RFIDlers ...",
+                L"updating previously installed RFIDlers",
             };
 
-            ReportStatus(hWndStatus, updateMessage[wParam], szRfidlerInfName);
+            if (wParam < n_messages) {
+                ReportStatus(hWndStatus, updateMessage[wParam]);
+            }
         }
         handled++;
         break;
 
-    case WM_PRIVATE_DRIVER_UPDATE_COMPLETE:
-        installing = FALSE;
-        if (insInfo.infpath) {
-            free(insInfo.infpath);
-            insInfo.infpath = NULL;
-        }
-        /* notification from installer thread: install success (or previously installed) => Complete, otherwise error */
-        StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (wParam != 0) ? PROG_COMPLETE : PROG_ERROR);
+    case WM_PRIVATE_UPDATE_COMPLETE:
+        if (installing) {
+            installing = FALSE;
+            if (insInfo.infpath) {
+                free(insInfo.infpath);
+                insInfo.infpath = NULL;
+            }
+            /* notification from installer thread: install success (or previously installed) => Complete, otherwise error */
+            StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (wParam != 0) ? PROG_COMPLETE : PROG_ERROR);
 
-        EnableAndFocusOnFinishButton(hWnd);
+            EnableAndFocusOnFinishButton(hWnd);
 
-        if (wParam) {
-            if (insInfo.rebootRequired) {
-                ReportStatus(hWndStatus, _T("Windows reboot required to complete installation"));
-                ShowWindow(hRebootButton, SW_SHOWNORMAL);
-                EnableWindow(hRebootButton, TRUE);
-            } else {
-                ReportStatus(hWndStatus,
-                    (insInfo.insError == ERROR_SUCCESS) ? _T("Driver install complete") : _T("Driver already installed"));
-                if (!insInfo.devConnected) {
-                    ReportStatus(hWndStatus, _T("Connect your RFIDler LF now"));
+            if (wParam) {
+                if (insInfo.rebootRequired) {
+                    ReportStatus(hWndStatus, L"Windows reboot required to complete installation");
+                    ShowWindow(hRebootButton, SW_SHOWNORMAL);
+                    EnableWindow(hRebootButton, TRUE);
+                } else {
+                    ReportStatus(hWndStatus,
+                        (insInfo.insError == ERROR_SUCCESS) ? L"Driver install complete" : L"Driver already installed");
+                    if (!insInfo.devConnected) {
+                        ReportStatus(hWndStatus, L"Connect your RFIDler LF now");
+                    }
                 }
+            } else {
+                TCHAR *errmsg = NULL;
+                switch (insInfo.insError)
+                {
+                case ERROR_FILE_NOT_FOUND:
+                    errmsg = L"Error: " RFIDLER_INF_NAME L" file not found";
+                    break;
+                case ERROR_IN_WOW64:
+                    errmsg = L"Error: x86 installer failed on 64-bit Windows";
+                    break;
+                default:
+                    errmsg = L"Error: driver install failed (error = %X)";
+                    break;
+                }
+                ReportStatus(hWndStatus, errmsg, insInfo.insError);
+                MessageBeep(0xFFFFFFFF);
             }
-        } else {
-            TCHAR *errmsg = NULL;
-            switch (insInfo.insError)
-            {
-            case ERROR_FILE_NOT_FOUND:
-                errmsg = _T("Error: ") RFIDLER_INF_NAME _T(" file not found");
-                break;
-            case ERROR_IN_WOW64:
-                errmsg = _T("Error: x86 installer failed on 64-bit Windows");
-                break;
-            default:
-                errmsg = _T("Error: driver install failed (error = %X)");
-                break;
-            }
-            ReportStatus(hWndStatus, errmsg, insInfo.insError);
-            MessageBeep(0xFFFFFFFF);
         }
         handled++;
         break;
 
-    case WM_PRIVATE_DRIVER_UNINSTALL_COMPLETE:
-        installing = FALSE;
+    case WM_PRIVATE_UNINSTALL_COMPLETE:
+        if (installing) {
+            installing = FALSE;
 
-        StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (insInfo.insError == NO_ERROR) ? PROG_COMPLETE : PROG_ERROR);
+            StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, (insInfo.insError == NO_ERROR) ? PROG_COMPLETE : PROG_ERROR);
 
-        EnableAndFocusOnFinishButton(hWnd);
+            EnableAndFocusOnFinishButton(hWnd);
 
-        if (insInfo.insError == NO_ERROR) {
-            if (insInfo.rebootRequired) {
-                ReportStatus(hWndStatus, _T("Windows reboot required to complete uninstall"));
-                ShowWindow(hRebootButton, SW_SHOWNORMAL);
-                EnableWindow(hRebootButton, TRUE);
+            if (insInfo.insError == NO_ERROR) {
+                if (insInfo.rebootRequired) {
+                    ReportStatus(hWndStatus, L"Windows reboot required to complete uninstall");
+                    ShowWindow(hRebootButton, SW_SHOWNORMAL);
+                    EnableWindow(hRebootButton, TRUE);
+                } else {
+                    ReportStatus(hWndStatus,
+                        (insInfo.uninstallType == IDC_UNINSTALLDRIVER) ?
+                        L"Driver uninstall complete" : L"Uninstall of RFIDlers complete");
+                }
+            } else if (insInfo.insError == ERROR_FILE_NOT_FOUND) {
+                ReportStatus(hWndStatus, L"Uninstall complete, " RFIDLER_INF_NAME L" was not found");
             } else {
-                ReportStatus(hWndStatus,
+                ReportStatus(hWndStatus, L"Error: %s failed (error = %X)",
                     (insInfo.uninstallType == IDC_UNINSTALLDRIVER) ?
-                    _T("Driver uninstall complete") : _T("Uninstall of RFIDlers complete"));
+                    L"Driver uninstall" : L"Uninstall of RFIDlers",
+                    insInfo.insError);
+                MessageBeep(0xFFFFFFFF);
             }
-        } else if (insInfo.insError == ERROR_FILE_NOT_FOUND) {
-            ReportStatus(hWndStatus, _T("Uninstall complete, ") RFIDLER_INF_NAME _T(" was not found"));
-        } else {
-            ReportStatus(hWndStatus, _T("Error: %s failed (error = %X)"),
-                (insInfo.uninstallType == IDC_UNINSTALLDRIVER) ?
-                _T("Driver uninstall") : _T("Uninstall of RFIDlers"),
-                insInfo.insError);
-            MessageBeep(0xFFFFFFFF);
+            handled++;
         }
-        handled++;
         break;
 
     case WM_CLOSE:
@@ -684,7 +711,7 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
 #if defined(_DEBUG)
         if ((iMsg > 0x400) && hWndStatus) {
             if (TbCreatedNotification != iMsg) {
-                ReportStatus(hWndStatus, _T("Info: received unhandled Msg (0x%X)"), iMsg);
+                ReportStatus(hWndStatus, L"Info: received unhandled Msg (0x%X)", iMsg);
             }
         }
 #endif
@@ -705,6 +732,67 @@ INT_PTR CALLBACK InstallerDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lP
 }   /* InstallerDlgProc() */
 
 
+BOOL LaunchInstallOrUninstall(BOOL installAction, HWND hWnd, HWND hWndStatus, HWND hWndProg, ITaskbarList3* pTbList, InstallInfo *pInsInfo, int wID)
+{
+    BOOL installing = FALSE;
+    BOOL isSafe = IsSafeToInstall(500);
+
+    if (!isSafe) {
+        // Found New Hardware Wizard might be active
+        ReportStatus(hWndStatus, L"Error: Windows Installer is running, retry when it has finished");
+    } else if (installAction && !FindInfPath(hWnd, &pInsInfo->infpath)) {
+        ReportStatus(hWndStatus, L"Error: Cannot find rfidlercrc.inf");
+    } else {
+        // launch background thread for installer/uninstaller
+        HANDLE hThread;
+
+        // uninstall button id is used to distinguish the 3 uninstall functions
+        pInsInfo->uninstallType = wID;
+
+        SetWindowText(GetDlgItem(hWnd, IDC_STATUS_TITLE), 
+            installAction ? L"Install Status:" : L"Uninstall Status:");
+
+        hThread = CreateThread(NULL, 0,
+                    installAction ? DriverInstallThreadProc : DriverUninstallThreadProc,
+                    pInsInfo, 0, NULL);
+
+        if(hThread) {
+            installing = TRUE;
+            // Okay: close handle for install thread.
+            CloseHandle(hThread);
+
+            // enable/show progress bar, disable buttons
+            StartOrStopProgressMarquee(hWnd, hWndProg, pTbList, PROG_START);
+            EnableWindow (GetDlgItem(hWnd, IDC_INSTALL), FALSE);
+            EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALL_ALL_RFIDLERS), FALSE);
+            EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALL_NOT_PRESENT), FALSE);
+            EnableWindow (GetDlgItem(hWnd, IDC_UNINSTALLDRIVER), FALSE);
+            EnableWindow (GetDlgItem(hWnd, IDC_EXIT), FALSE);
+
+            if (installAction) {
+                ReportStatus(hWndStatus, L"Installing driver and all connected RFIDlers ...");
+            } else {
+                wchar_t * uninstallType = 
+                    (IDC_UNINSTALL_ALL_RFIDLERS == wID) ? L"all RFIDlers" : 
+                    (IDC_UNINSTALL_NOT_PRESENT == wID) ? L"not connected RFIDlers" : L"RFIDlers and driver";
+
+                ReportStatus(hWndStatus, L"Uninstalling %s ...", uninstallType);
+            }
+        } else {
+            ReportStatus(hWndStatus, L"Error: %s failed to start (error %X)",
+                installAction ? L"Install" : L"Uninstall",
+                GetLastError());
+        }
+    }
+
+    if (!installing) {
+        MessageBeep(0xFFFFFFFF);
+        // TODO? timed MessageBox
+    }
+    return installing;
+}
+
+
 void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbList, ProgBarState pbState)
 {
     // comctrl32 v6 required; set & show or clear & hide progress bar in marquee mode
@@ -723,14 +811,15 @@ void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbL
 
             SendMessage(hWndProgBar, PBM_SETMARQUEE, TRUE, 0);
             marquee = TRUE;
-        
+
             if (pTbList) {
                 pTbList->SetProgressState(hWnd, TBPF_INDETERMINATE);
             }
         }
         break;
+
     case PROG_ERROR: // stop marquee at 100% & display as red
-    case PROG_COMPLETE:
+    case PROG_COMPLETE: // stop marquee at 100% & display as green
         if (marquee) {
             LONG style = GetWindowLong(hWndProgBar, GWL_STYLE);
             if (style & PBS_MARQUEE) {
@@ -748,6 +837,7 @@ void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbL
             pTbList->SetProgressValue(hWnd, 100, 100);
         }
         break;
+
     case PROG_HIDE:
     default:
         // remove marquee
@@ -766,7 +856,7 @@ void StartOrStopProgressMarquee(HWND hWnd, HWND hWndProgBar, ITaskbarList3* pTbL
 
 void EnableAndFocusOnFinishButton(HWND hWnd)
 {
-    SetWindowText(GetDlgItem(hWnd, IDC_EXIT),_T("Finish"));
+    SetWindowText(GetDlgItem(hWnd, IDC_EXIT), L"Finish");
     EnableWindow (GetDlgItem(hWnd, IDC_EXIT), TRUE);
 
     // set dialog focus
@@ -775,61 +865,61 @@ void EnableAndFocusOnFinishButton(HWND hWnd)
 
 
 // program description and decide copyright licensing info
-static const TCHAR *helpTitle = _T("Help About RFIDLer LF Driver Installer v0.21");
+static const TCHAR *helpTitle = L"Help About RFIDLer LF Driver Installer v0.3";
 static const TCHAR *helpText =
-    _T("This installer is Copyright (c) 2014-2015 Anthony Naggs, all rights reserved.\r\n")
-    _T("Limited rights are assigned through BSD 2-Clause License, see bottom of text.\r\n")
-    _T("\r\n")
-    _T("RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n")
-    _T("Windows driver for USB serial ports, usbser.sys.\r\n")
-    _T("\r\n")
-    _T("A simple driver information file (") RFIDLER_INF_NAME _T(") tells Windows which driver to use, and \r\n")
-    _T("such details as manufacturer (Aperture Labs Ltd) and product names (RFIDler LF).\r\n")
-    _T("\r\n")
-    _T("IMPORTANT: Although ") RFIDLER_INF_NAME _T("simply tells Windows to use the standard USB\r\n")
-    _T("serial port driver Windows wants the .inf file to be signed as valid. This is unfortunately\r\n")
-    _T("expensive. Therefore this install will only work if Windows is configured not to enforce\r\n")
-    _T("signing of drivers.\r\n")
-    _T("\r\n")
-    _T("This installer provides a simple interface to install or uninstall (1) installed RFIDler\r\n")
-    _T("devices or (2) RFIDler devices and this .inf file. (Note that complete uninstall only\r\n")
-    _T("works on Windows XP.)\r\n")
-    _T("\r\n")
-    _T("Alternatively to using the installer you can connect your RFIDler LF, find it in Windows \r\n")
-    _T("Device Manager (via the Control Panel) and update the driver there. This program \r\n")
-    _T("needs to run as local Administrator in order to copy files to, or remove files from, \r\n")
-    _T("Windows protected directories.\r\n")
-    _T("\r\n")
-    _T("Two versions of the installer are supplied:\r\n")
-    _T("* rfidlerinstall-x86.exe for 32-bit versions of Windows XP to Windows 7, and\r\n")
-    _T("* rfidlerinstall-x64.exe for 64-bit versions of Windows on AMD64 CPUs.\r\n")
-    _T("\r\n")
-    _T(".....................................................\r\n\r\n")
-    _T("More copyright information below ...\r\n")
-    _T("\r\n")
-    _T("Limited assignment of rights under the 'BSD 2-Clause License':\r\n")
-    _T("\r\n")
-    _T("Redistribution and use in source and binary forms, with or without modification, are \r\n")
-    _T("permitted provided that the following conditions are met:\r\n")
-    _T("\r\n")
-    _T("1. Redistributions of source code must retain the above copyright notice, this list of\r\n")
-    _T("     conditions and the following disclaimer.\r\n")
-    _T("\r\n")
-    _T("2. Redistributions in binary form must reproduce the above copyright notice, this list\r\n")
-    _T("     list of conditions and the following disclaimer in the documentation and/or other\r\n")
-    _T("     materials provided with the distribution.\r\n")
-    _T("\r\n")
-    _T("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \r\n")
-    _T("\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT \r\n")
-    _T("LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR \r\n")
-    _T("A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT \r\n")
-    _T("HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, \r\n")
-    _T("SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT \r\n")
-    _T("LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, \r\n")
-    _T("DATA, ORPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY \r\n")
-    _T("THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \r\n")
-    _T("(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE \r\n")
-    _T("OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.");
+    L"This installer is Copyright (c) 2014-2015 Anthony Naggs, all rights reserved.\r\n"
+    L"Limited rights are assigned through BSD 2-Clause License, see bottom of text.\r\n"
+    L"\r\n"
+    L"RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n"
+    L"Windows driver for USB serial ports, usbser.sys.\r\n"
+    L"\r\n"
+    L"A simple driver information file (" RFIDLER_INF_NAME L") tells Windows which driver to use, and \r\n"
+    L"such details as manufacturer (Aperture Labs Ltd) and product names (RFIDler LF).\r\n"
+    L"\r\n"
+    L"IMPORTANT: Although " RFIDLER_INF_NAME L"simply tells Windows to use the standard USB\r\n"
+    L"serial port driver Windows wants the .inf file to be signed as valid. This is unfortunately\r\n"
+    L"expensive. Therefore this install will only work if Windows is configured not to enforce\r\n"
+    L"signing of drivers.\r\n"
+    L"\r\n"
+    L"This installer provides a simple interface to install or uninstall (1) installed RFIDler\r\n"
+    L"devices or (2) RFIDler devices and this .inf file. (Note that complete uninstall only\r\n"
+    L"works on Windows XP.)\r\n"
+    L"\r\n"
+    L"Alternatively to using the installer you can connect your RFIDler LF, find it in Windows \r\n"
+    L"Device Manager (via the Control Panel) and update the driver there. This program \r\n"
+    L"needs to run as local Administrator in order to copy files to, or remove files from, \r\n"
+    L"Windows protected directories.\r\n"
+    L"\r\n"
+    L"Two versions of the installer are supplied:\r\n"
+    L"* rfidlerinstall-x86.exe for 32-bit versions of Windows XP to Windows 7, and\r\n"
+    L"* rfidlerinstall-x64.exe for 64-bit versions of Windows on AMD64 CPUs.\r\n"
+    L"\r\n"
+    L".....................................................\r\n\r\n"
+    L"More copyright information below ...\r\n"
+    L"\r\n"
+    L"Limited assignment of rights under the 'BSD 2-Clause License':\r\n"
+    L"\r\n"
+    L"Redistribution and use in source and binary forms, with or without modification, are \r\n"
+    L"permitted provided that the following conditions are met:\r\n"
+    L"\r\n"
+    L"1. Redistributions of source code must retain the above copyright notice, this list of\r\n"
+    L"     conditions and the following disclaimer.\r\n"
+    L"\r\n"
+    L"2. Redistributions in binary form must reproduce the above copyright notice, this list\r\n"
+    L"     list of conditions and the following disclaimer in the documentation and/or other\r\n"
+    L"     materials provided with the distribution.\r\n"
+    L"\r\n"
+    L"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \r\n"
+    L"\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT \r\n"
+    L"LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR \r\n"
+    L"A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT \r\n"
+    L"HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, \r\n"
+    L"SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT \r\n"
+    L"LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, \r\n"
+    L"DATA, ORPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY \r\n"
+    L"THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \r\n"
+    L"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE \r\n"
+    L"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
 
 /*
     Notes:
@@ -847,6 +937,9 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam
     case WM_INITDIALOG:
         SetWindowText(hDlg, helpTitle);
         SetWindowText(GetDlgItem(hDlg, IDC_HELP_TEXT), helpText);
+
+        // TODO: get .exe file version for use in title eg GetFileVersionInfoSize() & GetFileVersionInfo()
+
         SetFocus( GetDlgItem (hDlg, IDOK));
         // return TRUE  unless you set the focus to a control
         return FALSE;
@@ -871,8 +964,8 @@ BOOL FindInfPath(HWND hWnd, TCHAR **aPath)
     // NULL terminated list of subirectories to search
     const TCHAR *szIndSubdirList[] =
         { 
-            _T("windows driver\\inf"), _T("inf"), 
-            _T("..\\windows driver\\inf"), _T("..\\inf"), 
+            L"windows driver\\inf", L"inf",
+            L"..\\windows driver\\inf", L"..\\inf",
             NULL };
     TCHAR   *fname = NULL;
     BOOL    result = FALSE;
@@ -957,13 +1050,13 @@ BOOL UserSearchForInfFile(HWND hWnd, TCHAR **aPath, TCHAR *aInitialPath)
         ofn.lStructSize = sizeof(OPENFILENAME);
         ofn.hwndOwner = hWnd;
         ofn.lpstrInitialDir = aInitialPath;
-        ofn.lpstrTitle = _T("Find ") RFIDLER_INF_NAME _T(" required for driver install");
+        ofn.lpstrTitle = L"Find " RFIDLER_INF_NAME L" required for driver install";
         ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST
             | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLESIZING;
         ofn.nMaxFile = fileNameSize;
         ofn.lpstrFile = name;
-        ofn.lpstrFilter = _T("Driver install info (*.inf)\0*.inf\0\0");
-        ofn.lpstrDefExt = _T("inf");
+        ofn.lpstrFilter = L"Driver install info (*.inf)\0*.inf\0\0";
+        ofn.lpstrDefExt = L"inf";
         // Restrict selection to rfidlercdc.inf
         ofn.lpfnHook = OFNHookCheckFilenameProc;
 
@@ -997,7 +1090,7 @@ UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hDlg, UINT uiMsg, WPARAM wParam,
                 // file name is/is not okay?
                 TCHAR * filenameElement = notify->lpOFN->lpstrFile + notify->lpOFN->nFileOffset;
                 if (_tcscmp(filenameElement, szRfidlerInfName)) {
-                    // Note DWL_MSGRESULT undeclared in Win64 builds, use DWLP_MSGRESULT instead
+                    // Note DWL_MSGRESULT not declared in Win64 builds, use DWLP_MSGRESULT instead
                     SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 1);
                 }
                 handled++;
@@ -1009,7 +1102,7 @@ UINT_PTR CALLBACK OFNHookCheckFilenameProc(HWND hDlg, UINT uiMsg, WPARAM wParam,
 }
 
 
-// helpers for TestFileNameAndPath()
+// helpers for TestFileNameAndPath(), trim lowest directory level from path, used for handling "..\"
 void TrimDirectoryLevel(TCHAR *namebuff, size_t dirLen)
 {
     if (dirLen < 2) {
@@ -1036,7 +1129,8 @@ void TrimDirectoryLevel(TCHAR *namebuff, size_t dirLen)
 BOOL TestPathAndFileNameHelper(TCHAR *namebuff, size_t newsz, const TCHAR *basePath, 
     const TCHAR *fileName, const TCHAR *subdir)
 {
-    size_t dirLen = basePath ? _tcslen(basePath) : 0;
+    size_t  dirLen = basePath ? _tcslen(basePath) : 0;
+    DWORD   attributes = 0;
 
     // fill buffer with base path
     if (dirLen) {
@@ -1047,7 +1141,7 @@ BOOL TestPathAndFileNameHelper(TCHAR *namebuff, size_t newsz, const TCHAR *baseP
 
     if (subdir) {
         // handle "..\" in subdirectory
-        while (!wcsncmp(subdir, _T("..\\"), 3)) {
+        while (!wcsncmp(subdir, L"..\\", 3)) {
             subdir += 3;
             TrimDirectoryLevel(namebuff, dirLen);
         }
@@ -1057,17 +1151,22 @@ BOOL TestPathAndFileNameHelper(TCHAR *namebuff, size_t newsz, const TCHAR *baseP
     // ensure '\' at end of path
     dirLen = _tcslen(namebuff);
     if (namebuff[dirLen-1] != L'\\') {
-        _tcsncat_s(namebuff, newsz, _T("\\"), _TRUNCATE);
+        _tcsncat_s(namebuff, newsz, L"\\", _TRUNCATE);
     }
     
     _tcsncat_s(namebuff, newsz, fileName, _TRUNCATE);
 #if defined(_DEBUG)
-    PrintDebugStatus( _T("\"%s\"\n"), namebuff);
+    PrintDebugStatus( L"\"%s\"\n", namebuff);
 #endif
-    if (INVALID_FILE_ATTRIBUTES != GetFileAttributes(namebuff)) {
-        return TRUE;
+    attributes = GetFileAttributes(namebuff);
+    if (INVALID_FILE_ATTRIBUTES == attributes) {
+        return FALSE;
     }
-    return FALSE;
+    if ((FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ENCRYPTED | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_OFFLINE |
+            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_SPARSE_FILE | FILE_ATTRIBUTE_TEMPORARY) & attributes) {
+        return FALSE;
+    }
+    return TRUE; // FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_READONLY
 }
 
 
@@ -1129,6 +1228,7 @@ BOOL TestFileNameAndPath(const TCHAR *basePath, const TCHAR *fileName, TCHAR **o
 }
 
 
+/*
 TCHAR *GetWinDir()
 {
     // get %SystemRoot% eg C:\Windows
@@ -1143,10 +1243,11 @@ TCHAR *GetWinDir()
     }
     return windir;
 }
+*/
 
 
 #if !defined(_WIN64)
-/* this wrapper for IsWow64Process() API is adapted from MSDN */
+/* this wrapper for IsWow64Process() API is adapted from MSDN help text */
 BOOL IsWow64()
 {
     typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -1157,7 +1258,7 @@ BOOL IsWow64()
     // IsWow64Process is not available on all supported versions of Windows.
     // Use GetModuleHandle to get a handle to the DLL that contains the function
     // and GetProcAddress to get a pointer to the function if available.
-    hModule = GetModuleHandle(TEXT("kernel32"));
+    hModule = GetModuleHandle(L"kernel32");
     if(!hModule)
     {
         // Should never happen
@@ -1192,7 +1293,8 @@ BOOL IsSystemAMD64()
 /*
    Note after some investigation, I don't think we can launch 2nd installer as
    Admin on Vista & later. (At least not unless we are already installed into
-   Program Files directrory.) This is due to new User Access Control security behaviour.
+   Program Files directrory.) This is due to the new User Access Control security
+   behaviour.
    */
 #endif
 
@@ -1207,7 +1309,7 @@ BOOL IsSafeToInstall(DWORD dwTimeout)
     HMODULE hModule;
     CMP_WAITNOPENDINGINSTALLEVENTS_PROC pCMP_WaitNoPendingInstallEvents;
 
-    hModule = GetModuleHandle(TEXT("Cfgmgr32.dll"));
+    hModule = GetModuleHandle(L"Cfgmgr32.dll");
     if(!hModule)
     {
         // Should never happen since we're linked to Cfgmgr32, but...
@@ -1229,44 +1331,120 @@ BOOL IsSafeToInstall(DWORD dwTimeout)
 
 /* look for rfidlercdc.inf already present in %windir%\inf
    Only works on Windows XP.
-   Newer Windows versions install as OEM<random number>.inf
-   - not going to walk through these & do an content inspection.
-*/
-BOOL CheckIfInstalled()
-{
-    BOOL isInstalled = FALSE;
 
-#if 1
-    // try using SetupOpeninfFile to find installed rfidlercdc.inf
+   Not found => search to identify corresponding OEM<random number>.inf
+   that Windows renamed the file to on install.
+*/
+wchar_t *FindInstalledInf(HWND hWndMain)
+{
+    //HDEVINFO DeviceInfoSet;
+    HKEY hClassKey;
+
+    // try using SetupOpenInfFile to find installed rfidlercdc.inf, should work on Win XP, maybe Vista?
     HINF hh = SetupOpenInfFile(szRfidlerInfName, NULL, INF_STYLE_WIN4, NULL);
 
     if (hh != INVALID_HANDLE_VALUE) {
-        isInstalled = TRUE;
+        // TODO? check .inf file version
         SetupCloseInfFile(hh);
+        return _wcsdup(szRfidlerInfName);
+#if _DEBUG
+    } else {
+        PrintDebugStatus(L"Error: SetupOpenInfFile() (%08X)", GetLastError());
+#endif
     }
 
-#else
-    // GetWinDir() alternate code
-    TCHAR *windir = NULL;
 
-    windir = GetWinDir();
-    if (windir) {
-        // NULL terminated list of subirectories to search
-        const TCHAR *szIndSubdirList[] =
-            { _T("INF"), NULL };
+    // Open registry key HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\ + GUID_DEVCLASS_PORTS
+    hClassKey = SetupDiOpenClassRegKey(&GUID_DEVCLASS_PORTS, KEY_READ);
 
-        isInstalled = TestFileNameAndPath(windir, szRfidlerInfName, NULL, szIndSubdirList);
-        free(windir);
+    if (hClassKey) {
+        // Iterate through keys looking for value of MatchingDeviceId == usb\vid_1d50&pid_6098
+        wchar_t  *infName = NULL;
+
+#define MAX_KEY_LENGTH 255
+        wchar_t  valueBuffer[MAX_KEY_LENGTH];
+        wchar_t  achKey[MAX_KEY_LENGTH];   // buffer for subkey name
+        DWORD    cbName;                   // size of name string
+        wchar_t  achClass[MAX_PATH] = L""; // buffer for class name
+        DWORD    cchClassName = MAX_PATH;  // size of class string
+        DWORD    cSubKeys=0;               // number of subkeys
+        DWORD    cbMaxSubKey;              // longest subkey size
+        DWORD    cchMaxClass;              // longest class string
+        DWORD    cValues;              // number of values for key
+        DWORD    cchMaxValue;          // longest value name
+        DWORD    cbMaxValueData;       // longest value data
+        DWORD    cbSecurityDescriptor; // size of security descriptor
+        FILETIME ftLastWriteTime;      // last write time
+        DWORD i, retCode;
+        BOOL match = FALSE;
+
+        // Get the class name and the value count.
+        retCode = RegQueryInfoKey(
+            hClassKey,               // key handle
+            achClass,                // buffer for class name
+            &cchClassName,           // size of class string
+            NULL,                    // reserved
+            &cSubKeys,               // number of subkeys
+            &cbMaxSubKey,            // longest subkey size
+            &cchMaxClass,            // longest class string
+            &cValues,                // number of values for this key
+            &cchMaxValue,            // longest value name
+            &cbMaxValueData,         // longest value data
+            &cbSecurityDescriptor,   // security descriptor
+            &ftLastWriteTime);       // last write time
+
+        if (ERROR_SUCCESS == retCode) {
+            // Enumerate the subkeys, until matching hwId or RegEnumKeyEx fails.
+            for (i = 0; (i < cSubKeys) && !match; i++) {
+                cbName = MAX_KEY_LENGTH;
+                retCode = RegEnumKeyEx(hClassKey, i, achKey, &cbName, NULL, NULL, NULL, &ftLastWriteTime);
+
+                if (ERROR_SUCCESS == retCode) {
+                    DWORD valtype;
+                    DWORD valsize = sizeof(valueBuffer);
+                    HKEY hKey2;
+
+                    retCode = RegOpenKeyEx(hClassKey, achKey, 0, KEY_READ, &hKey2);
+
+                    if (ERROR_SUCCESS == retCode) {
+                        // get  & compare HardwareId with Rfidler
+                        retCode = RegQueryValueEx(hKey2, _T("MatchingDeviceId"), 0, &valtype, (BYTE*)&valueBuffer, &valsize);
+                        if ((ERROR_SUCCESS == retCode) && (REG_SZ == valtype) && (0 == _wcsicmp(valueBuffer, szRfidlerHardwareId))) {
+                            match = TRUE; // exit loop
+                            valsize = sizeof(valueBuffer);
+
+                            // query value of InfPath to find corresponding installed oem??.inf file name
+                            retCode = RegQueryValueEx(hKey2, _T("InfPath"), 0, &valtype, (BYTE*)&valueBuffer, &valsize);
+                            if ((ERROR_SUCCESS == retCode) && (REG_SZ == valtype)) {
+                                //PrintDebugStatus(L"LocationInformation %s\n", locationBuffer);
+                                infName = _wcsdup(valueBuffer);
+                            }
+                        }
+
+                        RegCloseKey(hKey2);
+                    }
+
+                    // DEBUG - PrintDebugStatus(L"(%d) %s %u\n", i+1, achKey, retCode);
+                }
+            } // for
+        } // if
+
+#undef MAX_KEY_LENGTH
+
+        RegCloseKey(hClassKey);
+
+        if (infName) {
+            return infName;
+        }
     }
 
     /*
-        The destination directory for .inf files can be changed, this should be given
-        by registry key HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion
-        Not currently important enough to handle this further.
+       TODO:
+       Recommended for Windows XP and later versions, use SetupDiBuildDriverInfoList (? maybe SetupDiGetDeviceInstallParams instead)
+       with DeviceInstallParams.FlagsEx set to DI_FLAGSEX_INSTALLEDDRIVER to obtain details about the installed driver. 
     */
-#endif
 
-    return isInstalled;
+    return NULL;
 }
 
 
@@ -1277,18 +1455,26 @@ DWORD WINAPI DriverUninstallThreadProc(LPVOID lpParameter)
     pInsInfo->insError = ERROR_SUCCESS;
 
     // look for serial ports matching dev
-    UpdateDriverWithAction(pInsInfo, &GUID_DEVCLASS_PORTS, UninstallDriverWinXP);
+    UpdateDriverWithAction(pInsInfo, &GUID_DEVCLASS_PORTS,
+        (pInsInfo->uninstallType != IDC_UNINSTALL_NOT_PRESENT) ? UninstallAllRfidlers : UninstallNotPresentRfidlers);
 
-    // Windows XP? and need to fully uninstall driver?
-    if (!CheckWindowsVersion(WinAtLeastVista) && (pInsInfo->uninstallType == IDC_UNINSTALLDRIVER)) {
-        // remove the .inf file from the system
-        if (!SetupUninstallOEMInf(szRfidlerInfName, SUOI_FORCEDELETE, NULL)) {
-            pInsInfo->insError = GetLastError();
+    // need to fully uninstall driver?
+    if (pInsInfo->uninstallType == IDC_UNINSTALLDRIVER) {
+        // find & remove the .inf file from the system
+        wchar_t *infPath = FindInstalledInf(pInsInfo->hWndMain);
+
+        if (infPath) {
+            if (!SetupUninstallOEMInf(szRfidlerInfName, SUOI_FORCEDELETE, NULL)) {
+                pInsInfo->insError = GetLastError();
+                free(infPath);
+            } else {
+                PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UNINSTALL_INF, 0, (LPARAM) infPath);
+            }
         }
     }
 
     /* notify UI thread that we have finished, nb advances prog bar to 100%  */
-    PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UNINSTALL_COMPLETE, TRUE, 0);
+    PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UNINSTALL_COMPLETE, TRUE, 0);
     return pInsInfo->insError;
 }
 
@@ -1306,13 +1492,13 @@ DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter)
 
     pInsInfo->insError = ERROR_SUCCESS;
 
-    driverInstalled = UpdateDriverForPlugAndPlayDevices(pInsInfo->hWnd, szRfidlerHardwareId,
+    driverInstalled = UpdateDriverForPlugAndPlayDevices(pInsInfo->hWndMain, szRfidlerHardwareId,
         pInsInfo->infpath, 0, &pInsInfo->rebootRequired);
 
     if (driverInstalled) {
         pInsInfo->devConnected = TRUE;
         // update progress reporting, installed for connected devices
-        PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_CONNECTED, 0);
+        PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UPDATE_PROGRESS, UPDATE_CONNECTED, 0);
     } else {
         // some issue means driver not fully installed
         pInsInfo->insError = GetLastError();
@@ -1340,26 +1526,26 @@ DWORD WINAPI DriverInstallThreadProc(LPVOID lpParameter)
             } else {
                 pInsInfo->insError = ERROR_SUCCESS;
                 // update progress reporting
-                PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_COPIED, 0);
+                PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UPDATE_PROGRESS, UPDATE_COPIED, 0);
             }
         }
     }
 
     if (driverInstalled) {
         // iterate thru not present devices, ensure they are updated to the new driver on next connect
-        PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_PROGRESS, UPDATE_PREVIOUS, 0);
-        UpdateDriverWithAction(pInsInfo, NULL, MarkNonPresentForReinstall);
+        PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UPDATE_PROGRESS, UPDATE_PREVIOUS, 0);
+        UpdateDriverWithAction(pInsInfo, NULL, MarkNotPresentRfidlersForReinstall);
     }
 
     /* notify UI thread that we have finished */
-    PostMessage(pInsInfo->hWnd, WM_PRIVATE_DRIVER_UPDATE_COMPLETE, driverInstalled, 0);
+    PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UPDATE_COMPLETE, driverInstalled, 0);
     return pInsInfo->insError;
 }
 
 
 /*
    Note:
-   RFIDlers that have a (old) driver have class GUID = GUID_DEVCLASS_PORTS.
+   RFIDlers that have a (old/new) driver have class GUID = GUID_DEVCLASS_PORTS.
    RFIDlers that are not configured have no class GUID, & show as "other devices" in Device Manager.
    So we can search with the GUID during uninstall, but need to search without a GUID, and with
    DIGCF_ALLCLASSES flag to identify previously connected device node during install.
@@ -1372,7 +1558,7 @@ void UpdateDriverWithAction(InstallInfo *pInsInfo, const GUID *classGuid, enum U
     ULONG Status, Problem;
 
 
-    DeviceInfoSet = SetupDiGetClassDevs(classGuid, NULL, pInsInfo->hWnd, 
+    DeviceInfoSet = SetupDiGetClassDevs(classGuid, NULL, pInsInfo->hWndMain,
         classGuid ? 0 : DIGCF_ALLCLASSES);
 
     if (DeviceInfoSet == INVALID_HANDLE_VALUE) {
@@ -1387,30 +1573,25 @@ void UpdateDriverWithAction(InstallInfo *pInsInfo, const GUID *classGuid, enum U
 
         if (CheckHardwareIdMatch(DeviceInfoSet, &DeviceInfoData, szRfidlerHardwareId)) {
             switch (action) {
-            case MarkNonPresentForReinstall:
+            case MarkNotPresentRfidlersForReinstall:
                 // failure to fetch status => device not present
                 if (CR_SUCCESS != CM_Get_DevNode_Status(&Status, &Problem, (DEVNODE)DeviceInfoData.DevInst, 0)) {
                     // mark for re-install
                     MarkDeviceConfigForReinstall(DeviceInfoSet, &DeviceInfoData);
                  }
                break;
-            case UninstallDriverWinXP:
-                // remove RFIDler devices
-                if (SetupDiCallClassInstaller(DIF_REMOVE, DeviceInfoSet, &DeviceInfoData)) {
-                    // check whether Windows wants a Reboot to enact changes
-                    SP_DEVINSTALL_PARAMS params;
 
-                    ZeroMemory(&params, sizeof(SP_DEVINSTALL_PARAMS));
-                    params.cbSize = sizeof(SP_DEVINSTALL_PARAMS);
-                    if (SetupDiGetDeviceInstallParams(DeviceInfoSet, &DeviceInfoData, &params)) {
-                        if (!pInsInfo->rebootRequired && (params.Flags & (DI_NEEDREBOOT | DI_NEEDRESTART))) {
-                            pInsInfo->rebootRequired = TRUE;
-                        }
-                    }
-                } else {
-                    pInsInfo->insError = GetLastError();
+            case UninstallNotPresentRfidlers:
+                // failure to fetch status => device not present
+                if (CR_SUCCESS != CM_Get_DevNode_Status(&Status, &Problem, (DEVNODE)DeviceInfoData.DevInst, 0)) {
+                    RemoveRfidlerDevice(pInsInfo, DeviceInfoSet, &DeviceInfoData);
                 }
                 break;
+
+            case UninstallAllRfidlers:
+                RemoveRfidlerDevice(pInsInfo, DeviceInfoSet, &DeviceInfoData);
+                break;
+
             case DebugLogDevice:
                 OutputDebugStringA("Found a Rfidler device instance\n");
                 break;
@@ -1422,7 +1603,56 @@ void UpdateDriverWithAction(InstallInfo *pInsInfo, const GUID *classGuid, enum U
 }
 
 
-BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoData, const TCHAR *szHardwareId)
+// tell Windows to forget an RFIDler device, and release its COM port number
+void RemoveRfidlerDevice(InstallInfo *pInsInfo, HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData)
+{
+    // get the registry key with the device's port settings
+    HKEY devkey = SetupDiOpenDevRegKey(DeviceInfoSet, pDeviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_QUERY_VALUE);
+
+    if (devkey) {
+        //Read the name of the port from the registry
+        wchar_t portnameBuff[16];
+        const wchar_t*  keyname = L"PortName";
+        DWORD sizeOut = 16;
+        DWORD type = 0;
+        LSTATUS result = RegQueryValueEx(devkey, keyname, NULL, &type, (LPBYTE)portnameBuff, &sizeOut);
+
+        // tidy up
+        RegCloseKey(devkey);
+
+        // check registry value type, and port is COMxx
+        if ((result == ERROR_SUCCESS) && (REG_SZ == type) && (0 == wcsncmp(portnameBuff, _T("COM"), 3))) {
+            // Determine COM port number, for notification to user via WM_PRIVATE_UNINSTALL_COMPORT
+            unsigned portNumber = wcstoul(portnameBuff + 3, NULL, 10);
+
+            if (portNumber) {
+                PostMessage(pInsInfo->hWndMain, WM_PRIVATE_UNINSTALL_COMPORT, portNumber, 0);
+            }
+
+            // remove the Rfidler
+            if (SetupDiCallClassInstaller(DIF_REMOVE, DeviceInfoSet, pDeviceInfoData)) {
+                // now check whether Windows wants a Reboot to enact changes
+                SP_DEVINSTALL_PARAMS params;
+
+                ZeroMemory(&params, sizeof(SP_DEVINSTALL_PARAMS));
+                params.cbSize = sizeof(SP_DEVINSTALL_PARAMS);
+                if (SetupDiGetDeviceInstallParams(DeviceInfoSet, pDeviceInfoData, &params)) {
+                    if (!pInsInfo->rebootRequired && (params.Flags & (DI_NEEDREBOOT | DI_NEEDRESTART))) {
+                        pInsInfo->rebootRequired = TRUE;
+                    }
+                }
+
+                return; // success
+            }
+        }
+    }
+
+    // something failed
+    pInsInfo->insError = GetLastError();
+}
+
+
+BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData, const TCHAR *szHardwareId)
 {
     LPWSTR HwIdBuffer = NULL;
     DWORD HwIdBufferLen = 0;
@@ -1432,7 +1662,7 @@ BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoDat
 
     // get the HardwareID property for this device
     while (!SetupDiGetDeviceRegistryProperty(DeviceInfoSet,
-                                            DeviceInfoData,
+                                            pDeviceInfoData,
                                             SPDRP_HARDWAREID,
                                             &RegDataType,
                                             (PBYTE)HwIdBuffer,
@@ -1456,7 +1686,7 @@ BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoDat
         LPWSTR idStr;
         // compare each MULTI_SZ string with reference
         for (idStr = HwIdBuffer; idStr && *idStr; idStr += (lstrlen(idStr) + 1)) {
-            if (!lstrcmpi(idStr, szHardwareId)) {
+            if (!_wcsicmp(idStr, szHardwareId)) {
                 match = TRUE;
                 break;
             }
@@ -1470,21 +1700,21 @@ BOOL CheckHardwareIdMatch(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoDat
 }
 
 
-void MarkDeviceConfigForReinstall(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *DeviceInfoData)
+void MarkDeviceConfigForReinstall(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData)
 {
     DWORD ConfigFlags = 0;
     DWORD RegDataType;
 
     // try to get ConfigFlags value, may not be present
     (void) SetupDiGetDeviceRegistryProperty(DeviceInfoSet,
-                                         DeviceInfoData,
+                                         pDeviceInfoData,
                                          SPDRP_CONFIGFLAGS,
                                          &RegDataType,
                                          (PBYTE)&ConfigFlags,
                                          sizeof(ConfigFlags),
                                          NULL);
 
-    /* Re-install flag is should already be set if no driver
+    /* Re-install flag should already be set if no driver
        was previously installed.
        */
     if ( !(ConfigFlags & CONFIGFLAG_REINSTALL)) {
@@ -1493,7 +1723,7 @@ void MarkDeviceConfigForReinstall(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA *Devic
 
         // just write value, nothing more to do even if it fails
         (void) SetupDiSetDeviceRegistryProperty(DeviceInfoSet,
-                                         DeviceInfoData,
+                                         pDeviceInfoData,
                                          SPDRP_CONFIGFLAGS,
                                          (PBYTE)&ConfigFlags,
                                          sizeof(ConfigFlags)
@@ -1531,6 +1761,15 @@ BOOL CheckWindowsVersion(enum WinVersion request)
     if (gotVerInfo != 0) {
         switch (request)
         {
+        case WinAtLeastXP:
+            if (winVer.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                // Windows XP returns version 5.1 from GetVersionEx
+                if ((winVer.dwMajorVersion > 5) || ((winVer.dwMajorVersion == 5) && (winVer.dwMinorVersion >= 1))) {
+                    checkResult = TRUE;
+                }
+            }
+            break;
+
         case WinAtLeastVista:
             if (winVer.dwPlatformId == VER_PLATFORM_WIN32_NT) {
                 // Windows Vista returns version 6.0 from GetVersionEx
@@ -1539,14 +1778,34 @@ BOOL CheckWindowsVersion(enum WinVersion request)
                 }
             }
             break;
+
         case WinAtLeast7:
             if (winVer.dwPlatformId == VER_PLATFORM_WIN32_NT) {
                 // Windows 7 returns version 6.1 from GetVersionEx
-                if ((winVer.dwMajorVersion > 6) || ((winVer.dwMajorVersion == 6) && (winVer.dwMinorVersion > 0))) {
+                if ((winVer.dwMajorVersion > 6) || ((winVer.dwMajorVersion == 6) && (winVer.dwMinorVersion >= 1))) {
                     checkResult = TRUE;
                 }
             }
             break;
+
+        case WinAtLeast8:
+            if (winVer.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                // Windows 8.0 returns version 6.2 from GetVersionEx
+                if ((winVer.dwMajorVersion > 6) || ((winVer.dwMajorVersion == 6) && (winVer.dwMinorVersion >= 2))) {
+                    checkResult = TRUE;
+                }
+            }
+            break;
+
+        case WinAtLeast10:
+            if (winVer.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                // Windows 10 returns version 10.0 from GetVersionEx, *but only if Manifested for version 10* otherwise 6.2
+                if (winVer.dwMajorVersion >= 10) {
+                    checkResult = TRUE;
+                }
+            }
+            break;
+
         default: assert(0);
         }
     }

@@ -60,7 +60,7 @@ USB HID Bootloader is provided by the [UBW32 project](http://www.schmalzhaus.com
 
 For convenience, a copy of the bootloader hex and an MPLAB hex load project is provided in `firmware/Pic32/HIDBoot_MX795_Hex_Load.X`
 
-The Bootloader client, mphidflash, runs on Linux/Max/Windows and transmits & verifies the new firmware.
+The Bootloader client, mphidflash, runs on Linux/Mac/Windows and transmits & verifies the new firmware.
 
 http://code.google.com/p/mphidflash/
 

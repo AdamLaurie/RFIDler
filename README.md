@@ -8,6 +8,8 @@ Currently that is Pic32, but we will add a new section if and when required.
 
 ##Hardware
 
+A fully built RFIDler board can be purchased here: [http://aperturelabs.com/tools.html](http://aperturelabs.com/tools.html)
+
 ### Pic32
 
 The main microcontroller is a [Microchip PIC32MX795F512L](http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en545660)

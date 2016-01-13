@@ -138,54 +138,79 @@
 #include "util.h"
 #include "comms.h"
 
-void detect_external_clock(void)
+void detect_init(void)
 {
-    BYTE                    toggle;
-    unsigned long           time= 0, tick;
-    unsigned int            count= 0;
-
     // make sure local clock isn't running & switch to input
     stop_HW_clock();
 
     COIL_MODE_READER();
     READER_CLOCK_ENABLE_OFF(LOW);
+}
+
+// detect and measure external clock
+// optionally wait for clock to stop in order to detect reader gap
+void detect_external_clock(BOOL wait, BYTE max_hz)
+{
+    BYTE                    toggle= SNIFFER_COIL;
+    unsigned long           tick, time;
+    unsigned int            count= 0;
+
+    detect_init();
+
+    // wait for external clock to stop if required
+    if(wait)
+    {
+        // calculate max ticks to wait for clock pulse
+        time= max_hz * 1000000000UL;
+        time *= (unsigned long) (GetSystemClock() / US_TO_TICKS);
+        time /= 2;
+        while(42)
+        {
+            GetTimer_ticks(RESET);
+            while(SNIFFER_COIL == toggle)
+            {
+                // check for user abort
+                if(get_user_abort())
+                    return;
+                if(GetTimer_ticks(NO_RESET) > time)
+                    return;
+            }
+            toggle= !toggle;
+        }
+    }
 
     // wait for 100 ticks to make sure we're settled
-    toggle= SNIFFER_COIL;
-    while(count < 100)
+    count= 100;
+    while(count--)
     {
         while(SNIFFER_COIL == toggle)
             // check for user abort
             if(get_user_abort())
                 return;
-        ++count;
         toggle= !toggle;
     }
 
-    // now get the length of the next 1000 ticks
-    count= 0;
+    UserMessageNum("\r\nClock detected: %ld Hz\r\n", read_external_clock_burst(1000));
+}
+
+// read a data burst and measure frequency
+unsigned long read_external_clock_burst(unsigned int ticks)
+{
+    BOOL toggle;
+    unsigned long time= 0UL;
+
     GetTimer_ticks(RESET);
-    while(count < 1000)
+    while(ticks--)
     {
        while(SNIFFER_COIL == toggle)
           if(get_user_abort())
-             return;
-       tick= GetTimer_ticks(RESET);
-       // sanity check - we may be in an idle period
-       if(tick > 1000)
-           count= 0;
-       else
-       {
-           ++count;
-           time += tick;
-       }
+             return 0L;
+       time += GetTimer_ticks(RESET);
        toggle= !toggle;
     }
-
     // convert to KHz
-    time *= 2L; // two toggles per clock tick
+    time *= 2UL; // two toggles per clock tick
     time /= (unsigned long) (GetSystemClock() / US_TO_TICKS);
-    time= 1000000000L / time;
-
-    UserMessageNum("\r\nClock detected: %ld Hz\r\n", time);
+    time= 1000000000UL / time;
+    return time;
 }

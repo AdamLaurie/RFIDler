@@ -210,5 +210,5 @@ BOOL bcd_to_hid26_bin(unsigned char *hid26, unsigned char *bcd)
 // return raw HEX UID
 BOOL hid26_get_uid(BYTE *response)
 {
-    return fsk_raw_get_uid(response);
+    return fsk_raw_get_uid(response, FALSE);
 }

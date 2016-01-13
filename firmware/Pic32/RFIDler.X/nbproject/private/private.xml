@@ -4,20 +4,32 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/unique.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/ask.c</file>
             <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/tags.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/config.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/vtag.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/util.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/hitag.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/main.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/tags.h</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/hdx.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/nbproject/Makefile-debug.mk</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/detect.h</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/indala.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/tamagotchi.h</file>
             <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/q5.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/config.h</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/login.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/tamagotchi.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/hdx.h</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/fdxb.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/emulate.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/q5.h</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/util.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/main.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/awid.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/sniff.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/hid.c</file>
             <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/isr.c</file>
             <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/clock.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/hitag.h</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/em.c</file>
-            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/em.h</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/uid.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/rwd.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/src/detect.c</file>
+            <file>file:/home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/include/rfidler.h</file>
         </group>
     </open-files>
 </project-private>

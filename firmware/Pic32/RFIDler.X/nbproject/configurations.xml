@@ -56,6 +56,7 @@
       <itemPath>include/t55x7.h</itemPath>
       <itemPath>include/sniff.h</itemPath>
       <itemPath>include/tamagotchi.h</itemPath>
+      <itemPath>include/hdx.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -124,6 +125,7 @@
       <itemPath>src/t55x7.c</itemPath>
       <itemPath>src/sniff.c</itemPath>
       <itemPath>src/tamagotchi.c</itemPath>
+      <itemPath>src/hdx.c</itemPath>
     </logicalFolder>
     <logicalFolder name="windows driver"
                    displayName="Windows Driver"

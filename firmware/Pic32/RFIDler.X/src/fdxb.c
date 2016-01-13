@@ -129,7 +129,7 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
+// ISO-11784/5 FDX-B as per http://www.webcitation.org/5fsCRL5Zz
 
 #include "HardwareProfile.h"
 #include "fdxb.h"

@@ -213,6 +213,7 @@ typedef struct {
     BOOL            BiPhase;
     BOOL            Invert;
     BOOL            Manchester;
+    BOOL            HalfDuplex;
     unsigned int    Repeat;
     unsigned int    PotLow;
     unsigned int    PotHigh;
@@ -333,6 +334,7 @@ extern rtccDate	RTC_date;			// date structure
 #define TAG_TYPE_AWID_26                17
 #define TAG_TYPE_EM4X05                 18
 #define TAG_TYPE_TAMAGOTCHI             19
+#define TAG_TYPE_HDX                    20      // same underlying data as FDX-B, but different modulation & telegram 
 
 // various
 
@@ -384,6 +386,9 @@ extern rtccDate	RTC_date;			// date structure
 
 #define NEWLINE                         TRUE
 #define NO_NEWLINE                      FALSE
+
+#define WAIT                            TRUE
+#define NO_WAIT                         FALSE
 
 #define WIPER_HIGH                      0
 #define WIPER_LOW                       1

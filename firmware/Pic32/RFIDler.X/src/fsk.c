@@ -204,7 +204,7 @@ void write_FSK_HW_clock(unsigned long pulse, BYTE *data, unsigned int tpb, unsig
 
 
 // return raw HEX UID
-BOOL fsk_raw_get_uid(BYTE *response)
+BOOL fsk_raw_get_uid(BYTE *response, BOOL oneshot)
 {
     unsigned int i;
     BOOL blank= TRUE;
@@ -213,7 +213,7 @@ BOOL fsk_raw_get_uid(BYTE *response)
     memset(tmp, '0', MAXUID);
     tmp[MAXUID]= '\0';
     
-    if (read_fsk_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.DataRateSub0, RFIDlerConfig.DataRateSub1, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Invert, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, FALSE, HEX) != RFIDlerConfig.DataBits)
+    if (read_fsk_data(RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.DataRateSub0, RFIDlerConfig.DataRateSub1, tmp, RFIDlerConfig.DataBits, RFIDlerConfig.Invert, RFIDlerConfig.Sync, RFIDlerConfig.SyncBits, RFIDlerConfig.Timeout, oneshot, HEX) != RFIDlerConfig.DataBits)
         return FALSE;
     
     for(i= 0 ; i < strlen(tmp) ; ++i)
@@ -367,7 +367,7 @@ BOOL read_FSK_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, unsi
             if (GetTimer_us(NO_RESET) > timeout_us)
                 return FALSE;
     gaplength= GetTimer_us(RESET);
-    
+
     // now look for a gap that doesn't match
     tries= 20;
     while(tries--)

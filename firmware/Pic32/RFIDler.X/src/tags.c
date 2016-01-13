@@ -137,6 +137,7 @@
 #include "comms.h"
 #include "em.h"
 #include "fdxb.h"
+#include "hdx.h"
 #include "hitag.h"
 #include "hid.h"
 #include "indala.h"
@@ -171,6 +172,7 @@ const BYTE *TagTypes[]= {
     "AWID26",
     "EM4X05",
     "TAMAGOTCHI",
+    "HDX",
     NULL
 };
 
@@ -301,6 +303,9 @@ unsigned int tag_get_databits(BYTE tag)
         case TAG_TYPE_FDXB:
             return FDXB_DATABITS;
 
+        case TAG_TYPE_HDX:
+            return HDX_DATABITS;
+
         case TAG_TYPE_HITAG1:
             return HITAG1_DATABLOCKS * HITAG1_BLOCKSIZE;
 
@@ -354,6 +359,7 @@ BOOL tag_set(BYTE tag)
     RFIDlerConfig.FrameClock= 0;
     RFIDlerConfig.BiPhase= FALSE;
     RFIDlerConfig.Manchester= FALSE;
+    RFIDlerConfig.HalfDuplex= FALSE;
     RFIDlerConfig.Invert= FALSE;
     RFIDlerConfig.Modulation= MOD_MODE_NONE;
     RFIDlerConfig.PotLow= 0;

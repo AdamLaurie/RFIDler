@@ -129,4 +129,6 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-void detect_external_clock(void);
+void detect_init(void);
+void detect_external_clock(BOOL wait, BYTE max_hz);
+unsigned long read_external_clock_burst(unsigned int ticks);

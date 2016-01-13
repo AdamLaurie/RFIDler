@@ -165,6 +165,12 @@ BOOL emulate_tag(unsigned char *UID)
                 return FALSE;
             return send_ask_bin(TmpBuff, RFIDlerConfig.DataBits, RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.Repeat);
 
+        // TODO
+        case TAG_TYPE_HDX:
+            if(!uid_to_hdx_bin(TmpBuff, UID))
+                return FALSE;
+            return FALSE;
+
         case TAG_TYPE_UNIQUE:
             if(!hex_to_unique_bin(TmpBuff, UID))
                 return FALSE;

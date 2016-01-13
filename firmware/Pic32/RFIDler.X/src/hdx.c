@@ -129,158 +129,201 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
+// ISO-11784/5 HDX as per http://www.webcitation.org/5fsCRL5Zz
+
 #include "HardwareProfile.h"
-#include "rfidler.h"
-#include "uid.h"
-#include "ask.h"
-#include "fsk.h"
-#include "fdxb.h"
+#include "detect.h"
 #include "hdx.h"
-#include "em.h"
-#include "indala.h"
-#include "unique.h"
-#include "psk.h"
-#include "hitag.h"
-#include "q5.h"
-#include "t55x7.h"
+#include "fsk.h"
+#include "rfidler.h"
+#include "util.h"
 
-
-// get a tag's UID
-
-BOOL get_tag_uid(BYTE *response)
+// HDX reads data in Half Duplex mode
+// first we energise the TAG for long enough that it charges up
+// then we use sniffer to read response
+// each bit is 16 ticks, a 1 is 124.2 KHz and a 0 is 134.2 KHz
+// activation frequency is 134.2 KHz (745 FCs))
+BOOL hdx_get_uid(BYTE *response)
 {
-    switch(RFIDlerConfig.TagType)
+    BYTE i;
+    BYTE tmp[HDX_DATABITS];
+
+
+    // energise tag & wait for wakeup period
+    InitHWReaderClock(OC_TOGGLE_PULSE, 745 / 2L, 745, RWD_STATE_ACTIVE);
+    Delay_us((RFIDlerConfig.FrameClock * RFIDlerConfig.RWD_Wake_Period) / 100);
+
+    // switch off clock and switch to sniffer mode
+    detect_init();
+
+    // read to temporary array for speed
+    for(i= 0 ; i < HDX_DATABITS ; ++i)
+        tmp[i]= read_external_clock_burst(16) / 1000L;
+
+    // convert to binary based on freq +- 3
+    for(i= 0 ; i < HDX_DATABITS ; ++i)
     {
-        case TAG_TYPE_ASK_RAW:
-            return ask_raw_get_uid(response);
-
-        case TAG_TYPE_AWID_26:
-            return awid26_get_uid(response);
-
-        case TAG_TYPE_EM4X05:
-            return em4x05_get_uid(response);
-
-        case TAG_TYPE_EM4X02:
-            return em4x02_get_uid(response);
-
-        case TAG_TYPE_FDXB:
-            return fdxb_get_uid(response);
-
-        case TAG_TYPE_FSK1_RAW:
-        case TAG_TYPE_FSK2_RAW:
-            return fsk_raw_get_uid(response, FALSE);
-
-        case TAG_TYPE_HDX:
-            return hdx_get_uid(response);
-
-        case TAG_TYPE_HID_26:
-            return hid26_get_uid(response);
-
-        case TAG_TYPE_HITAG1:
-            return hitag1_get_uid(response);
-
-        case TAG_TYPE_HITAG2:
-            return hitag2_get_uid(response);
-
-        case TAG_TYPE_INDALA_64:
-            return indala64_get_uid(response);
-
-        case TAG_TYPE_INDALA_224:
-            return indala224_get_uid(response);
-
-        case TAG_TYPE_PSK1_RAW:
-            return psk1_raw_get_uid(response);
-
-        case TAG_TYPE_Q5:
-            return q5_get_uid(response);
-
-        case TAG_TYPE_T55X7:
-            return t55x7_get_uid(response);
-
-        case TAG_TYPE_UNIQUE:
-            return unique_get_uid(response);
-
-        default:
-            break;
+        if (tmp[i] >= 122 && tmp[i] <= 128)
+            tmp[i]= 0x01;
+        else
+            if (tmp[i] >= 129 && tmp[i] <= 135)
+                 tmp[i]= 0x00;
+            else
+                return FALSE;
     }
-    return FALSE;
+    binarraytohex(response, tmp, HDX_DATABITS);
+    return TRUE;
 }
 
-// show interpreted HEX value UID
-BOOL interpret_uid(BYTE *response, BYTE *hex, BYTE tagtype)
+// convert human readable UID to 128 bit fdx-b HEX string
+BOOL uid_to_hdx_hex(BYTE *hex, BYTE *uid)
 {
-    switch(tagtype)
-    {
-        case TAG_TYPE_NONE:
-            strcpy(response, hex);
-            return TRUE;
-            
-        case TAG_TYPE_ASK_RAW:
-            return ask_raw_hex_to_uid(response, hex);
-
-        case TAG_TYPE_AWID_26:
-            return awid26_hex_to_uid(response, hex);
-
-        case TAG_TYPE_EM4X05:
-            strcpy(response, hex);
-            return TRUE;
-
-        case TAG_TYPE_EM4X02:
-            return em4x02_hex_to_uid(response, hex);
-
-        case TAG_TYPE_FDXB:
-            return fdxb_hex_to_uid(response, hex);
-
-        case TAG_TYPE_FSK1_RAW:
-        case TAG_TYPE_FSK2_RAW:
-            return fsk_raw_hex_to_uid(response, hex);
-
-        case TAG_TYPE_HDX:
-            return hdx_hex_to_uid(response, hex);
-
-        case TAG_TYPE_HID_26:
-            return hid26_hex_to_uid(response, hex);
-
-        case TAG_TYPE_HITAG1:
-            return hitag1_hex_to_uid(response, hex);
-
-        case TAG_TYPE_HITAG2:
-            return hitag2_hex_to_uid(response, hex);
-
-        case TAG_TYPE_INDALA_64:
-            return indala64_hex_to_uid(response, hex);
-
-        case TAG_TYPE_INDALA_224:
-            return indala224_hex_to_uid(response, hex);
-
-        case TAG_TYPE_PSK1_RAW:
-            return psk1_raw_hex_to_uid(response, hex);
-
-        case TAG_TYPE_Q5:
-            return q5_hex_to_uid(response, hex);
-
-        case TAG_TYPE_T55X7:
-            strcpy(response, hex);
-            return TRUE;
-
-        case TAG_TYPE_UNIQUE:
-            return unique_hex_to_uid(response, hex);
-
-        default:
-            break;
-    }
-    return FALSE;
-}
-
-BOOL get_interpreted_tag_uid(BYTE *response, BYTE tagtype)
-{
-        BYTE tmp[MAXUID + 1];
-
-        if(get_tag_uid(tmp))
-        {
-            if(interpret_uid(response, tmp, tagtype))
-                return write_wiegand_uid(response);
-        }
+    BYTE tmp[128];
+    if(!uid_to_fdxb_bin(tmp, uid))
         return FALSE;
+
+   binarraytohex(hex, tmp, 128);
+   return TRUE;
 }
 
+// convert human readable UID to 128 bit fdx-b binary array
+BOOL uid_to_hdx_bin(BYTE *bin, BYTE *uid)
+{
+    BYTE tmp1[64], crc[8], i;
+    unsigned int country, crctag;
+    unsigned long long id;
+
+    memset(tmp1, 0x00, 64);
+
+    // set animal flag
+    if(uid[0] == 'A')
+        tmp1[0]= 0x01;
+    else
+        if(uid[0] != '0')
+            return FALSE;
+
+    // set data flag
+    if(uid[1] == 'D')
+        tmp1[15]= 0x01;
+    else
+        if(uid[1] != '0')
+            return FALSE;
+
+    // set country code - 4 hex digits -> 10 bits
+    country= bcdtouint(uid + 2, 4);
+    inttobinarray(tmp1 + 16, country, 10);
+
+    // set national ID - 12 hex digits -> 38 bits
+    id= bcdtoulonglong(uid + 6, 12);
+    ulonglongtobinarray(tmp1 + 26, id, 38);
+
+    // reverse binary
+    string_reverse(tmp1, 64);
+
+    // add header for over-the-air: 10 x 0x00 + 0x01
+    memset(bin, 0x00, 10);
+
+    // every 9th bit is 0x01, but we can just fill the rest with 0x01 and overwrite
+    memset(bin + 10, 0x01, 118);
+
+    //data is 8 blocks of 8 bits, plus obfuscation bit
+    for(i= 0 ; i < 8 ; ++i)
+        memcpy(bin + 11 + i * 9, tmp1 + i * 8, 8);
+
+    // calculate & append crc for 64 bits of data
+    for(i= 0 ; i < 8 ; ++i)
+        crc[i]= (BYTE) binarraytoint(tmp1 + i * 8, 8);
+    crctag= crc_ccitt(crc, 8);
+    inttobinarray(bin + 83, crctag >> 8, 8);
+    inttobinarray(bin + 92, crctag, 8);
+
+    // add trailer
+    for(i= 0 ; i < 3 ; ++i)
+        memset(bin + 101 + i * 9, 0x00, 8);
+
+    return TRUE;
+}
+
+// convert fdxb 128 bit binary array to human readable UID
+// format is ADCCCCIIIIIIIIIIII where A is 'A' or '0' for animal / non-animal,
+// D is 'D' or '0' for Data block available / No data available, 
+// CCCC is ISO-3166 country code or ICAR.ORG manufacturer code
+// IIIIIIIIIIII is national ID
+BOOL hdx_hex_to_uid(BYTE *uid, BYTE *hex)
+{
+    BYTE tmp[128];
+    unsigned int country;
+    unsigned long long id;
+
+
+    // strip headers etc.
+    if(!fdxb_hex_to_bin(tmp, hex))
+        return FALSE;
+
+    // reverse binary
+    string_reverse(tmp, 64);
+
+    // output animal flag
+    if(tmp[0])
+        uid[0]= 'A';
+    else
+        uid[0]= '0';
+
+    // output data flag
+    if(tmp[15])
+        uid[1]= 'D';
+    else
+        uid[1]= '0';
+
+    // output country/icar code
+    country= binarraytoint(&tmp[16], 10);
+    sprintf(&uid[2], "%04u", country);
+
+    // output national ID
+    id= binarraytoulonglong(&tmp[26], 38);
+    sprintf(&uid[6], "%012llu", id);
+
+    return TRUE;
+}
+
+// convert 32 hex digit/128 bit FDXB ID to 64 bit raw UID
+// safe to do in-place as we use a scratchpad
+BOOL hdx_hex_to_bin(BYTE *response, BYTE *fdxb)
+{
+    BYTE i, crc_check[8], trailer[9]= {0,0,0,0,0,0,0,0,1}, tmp[128];
+    unsigned int crctag;
+
+    hextobinarray(tmp, fdxb);
+
+    // check header - should be 10 x 0x00 + 0x01
+    for(i= 0 ; i < 10 ; ++i)
+        if(tmp[i] != 0x00)
+            return FALSE;
+    if(tmp[10] != 0x01)
+        return FALSE;
+
+    // check CRC
+    // calculate crc for 64 bits of data (8 blocks of 8 plus obfuscation bit)
+    for(i= 0 ; i < 8 ; ++i)
+        crc_check[i]= (BYTE) binarraytoint(tmp + 11 + i * 9, 8);
+    // stored crc (2 x 8 + 1) is at offset 83 (11 + 64 + 8)
+    crctag= binarraytoint(tmp + 83, 8) << 8;
+    crctag += binarraytoint(tmp + 92, 8);
+    if (crctag != crc_ccitt(crc_check, 8))
+        return FALSE;
+
+    // check trailer - '000000001' x 3 at offset 101
+    for(i= 0 ; i < 3 ; ++i)
+        if(memcmp(tmp + 101 + i * 9, trailer, 9) != 0)
+            return FALSE;
+
+    // data is 8 blocks of 8 bits, plus obfuscation bit so check and strip every 9th bit
+    for(i= 0 ; i < 8 ; ++i)
+    {
+        if(tmp[11 + ((i + 1) * 9) - 1] != 0x01)
+            return FALSE;
+        memcpy(response + i * 8, tmp + 11 + (i * 9), 8);
+    }
+
+    return TRUE;
+}

@@ -1298,7 +1298,7 @@ BYTE ProcessSerialCommand(char *command)
     {
         commandok= command_ack(DATA);
         UserMessage("%s", "Waiting for external clock (hit any key to abort)...\r\n");
-        detect_external_clock();
+        detect_external_clock(NO_WAIT, 0);
         eod();
     }
 

@@ -134,7 +134,7 @@
 BOOL send_fsk_hex(unsigned char *data, unsigned long pulsewidth, unsigned int cpb, unsigned int c0, unsigned int c1, unsigned int repeat);
 BOOL send_fsk_bin(unsigned char *data, unsigned int length, unsigned long pulsewidth, unsigned int cpb, unsigned int c0, unsigned int c1, unsigned int repeat);
 void write_FSK_HW_clock(unsigned long pulse, BYTE *data, unsigned int tpb, unsigned int t0, unsigned int t1, unsigned int repeat);
-BOOL fsk_raw_get_uid(BYTE *response);
+BOOL fsk_raw_get_uid(BYTE *response, BOOL oneshot);
 BOOL fsk_raw_hex_to_uid(BYTE *response, BYTE *hex);
 unsigned int read_fsk_data(unsigned int period_us, unsigned int ticks, unsigned int t0_ticks, unsigned int t1_ticks, BYTE *data, unsigned int bits, BOOL invert, unsigned char *sync, unsigned char syncbits, unsigned int timeout_us, BOOL oneshot, BYTE format);
 BOOL read_FSK_HW_clock(unsigned int period, unsigned int ticks, BYTE *data, unsigned int bits, unsigned int timeout_us);

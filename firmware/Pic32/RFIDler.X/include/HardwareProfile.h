@@ -285,7 +285,7 @@
 #define DOOR_RELAY_OPEN()           DOOR_RELAY= HIGH
 #define DOOR_RELAY_CLOSE()          DOOR_RELAY= LOW
 
-// inductance/capicitance freq
+// inductance/capacitance freq
 #define IC_FREQUENCY               PORTAbits.RA2
 
 #define SNIFFER_COIL               PORTDbits.RD12    // external reader clock detect

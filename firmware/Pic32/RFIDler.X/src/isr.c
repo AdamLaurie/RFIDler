@@ -548,6 +548,7 @@ void __ISR(_TIMER_4_VECTOR, ipl6auto) HW_read_bit(void)
             // to read FSK we will measure a pulse width. we must stop before end of bit period so we don't
             // get caught by the next interrupt. accordingly our time period is shortened by 20%, but
             // that should be OK as we only need to see a single pulse.
+            // IN HDX mode we read from the SNIFFER coil instead of the READER
             //DEBUG_PIN_4= !DEBUG_PIN_4;
             //time= CONVERT_TO_TICKS(RFIDlerConfig.FrameClock * (RFIDlerConfig.DataRate - (RFIDlerConfig.DataRate / 5)));
             time= RFIDlerConfig.FrameClock * (RFIDlerConfig.DataRate - (RFIDlerConfig.DataRate / 5));

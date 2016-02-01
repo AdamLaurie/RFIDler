@@ -878,6 +878,7 @@ void show_usage(char *command)
         "LEDON <0-6>                                                  LED on (0 for ALL)\r\n",
         "LOGIN [PWD] [BLOCK]                                          Authenticate in PASSWORD mode\r\n",
         "PING                                                         Keepalive - prints 'RFIDler'\r\n",
+        "PINS                                                         Show wiring diagram (alias: WIRES WIRING)\r\n",
         "POTS                                                         Show POT wiper settings\r\n",
         "POTINC <H|L> <1-255>                                         Increment POT\r\n",
         "POTDEC <H|L> <1-255>                                         Decrement POT\r\n",
@@ -932,6 +933,7 @@ void show_usage(char *command)
         "WIEGAND-WRITE <BINARY>                                       Send Wiegand output\r\n",
         "WIPE                                                         Wipe NVM\r\n",
         "WRITE <BLOCK> <HEX DATA>                                     Write data block (may require login/auth)\r\n",
+        "WIRES                                                        Show wiring diagram (alias: WIRING PINS)\r\n",
         "WIRING                                                       Show wiring diagram (alias: WIRES PINS)\r\n",
         NULL,
     };

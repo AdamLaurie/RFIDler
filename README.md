@@ -16,42 +16,31 @@ The main microcontroller is a [Microchip PIC32MX795F512L](http://www.microchip.c
 
 ## Software Build environment
 
-The project was developed in Mplab-X IDE V2.20 under Linux, but can also be built under Windows & Mac:
+The project was developed in Mplab-X IDE V3.20 under Linux, but can also be built under Windows & Mac:
 
-  http://www.microchip.com/pagehandler/en-us/family/mplabx/
+* [Linux] (http://www.microchip.com/mplabx-ide-linux-installer)
 
-The compiler used was the free version of Microchip's XC32 V1.34:
+* [Windows] (http://www.microchip.com/mplabx-ide-windows-installer)
 
-  http://www.microchip.com/pagehandler/en-us/devtools/mplabxc/home.html
+* [Mac] (http://www.microchip.com/mplabx-ide-osx-installer)
 
-USB stack and peripheral support is provided by Microchip Application Library v2013-06-15:
+The compiler used was the free version of Microchip's XC32 V1.40:
+
+* [Linux] (http://www.microchip.com/mplabxc32linux)
+
+* [Windows] (http://www.microchip.com/mplabxc32windows)
+
+* [Mac] (http://www.microchip.com/mplabxc32osx)
+
+USB stack and peripheral support is provided by [Microchip Application Library v2013-06-15] (http://www.microchip.com/pagehandler/en-us/devtools/mla/archives.html):
 
 * [Linux](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run)
-  - Install to '/opt/microchip/microchip_solutions_v2013-06-15'
+  - Install to /opt/microchip/microchip_solutions_v2013-06-15/
+  - Note: if the installer fails to start, try adding the run-time option '--mode text'
 * [Windows](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-windows-installer.exe)
   - Install to installer default location
 * [Mac](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-osx-installer.dmg)
-  - Install to default location, which will normally be your home directory.
-
-Example setup Linux x64:
-
-	mkdir tmp; cd tmp;
-	#Get Mplab-X
-	wget http://ww1.microchip.com/downloads/en/DeviceDoc/MPLABX-v2.26-linux-installer.sh
-	# Get compiler
-	wget http://ww1.microchip.com/downloads/en/DeviceDoc/xc32-v1.34-full-install-linux-installer.run
-	# Get USB support
-	wget http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-linux-installer.run
-	# Install IDE
-	chmod +x MPLABX-v2.26-linux-installer.sh 
-	sudo ./MPLABX-v2.26-linux-installer.sh 
-	64 Bit, check libraries
-	Check for 32 Bit libraries
-	Verifying archive integrity... All good.
-	chmod +x xc32-v1.34-full-install-linux-installer.run 
-	sudo ./xc32-v1.34-full-install-linux-installer.run
-	chmod +x microchip-libraries-for-applications-v2013-06-15-linux-installer.run
-	sudo ./microchip-libraries-for-applications-v2013-06-15-linux-installer.run
+  - Install to installer default location
 
 ### Bootloader
 
@@ -64,13 +53,13 @@ For convenience, a copy of the bootloader hex and an MPLAB hex load project is p
 
 The Bootloader client, mphidflash, runs on Linux/Mac/Windows and transmits & verifies the new firmware.
 
-http://code.google.com/p/mphidflash/
+https://github.com/ApertureLabsLtd/mphidflash
 
 #### Notes
 
 mphidflash v1.3 has some known bugs where for some ROM binaries programming fails and a verification error is reported.
 	
-If you hit this problem check for a newer release of mphidflash. Pre-compiled executables for all platforms are available [here](https://code.google.com/p/mphidflash/)
+If you hit this problem check for a newer release of mphidflash. Pre-compiled executables for all platforms are available [here](https://github.com/ApertureLabsLtd/mphidflash)
 
 ### Software Build
 
@@ -86,15 +75,7 @@ Clone this repo to your local hard disk.
 
 If you are running Windows, you will need to change the default Linux library to the local Windows version:
 
-1. In the 'Projects' window, expand RFIDler/Libraries
-2. Highlight the only entry (/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and right-click
-3. Select 'Remove'
-4. Copy the libmchp_peripheral_32MX795F512L.a file:
-  from your local XC32 installation (normally 'Program Files (x86)/Microchip/xc32') and drill down to v1.34/pic32mx/lib/
-  to your RFIDler.X project directory.
-5. Select 'Libraries' and right-click
-6. Select 'Add Library/Object file'
-7. Browse to your RFIDler.X project and select libmchp_peripheral_32MX795F512L.a
+UPDATE NEEDED TO THIS SECTION!
 
 (There are bugs in MPLAB X and GNU make such that paths to libraries containing spaces are not always processed correctly, 
 and the default install path on Windows contains spaces so making the copy is the simplest solution.)
@@ -103,31 +84,14 @@ and the default install path on Windows contains spaces so making the copy is th
 
 If you are running Mac OS X, you will need to change the default Linux library to the local Mac version:
 
-1. In the 'Projects' window, expand RFIDler/Libraries
-2. Highlight the only entry (/opt/microchip/xc32/v1.34/pic32mx/lib/libmchp_peripheral_32MX795F512L.a) and ctrl-click
-3. Select 'Remove'
-4. Select 'Libraries' and ctrl-click
-5. Select 'Add Library/Object file'
-6. Browse to your xc32 installation directory (default is /Applications/microchip/xc32) and drill down to v1.34/pic32mx/lib/
-         select libmchp_peripheral_32MX795F512L.a
-7. In the projects window, highlight 'RFIDler' and ctl-click
-8. Select 'Properties'
-9. For both 'Conf: [default]' and 'Conf: [debug]', perform the following steps:
-10. Select 'xc32-gcc'
-11. In the 'Option categories' pulldown menu, select 'Preprocessing and messages'
-12. Double-click on the 'Include directories' window
-13. Edit the two 'microchip_solutions_v2013-06-15' entries, such that they point at your local installation
-(prepending '../../../../..' should suffice if you installed to the default location, and your project
-is also in the default location for projects)
-14. Edit the '/opt/microchip/xc32' entry, and substitute '/Applications/' for '/opt/'
-15. Select 'Run/Clean and Build Main Project'
+UPDATE NEEDED TO THIS SECTION!
 
 ### Connections
 
 The device can be powered via the USB port, and, if connected to a PC, will provide a
 management CLI/API via USB-Serial CDC at 115200 baud (8 bit, No Parity, 1 Stop Bit, No Handshaking/Flow Control).
 
-The CLI/API is also accessible via 3.3v or 5v UART on pins RF4 (UART2 RX) and RF5 (UART2 TX)
+The CLI/API is also accessible via 3.3v or 5v UART on pins RG7 (UART3 RX) and RG8 (UART3 TX), also at 115200 baud.
 
 When you connect with USB for the first time, you may need to perform some configuration steps:
 
@@ -210,7 +174,7 @@ The device will be programmed and will then reboot. `dmesg` should show:
 ## Install mphidflash from source
 Option 1, v1.6:
 ```shell
-curl https://mphidflash.googlecode.com/svn/trunk/dist/mphidflash-1.6-src.tar.gz > mphidflash1-6.tar.gz
+curl https://github.com/ApertureLabsLtd/mphidflash/blob/master/dist/mphidflash-1.6-src.tar.gz > mphidflash1-6.tar.gz
 mkdir mphidflash1-6
 tar -zxvf mphidflash1-6.tar.gz -C mphidflash1-6
 cd mphidflash1-6
@@ -220,7 +184,7 @@ sudo make install64
 
 Option 2, latest:
 ```shell
-svn checkout http://mphidflash.googlecode.com/svn/trunk/ mphidflash
+git clone https://github.com/ApertureLabsLtd/mphidflash.git
 cd mphidflash
 sudo make install64
 ```

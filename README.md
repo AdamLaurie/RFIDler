@@ -42,6 +42,15 @@ USB stack and peripheral support is provided by [Microchip Application Library v
 * [Mac](http://ww1.microchip.com/downloads/en/softwarelibrary/microchip-libraries-for-applications-v2013-06-15-osx-installer.dmg)
   - Install to installer default location
 
+and [PIC32 Peripheral Library] (http://www.microchip.com/SWLibraryWeb/product.aspx?product=PIC32%20Peripheral%20Library):
+
+* [Linux](http://ww1.microchip.com/downloads/en/DeviceDoc/PIC32%20Legacy%20Peripheral%20Libraries%20Linux.tar)
+  - Install to /opt/microchip/xc32/v1.40
+* [Windows](http://ww1.microchip.com/downloads/en/DeviceDoc/PIC32%20Legacy%20Peripheral%20Libraries.zip)
+  - Install to installer default location
+* [Mac](http://ww1.microchip.com/downloads/en/DeviceDoc/PIC32%20Legacy%20Peripheral%20Libraries%20MACOS.zip)
+  - Install to installer default location
+
 ### Bootloader
 
 When the Bootloader is running the RFIDler appears on the USB as a HID, and waits for new RFIDler firmware to install in Flash memory.

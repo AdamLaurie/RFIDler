@@ -194,6 +194,9 @@ BOOL send_indala_raw(unsigned char *indala)
 // we currently do a raw select, then check for 101 terminator, parity, & 2 zero bits
 BOOL indala64_get_uid(BYTE *response)
 {
+    int bits;
+    int i, n;
+    
     //Reading failed
     if (!psk1_raw_get_uid(response) || (strlen(response) != 16))
         return FALSE;
@@ -219,25 +222,20 @@ BOOL indala64_get_uid(BYTE *response)
 
 
     //Parity check, count bits
-    int bits;
-    int i, n;
-    for (i=0; i<16; i++)
+    for (i= 0, bits= 0; i < 16; i++)
     {
         if (response[i] >= 'a' && response[i] <= 'f')
-            n = response[i] - ('a' - 10);
+            n= response[i] - ('a' - 10);
         else if (response[i] >= '0' && response[i] <= '9')
-            n = response[i] - '0';
+            n= response[i] - '0';
         else if (response[i] >= 'A' && response[i] <= 'F')
-            n = response[i] - ('A' - 10);
+            n= response[i] - ('A' - 10);
         else
             return FALSE;
         bits += __builtin_popcount(n);
     }
 
-    if (bits % 2 == 0)
-        return FALSE;
-
-    return TRUE;
+    return bits % 2;
 }
 
 // since we currently don't know how to interpret indala data, just copy

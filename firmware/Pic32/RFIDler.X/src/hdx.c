@@ -147,7 +147,9 @@ BOOL hdx_get_uid(BYTE *response)
 {
     BYTE i;
     BYTE tmp[HDX_DATABITS];
-
+    
+    // this is a work in progress, so until reading produces any data, return empty
+    return FALSE;
 
     // energise tag & wait for wakeup period
     InitHWReaderClock(OC_TOGGLE_PULSE, 745 / 2L, 745, RWD_STATE_ACTIVE);

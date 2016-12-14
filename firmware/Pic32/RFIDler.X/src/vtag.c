@@ -443,10 +443,12 @@ BOOL vtag_write_to_tag(BYTE *pass)
     if(!write_tag(config_block_no, tmp, NO_VERIFY))
     {
         memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
+        stop_HW_clock();
         return FALSE;
     }
 
     memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
+    stop_HW_clock();
     return TRUE;
 }
 

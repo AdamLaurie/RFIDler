@@ -1,15 +1,15 @@
 /* 
 
-    Project: RFIDler Monitor v0.1
+    Project: RFIDler Monitor v0.2
              Graphical monitor that lists which USB ports an RFIDler is 
              currently connected to, and watches for changes.
              Tool for Aperture Labs RFIDler LF.
 
     File: rfidmonitor.cpp
 
-    Author: Anthony Naggs, 2014
+    Author: Anthony Naggs, 2014, 2015, 2016
 
-    Copyright (c) 2014-2015 Anthony Naggs.
+    Copyright (c) 2014-2016 Anthony Naggs.
     All rights reserved.
 
     Limited assignment of rights under the 'BSD 2-Clause License':
@@ -38,7 +38,7 @@
 #include "rfidmonitor.h"
 
 #include <ShlObj.h>
-#include <uxtheme.h> 
+//#include <uxtheme.h>
 
 
 /*
@@ -66,11 +66,13 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 // various global constant
 
-const wchar_t *szAppName = _T("RFIDler Monitor");
-const wchar_t *szRfidlerHwUsbId = _T("USB\\VID_1D50&PID_6098");
-const wchar_t *szMicrochipSerialHwUsbId = _T("USB\\VID_04D8&PID_000A");
-const wchar_t *szMicrochipBootHidId = _T("HID\\VID_04D8&PID_003C");
+const wchar_t *szAppName = L"RFIDler Monitor";
+const wchar_t *szRfidlerHwUsbId = L"USB\\VID_1D50&PID_6098";
+const wchar_t *szMicrochipSerialHwUsbId = L"USB\\VID_04D8&PID_000A";
+const wchar_t *szMicrochipBootHidId = L"HID\\VID_04D8&PID_003C";
+const wchar_t *szTeensyHalfKayBootHidId = L"HID\\VID_16C0&PID_0478";
 
+const wchar_t *KStartupArgument = L"/STARTUP";
 
 // singleton DeviceTracker
 DeviceTracker DevTracker;
@@ -99,14 +101,10 @@ public:
 
 
 BOOL CALLBACK MonitorDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-HWND InitTabbedDialog(HWND hWndTab, int itemId, wchar_t *tabTitle, LPCWSTR lpTemplateName,
-        DLGPROC lpDialogFunc, LPARAM dwInitParam, BOOL showDialog);
-HWND InitShowControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
-HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog);
-BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
+BOOL NotifyRfidlerList(HINSTANCE hInst, HWND hWnd, NM_LISTVIEW *pNm);
+BOOL NotifyRfidlerHeader(LPNMHEADER pNmHdr);
 INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DeviceDetailsDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 #if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
 INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
@@ -132,8 +130,36 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem);
 void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup);
 void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection);
 void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, POINT scrPt);
+void DefaultContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, POINT lvWndPt);
 DeviceInfo *DevInfoFromListItem(HWND hWndLV, int iItem);
 DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt);
+
+
+struct LaunchParams {
+    HINSTANCE   launchInstance;
+    BOOL        launchFromStartup;
+};
+
+
+/*
+    Crib notes on how ListView should work
+    ======================================
+
+    keyboard shortcuts
+    SPACE              Locates new selection and anchor for the item.
+    SHIFT + SPACE      Extends the selection from anchor to the item.
+    CTRL + SPACE       Invoke additional selection or deselection and move the anchor to the selected item.
+    Arrow keys         Move focus and remove all selection and the anchor previously made.
+    CTRL + NUM+ (Control with Numberpad +)
+                       In details view resizes the colmuns to content width
+    Drop Menu key (VK_APPS) or SHIFT + F10
+                       WM_CONTEXTMENU is processed if the ListView has an item selected
+
+    currently non-functioning shortcuts
+    CTRL+arrow keys    Move focus without move of selection or the anchor.
+    Any printable key  Moves the selection to the item matching prefix letters in the beginning of the label.
+                       (generates LVN_INCREMENTALSEARCHW message, not currently handled)
+*/
 
 
 /* real code begins here ... */
@@ -141,8 +167,8 @@ DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt);
 int WINAPI WinMain (
     HINSTANCE hInstance,
     HINSTANCE /* hPrevInstance */,
-    PSTR /* szCmdLine TODO: use to identify when launched from Startup Shortcut */,
-    int /* iCmdShow TODO: review if useful to support this */
+    PSTR /* szCmdLine not useful on Win32 as we don't get Unicode parameters */,
+    int /* iCmdShow, does not seem useful to do anythingh with this */
 )
 {
     ATOM ClassId;
@@ -152,7 +178,7 @@ int WINAPI WinMain (
     ClassId = RegisterMainWindow (hInstance);
 
     if (!ClassId) {
-        MessageBox(NULL, _T("Unable to create main window"), szAppName, MB_OK | MB_ICONWARNING);
+        MessageBox(NULL, L"Unable to create main window", szAppName, MB_OK | MB_ICONWARNING);
         return 3;
     }
 
@@ -164,9 +190,17 @@ int WINAPI WinMain (
     // need Microsoft COM setup for handling shortcuts
     CoInitialize(NULL);
 
+    // create a parameter block, eg including launch from Startup flag
+    LaunchParams launch = { hInstance, FALSE };
+
+    // use to identify when launched from Startup Shortcut, or use GetCommandLineW()
+    LPWSTR cmdLine = GetCommandLineW();
+    if (wcsstr(cmdLine, KStartupArgument)) {
+        launch.launchFromStartup = TRUE;
+    }
+
     // simply use DialogBoxParam to show window
-    // TODO: pass a parameter block, eg including launch from Startup flag
-    INT_PTR result = DialogBoxParam (hInstance, MAKEINTRESOURCE(IDD_MONITOR), 0, MonitorDlgProc, (LPARAM) hInstance);
+    INT_PTR result = DialogBoxParam (hInstance, MAKEINTRESOURCE(IDD_MONITOR), 0, MonitorDlgProc, (LPARAM) &launch);
 
     CoUninitialize();
     return result;
@@ -184,14 +218,14 @@ ATOM RegisterMainWindow (HINSTANCE hInstance)
     WndClass.cbClsExtra    = 0;
     WndClass.cbWndExtra    = DLGWINDOWEXTRA;
     WndClass.hInstance     = hInstance;
-    // Visual Studio 2010 does not allow setting Class of Dialog template, so icon given here wont be used for our main window
+    // Visual Studio 2010 bug - does not allow setting Class of Dialog template, so icon given here wont be used for our main window
     WndClass.hIcon         = NULL;
                             /* (HICON) LoadImage(hInstance, MAKEINTRESOURCE(IDI_RFIDLER),
                                     IMAGE_ICON, 48, 48, LR_DEFAULTCOLOR); */
     WndClass.hCursor       = LoadCursor (NULL, IDC_ARROW);
     WndClass.hbrBackground = (HBRUSH) GetStockObject (LTGRAY_BRUSH);
     WndClass.lpszMenuName  = NULL;
-    WndClass.lpszClassName = _T("RFIDmonitor");
+    WndClass.lpszClassName = L"RFIDmonitor";
     WndClass.hIconSm       = NULL;
     return RegisterClassEx (&WndClass);
 }   /* RegisterMainWindow() */
@@ -215,10 +249,12 @@ void PrintDebugStatus(const wchar_t *format, ...)
 
 
 /* info for managing main window during resize */
+#define FLAG_GROUP_VERTICAL_POS     0x000000FF
 #define FLAG_TOP_NOMOVE             0x00000001
 #define FLAG_HEIGHT_FIXED           0x00000002
 #define FLAG_BOTTOM_TRACK           0x00000004
 
+#define FLAG_GROUP_HORIZONTAL_POS   0x0000FF00
 #define FLAG_LEFT_NOMOVE            0x00000100
 #define FLAG_WIDTH_FIXED            0x00000200
 #define FLAG_RIGHT_TRACK            0x00000400
@@ -320,17 +356,15 @@ void RecalcControlPositions(HWND hWnd, AppWindowPos *wnd)
         }
     
         // height change?
-        if (increaseH != 0) {
-            if (ctl->ctlPosRules & FLAG_HEIGHT_FIXED) {
-                // not fixed pos Y?
-                if (!(ctl->ctlPosRules & FLAG_TOP_NOMOVE)) {
-                    // move down
+        if ((increaseH != 0) && (ctl->ctlPosRules & FLAG_GROUP_VERTICAL_POS)) {
+            if (ctl->ctlPosRules & FLAG_BOTTOM_TRACK) {
+                rt->bottom += increaseH;
+                if (ctl->ctlPosRules & FLAG_HEIGHT_FIXED) {
                     rt->top += increaseH;
                     uFlags &= ~SWP_NOMOVE;
+                } else { // ctl->ctlPosRules & FLAG_TOP_NOMOVE
+                    uFlags &= ~SWP_NOSIZE;
                 }
-            } else {
-                rt->bottom += increaseH;
-                uFlags &= ~SWP_NOSIZE;
             }
         }
 
@@ -378,7 +412,7 @@ void MoveMainWindow(HWND hWnd, HINSTANCE hInst)
     if (GetWindowRect(hWnd, &rc)) {
         // make invisible window the same size as this, positioned with CW_USEDEFAULT
         // NB need to reference a valid Window class
-        HWND hW = CreateWindow(_T("RFIDmonitor"), _T("Invisible Touch"), WS_OVERLAPPEDWINDOW,
+        HWND hW = CreateWindow(L"RFIDmonitor", L"Invisible Touch", WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
             NULL, NULL, hInst, NULL);
         if (hW) {
@@ -406,11 +440,14 @@ BOOL CALLBACK MonitorDlgProc (
     static HINSTANCE        hInst = 0;
     static HWND             hWndLV = NULL;
     static HWND             hWndStatusBar = NULL;
+    static HWND             hWndListHeader = NULL;
     static UINT             TbCreatedNotification = 0;
+    static UINT             currentTab = 0; // Tab 0 is always DeviceView
     static ITaskbarList3*   pTbList = NULL; // Windows >= 7 Taskbar COM interface
     // data to support resizing of window
     static AppControlPos    MainControls[] =
     {
+        { IDC_MAIN_TAB_CONTROL, FLAG_TOP_NOMOVE | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
         { IDC_RFIDLERLIST, FLAG_TOP_NOMOVE | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
         { IDC_STATUSBAR,  FLAG_HEIGHT_FIXED | FLAG_BOTTOM_TRACK | FLAG_LEFT_NOMOVE | FLAG_RIGHT_TRACK },
     };
@@ -422,52 +459,46 @@ BOOL CALLBACK MonitorDlgProc (
 
 
     /* locals */
-    int  handled = 0;
+    BOOL handled = FALSE;
 
     switch (iMsg) {
     case WM_INITDIALOG: /* from CreateDialog() */
-        hInst = (HINSTANCE) lParam;
+        {
+            struct LaunchParams *pLaunch = (struct LaunchParams*) lParam;
 
-        // set System Menu Icon for dialog
-        SetClassLong(hWnd, GCL_HICON, (LONG) LoadIcon(hInst, MAKEINTRESOURCE(IDI_RFIDLER)));
+            hInst = pLaunch->launchInstance;
 
-        // create / remember key child windows
-        hWndLV = GetDlgItem(hWnd, IDC_RFIDLERLIST);
+            // set System Menu Icon for dialog
+            SetClassLong(hWnd, GCL_HICON, (LONG) LoadIcon(hInst, MAKEINTRESOURCE(IDI_RFIDLER)));
 
-        // Create Status Bar with sizing grip at bottom of window
-        hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP, _T(""), hWnd, IDC_STATUSBAR);
+            // create / remember key child windows
+            hWndLV = GetDlgItem(hWnd, IDC_RFIDLERLIST);
+            hWndListHeader = ListView_GetHeader(hWndLV);
 
-        // setup support for resizing / moving child controls when dialog is resized
-        GetInitialControlPositions(hWnd, &MainWnd);
+            // Create Status Bar with sizing grip at bottom of window
+            hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP, L"", hWnd, IDC_STATUSBAR);
 
-        // Check for Windows >= 7
-        if (CheckWindowsVersion(WinAtLeast7)) {
-            /* Request notification when our Taskbar button is created,
-               can occur multiple times if Windows Shell restarts.
-             */
-            TbCreatedNotification = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
-            if (TbCreatedNotification) {
-                // obscurely documented secret sauce to actually get the notification
-                ChangeWindowMessageFilterEx(hWnd, TbCreatedNotification, MSGFLT_ALLOW, NULL);
+            // prepare support for resizing / moving child controls when dialog is resized
+            GetInitialControlPositions(hWnd, &MainWnd);
+
+            // Check for Windows >= 7
+            if (CheckWindowsVersion(WinAtLeast7)) {
+                /* Request notification when our Taskbar button is created,
+                   can occur multiple times if Windows Shell restarts.
+                 */
+                TbCreatedNotification = RegisterWindowMessage(L"TaskbarButtonCreated");
+                if (TbCreatedNotification) {
+                    // obscurely documented secret sauce to actually get the notification
+                    ChangeWindowMessageFilterEx(hWnd, TbCreatedNotification, MSGFLT_ALLOW, NULL);
+                }
             }
+
+            // create Plug & Play device tracking stuff
+            DevTracker.Initialize(hWnd, hWndLV, hWndStatusBar, hWndListHeader, hInst, pLaunch->launchFromStartup);
+
+            // restore old window position & size if any, or use CW_USEDEFAULT positioning
+            MoveMainWindow(hWnd, hInst);
         }
-
-        // create Plug & Play device tracking stuff
-        DevTracker.Initialize(hWnd, hWndLV, hWndStatusBar, hInst);
-
-        // Registry Settings etc are restored by DeviceTracker Initialize(), so we can use them now
-
-        // should StatusBar have 2 or 3 partitions?
-        if (hWndStatusBar) {
-            if (DevTracker.GetOptions().ShowDevBoardsOrAnySerial()) {
-                SetStatusBarPartitions(hWndStatusBar, 3);
-            } else {
-                SetStatusBarPartitions(hWndStatusBar, 2);
-            }
-        }
-
-        // restore old window position & size if any, or use CW_USEDEFAULT positioning
-        MoveMainWindow(hWnd, hInst);
         return TRUE;
 
     case WM_WINDOWPOSCHANGED:
@@ -484,13 +515,17 @@ BOOL CALLBACK MonitorDlgProc (
 
                 // save position & size if 'normal' display (not maximized or minimized)
                 place.length = sizeof(WINDOWPLACEMENT);
-                if (GetWindowPlacement(hWnd, &place) && (place.showCmd == SW_SHOWNORMAL)) {
+                if (GetWindowPlacement(hWnd, &place)) {
                     // save window placement
-                    DevTracker.GetOptions().SaveWindowInfo(place.rcNormalPosition);
+                    DevTracker.GetOptions().SaveWindowInfo(place.showCmd, place.rcNormalPosition);
                 }
+#if defined(_DEBUG)
+                // log Window Min/Normal/Max
+                PrintDebugStatus(L"place.showCmd %i\n", place.showCmd);
+#endif
             }
         }
-        handled++;
+        handled = TRUE;
         break;
 
     case WM_GETMINMAXINFO: // set minimum window resize values
@@ -503,7 +538,7 @@ BOOL CALLBACK MonitorDlgProc (
                 minmax->ptMinTrackSize.y = KMinimiumWindowSize.cy;
             }
         }
-        handled++;
+        handled = TRUE;
         break;
 
     case WM_COMMAND: // handle button, menu selections, ...
@@ -515,7 +550,7 @@ BOOL CALLBACK MonitorDlgProc (
             switch (wID) {
             case ID_HELP_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_HELP_ABOUT), hWnd, AboutDlgProc);
-                handled++;
+                handled = TRUE;
                 break;
 
                 // change type of view
@@ -523,161 +558,159 @@ BOOL CALLBACK MonitorDlgProc (
             case ID_VIEW_SMALL_ICONS:
             case ID_VIEW_DETAILS:
             case ID_VIEW_TILES: // Tile view must be supported, as we specify comctrl32 DLL v6.0 in manifest
-                {
-                    int currentView = DevTracker.GetOptions().GetViewStyleButton();
-                    if (wID != currentView) {
-                        // move menu check mark
-                        HMENU hMenu = GetMenu(hWnd);
-
-                        CheckMenuItem(hMenu, currentView, MF_UNCHECKED);
-                        CheckMenuItem(hMenu, wID, MF_CHECKED);
-                        DevTracker.SetViewStyle(wID);
-                    }
+                if (0 == currentTab) {
+                    DevTracker.SetViewStyle(wID, FALSE);
                 }
-                handled++;
+                handled = TRUE;
+                break;
+
+            case ID_VIEW_DEF_COL_WIDTHS:
+                if (0 == currentTab) {
+                    // restore default column widths
+                    DevTracker.DefaultListColumnWidths();
+                }
+                handled = TRUE;
+                break;
+
+            case ID_VIEW_FIT_COL_WIDTHS:
+                if (0 == currentTab) {
+                    DevTracker.FitListColumnWidths();
+                }
+                handled = TRUE;
                 break;
 
             case ID_SETTINGS_CONFIG_SHORTCUTS: // dialog IDD_CONFIGSHORTCUTS
                 DialogBoxParam (hInst, MAKEINTRESOURCE(IDD_CONFIGSHORTCUTS), hWnd,
                     InstallConfigDlgProc, 0);
+                handled = TRUE;
                 break;
 
             case ID_SETTINGS_DEVTYPES:
             case ID_SETTINGS_DEVNOTIFICATIONS:
                 DialogBoxParam (hInst, MAKEINTRESOURCE(IDD_OPTIONS), hWnd,
                     OptionsDlgProc, wID);
+                handled = TRUE;
                 break;
 
             case ID_MONITOR_EXIT:
                 EndDialog (hWnd, 0);
-                handled++;
+                handled = TRUE;
                 break;
             }
         } // WM_COMMAND
         break;
 
     case WM_NOTIFY:
-        if (wParam == IDC_RFIDLERLIST) {
-            NM_LISTVIEW *pNm = (NM_LISTVIEW *) lParam;
-            UINT notifycode = pNm->hdr.code;
+        {
+            NMHDR *pNm = (NMHDR *) lParam;
 
-            switch(notifycode) {
-            case LVN_COLUMNCLICK:
-                LVColumnClickAndSort(pNm->iSubItem, pNm->hdr.hwndFrom);
-                handled++;
-                break;
-
-            case LVN_GETINFOTIP:
-                // tooltip when mouse hovers over device in view
-                LVInfoTip((LPNMLVGETINFOTIP)lParam);
-                handled++;
-                break;
-
-            case NM_RCLICK: // right click: device menu
-                LVRightClickContextMenu(hInst, hWnd, (LPNMITEMACTIVATE) lParam);
-                handled++;
-                break;
-
-            case LVN_ITEMACTIVATE:
-                LVItemDoubleClick(hInst, hWnd, (LPNMITEMACTIVATE)lParam);
-                handled++;
-                break;
-
-            case LVN_GETEMPTYMARKUP:
-                // bug: documented way of setting empty ListView text, not working for me (Windows 7)
-                LVEmptyViewTest((NMLVEMPTYMARKUP *) lParam);
-                handled++;
-                break;
-
-            case (LVN_FIRST-61):
-                // LVN_GETEMPTYTEXTW undocumented way of setting empty ListView text, not working for me (Windows 7)
-                {
-                    NMLVDISPINFO *nm = (NMLVDISPINFO *)lParam;
-                    if (nm->item.mask == LVIF_TEXT && nm->item.pszText) {
-                        StringCchCopy(nm->item.pszText, nm->item.cchTextMax, _T("No RFIDlers connected."));
-                    }
-                }
-                handled++;
-                break;
-
-#ifdef _DEBUG
-            case LVN_GETDISPINFOW:
-                {   // no action seems to be needed
-                    NMLVDISPINFO* pdi = (NMLVDISPINFO*) lParam;
-
-                    PrintDebugStatus(_T("WM_NOTIFY ListView hdr.code = LVN_GETDISPINFOW, iItem %u, mask = 0x%x\n"),
-                        pdi->item.iItem, pdi->item.mask);
-                }
-                break;
-
-            case LVN_ITEMCHANGING: // notifications we don't want Debug prints for
-            case LVN_ITEMCHANGED:
-            case LVN_INSERTITEM: 
-            case LVN_DELETEITEM:
-            case LVN_DELETEALLITEMS:
-            case LVN_HOTTRACK:
-            case LVN_BEGINSCROLL:
-            case LVN_ENDSCROLL:
-            case LVN_INCREMENTALSEARCHW:
-                break;
-
-            case LVN_KEYDOWN:
-                { // maybe want to handle some keys?
-                    NMLVKEYDOWN* pnkd = (NMLVKEYDOWN*) lParam;
-
-                    PrintDebugStatus(_T("ListView LVN_KEYDOWN hwndFrom 0x%0x, wVKey %u 0x%0x, flags 0x%0x\n"),
-                        pNm->hdr.hwndFrom, pnkd->wVKey, pnkd->flags);
-                }
-                break;
-
-            default: // report unhandled notifications
-                if (notifycode <= LVN_FIRST) {
-                    PrintDebugStatus(_T("WM_NOTIFY ListView hdr.code = %u = (LVN_FIRST-%u)\n"),
-                        notifycode, LVN_FIRST - notifycode);
-                }
-                break;
-#else
-            default:
-                break;
+            if (IDC_RFIDLERLIST == wParam) {
+                handled = NotifyRfidlerList(hInst, hWnd, (NM_LISTVIEW *) pNm);
+            } else if (IDC_MAIN_TAB_CONTROL == wParam) {
+                /* TODO? handle TTN_GETDISPINFO (display tooltip text) for the new Tab Control
+                LPNMTTDISPINFO nmtdi = (LPNMTTDISPINFO) lParam;
+                */
+#if defined(_DEBUG)
+                TabControlNotificationDebugReport(L"IDC_MAIN_TAB_CONTROL", pNm);
 #endif
+            } else if (!wParam && lParam) {
+                // no wParam, probably from ListView's Header?
+                if (pNm->hwndFrom == hWndListHeader) {
+                    handled = NotifyRfidlerHeader((LPNMHEADER) pNm);
+                }
             }
+
+#if defined(_DEBUG)
+            if (!handled && (NM_CUSTOMDRAW != pNm->code) && (WM_KILLFOCUS != pNm->code) && (WM_SETFOCUS != pNm->code) && (LVN_HOTTRACK != pNm->code)) {
+                PrintDebugStatus(L"MonitorDlgProc WM_NOTIFY code 0x%x\n", pNm->code);
+            }
+#endif
         }
         break;
 
     case WM_CONTEXTMENU: // Context Menu for ListView (should only be that VK_APPS or Shift+F10 come here)
-        if (wParam == (WPARAM) hWndLV) {
-            if ((lParam == 0xFFFFFFFF) && (ListView_GetSelectedCount(hWndLV) > 0)) {
-                LVSelectedItemContextMenu(hInst, hWnd, hWndLV);
+        if (0 == currentTab) {
+            if ((wParam == (WPARAM) hWndLV) && (lParam == 0xFFFFFFFF)) {
+                if (ListView_GetSelectedCount(hWndLV) > 0) {
+                    LVSelectedItemContextMenu(hInst, hWnd, hWndLV);
+                } else {
+                    // default Context Menu when Device List is displayed
+                    POINT lvPoint;
+                    lvPoint.x = 50;
+                    lvPoint.y = 50;
+
+                    // find current size of ListView, & calc centre
+                    for (unsigned idx = 0; idx < MainWnd.wndCtlCount; idx++) {
+                        AppControlPos  *ctl = MainWnd.wndCtrls + idx;
+                        if (ctl->ctlHWnd == hWndLV) {
+                            lvPoint.x = ctl->ctlRect.right / 3;
+                            lvPoint.y = ctl->ctlRect.bottom / 3;
+                            break;
+                        }
+                    }
+
+                    // display default context menu
+                    DefaultContextMenuPopup(hInst, hWnd, hWndLV, lvPoint);
+                }
             }
         }
+        // TODO context menu for Bootloader, Serial Terminal tabs
+        handled = TRUE;
         break;
 
     case WM_DEVICECHANGE:
         DevTracker.OnDeviceChange((UINT) wParam, lParam);
-        handled++;
+        handled = TRUE;
+        break;
+
+    case WM_SETTINGCHANGE:
+#if defined(_DEBUG)
+        // TODO check if time / date format has changed, reformat ArrivalTime column
+        if (wParam == 0) {
+            // could be locale change
+            if (lParam == NULL) {
+                PrintDebugStatus(L"WM_SETTINGCHANGE wParam Null, lParam NULL\n");
+            } else {
+                PrintDebugStatus(L"WM_SETTINGCHANGE wParam Null, lParam %.16s\n", lParam);
+            }
+        }
+#endif
+        break;
+
+    case WM_TIMECHANGE:
+        // TODO check if timezone or daylight saings status details have changed
+#if defined(_DEBUG)
+        PrintDebugStatus(L"WM_TIMECHANGE wParam 0x%x, lParam %p\n", wParam, lParam);
+#endif
         break;
 
     case WM_TIMER:
         switch (wParam)
         {
-        case DEV_RESCAN_TIMER_MAGICNUMBER:
+        case DEV_FAST_SCAN_TIMER_MAGICNUMBER:
+        case DEV_LAZY_SCAN_TIMER_MAGICNUMBER:
             DevTracker.ScanRfidlerDevices();
-            handled++;
+            handled = TRUE;
             break;
         case ARRIVAL_TIMER_MAGICNUMBER:
             DevTracker.UpdateArrivedAndRemovedDevices();
-            handled++;
+            handled = TRUE;
             break;
         case REGISTRY_SAVE_MAGICNUMBER:
             DevTracker.GetOptions().RegistrySaveChangedValues(FALSE);
-            handled++;
+            handled = TRUE;
+            break;
+        case CANCEL_CONTEXTMENU_MAGICNUMBER:
+            SendMessage(hWnd, WM_CANCELMODE, WPARAM(0), LPARAM(0));
+            DevTracker.CancelContextMenuTimer();
+            handled = TRUE;
             break;
         }
         break;
 
     case WM_CLOSE:
         EndDialog (hWnd, 0);
-        handled++;
+        handled = TRUE;
         break;
 
     case WM_DESTROY: /* cleanup & exit */
@@ -691,7 +724,7 @@ BOOL CALLBACK MonitorDlgProc (
         }
         // close program
         PostQuitMessage (0);
-        handled++;
+        handled = TRUE;
         break;
 
     default:
@@ -703,13 +736,75 @@ BOOL CALLBACK MonitorDlgProc (
             if (SUCCEEDED(CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTbList))) {
                 pTbList->HrInit();
             }
+            handled = TRUE;
         }
         break;
     }
 
-    // 1 = handled here, 0 = pass to default handling
+    // TRUE = handled here, FALSE = pass to default handling
     return handled;
 }   /* MonitorDlgProc() */
+
+
+BOOL NotifyRfidlerList(HINSTANCE hInst, HWND hWnd, NM_LISTVIEW *pNm)
+{
+    switch(pNm->hdr.code) {
+    case LVN_COLUMNCLICK:
+        LVColumnClickAndSort(pNm->iSubItem, pNm->hdr.hwndFrom);
+        return TRUE;
+
+    case LVN_GETINFOTIP:
+        // tooltip when mouse hovers over device in view
+        LVInfoTip((LPNMLVGETINFOTIP)pNm);
+        return TRUE;
+
+    case NM_RCLICK: // right click: device menu
+        LVRightClickContextMenu(hInst, hWnd, (LPNMITEMACTIVATE) pNm);
+        return TRUE;
+
+    case LVN_ITEMACTIVATE:
+        LVItemDoubleClick(hInst, hWnd, (LPNMITEMACTIVATE)pNm);
+        return TRUE;
+
+    case LVN_GETEMPTYMARKUP:
+        // bug: documented way of setting empty ListView text, not working for me (Windows 7)
+        LVEmptyViewTest((NMLVEMPTYMARKUP *) pNm);
+        return TRUE;
+
+    case (LVN_FIRST-61):
+        // LVN_GETEMPTYTEXTW undocumented way of setting empty ListView text, not working for me (Windows 7)
+        {
+            NMLVDISPINFO *nm = (NMLVDISPINFO *)pNm;
+            if (nm->item.mask == LVIF_TEXT && nm->item.pszText) {
+                StringCchCopy(nm->item.pszText, nm->item.cchTextMax, L"No RFIDlers connected.");
+            }
+        }
+        return TRUE;
+
+    default:
+#if defined(_DEBUG)
+        ListViewNotificationDebugReport(L"DeviceList", pNm);
+#endif
+        break;
+    }
+    return FALSE;
+}
+
+
+BOOL NotifyRfidlerHeader(LPNMHEADER pNmHdr)
+{
+    if ((pNmHdr->hdr.code == HDN_ITEMCHANGEDW) && (HDI_WIDTH & pNmHdr->pitem->mask)) {
+        DevTracker.GetOptions().SetDetailsColumnWidth(pNmHdr->iItem, pNmHdr->pitem->cxy);
+        return TRUE;
+    }
+
+    // event logging is noisy, only do this in Debug build
+#if _DEBUG
+    HeaderNotificationDebugReport(L"DeviceView", pNmHdr);
+#endif
+
+    return FALSE;
+}
 
 
 HWND InitTabbedDialog(HWND hWndTab, int itemId, wchar_t *tabTitle, LPCWSTR lpTemplateName,
@@ -741,356 +836,6 @@ HWND InitTabbedDialog(HWND hWndTab, int itemId, wchar_t *tabTitle, LPCWSTR lpTem
     }
     return child;
 }
-
-
-HWND InitShowControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog)
-{
-    return InitTabbedDialog(hWndTab, 0, _T("Show Devices"), MAKEINTRESOURCE( IDD_WHATTOWATCH ),
-        ShowOptionsDlgProc, (LPARAM) newOptions, showDialog);
-}
-
-
-HWND InitNotificationControls(MonOptions *newOptions, HWND hWndTab, BOOL showDialog)
-{
-    return InitTabbedDialog(hWndTab, 1, _T("Device Notifications"), MAKEINTRESOURCE( IDD_NOTIFICATIONS ),
-        NotificationsDlgProc, (LPARAM) newOptions, showDialog);
-}
-
-
-void SetShowOptionsArrivalTime(HWND hWnd, MonOptions *aOptions)
-{
-    wchar_t arrivalString[8];
-
-    // setup arrival time edit control
-    StringCbPrintf(arrivalString, sizeof(arrivalString), _T("%u"), aOptions->GetArrivalOrRemovalTime());
-    SetDlgItemText(hWnd, IDC_ARRIVAL_REMOVAL_TIME, arrivalString);
-}
-
-
-void SetShowOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions, BOOL setEditControls)
-{
-    SendMessage(GetDlgItem(hWnd, IDC_SHOW_UNCONFIG), BM_SETCHECK, 
-        aOptions->ShowNonConfig() ? BST_CHECKED : BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SHOW_ALL), BM_SETCHECK, 
-        aOptions->ShowNotPresent() ? BST_CHECKED : BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_SHOW_DEV_BOARDS), BM_SETCHECK, 
-        aOptions->ShowDevBoards() ? BST_CHECKED : BST_UNCHECKED, 0);        
-    SendMessage(GetDlgItem(hWnd, IDC_SHOW_RECENTDISC), BM_SETCHECK, 
-        aOptions->ShowRecentDisc() ? BST_CHECKED : BST_UNCHECKED, 0);        
-    SendMessage(GetDlgItem(hWnd, IDC_OTHERSERIAL), BM_SETCHECK, 
-        aOptions->ShowAnySerial() ? BST_CHECKED : BST_UNCHECKED, 0);        
-
-    if (setEditControls) {
-        SetShowOptionsArrivalTime(hWnd, aOptions);
-    }
-}
-
-
-BOOL CALLBACK ShowOptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    static MonOptions *newOptions;
-    static HWND       hWndParentDlg = NULL;
-
-    int handled = 0;
-
-    switch(iMsg) {
-    case WM_INITDIALOG:
-        hWndParentDlg = GetParent(GetParent(hWnd));
-        newOptions = (MonOptions *) lParam;
-        SetShowOptionsCheckBoxes(hWnd, newOptions, TRUE);
-        // setup buddy range
-        SendMessage(GetDlgItem(hWnd, IDC_ARRIVAL_BUDDY), UDM_SETRANGE, 0, MAKELPARAM(1, KArrivalOrRemovalTimeMaximum));
-        EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-        return TRUE;
-
-    case WM_NOTIFYFORMAT:
-        return NFR_UNICODE;
-
-    case WM_COMMAND:
-        {
-            int wID = LOWORD (wParam);
-            BOOL enableApply = FALSE; // whether change of options should enable Apply button
-
-            switch (wID) 
-            {
-            case IDC_CHECK_SHOW_ALL:                
-                if (newOptions->SetShowFlagsToAll()) {
-                    enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions, FALSE);
-                }
-                break;
-            case IDC_CHECK_SHOW_NONE:
-                if (newOptions->SetShowFlagsToNone()) {
-                    enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions, FALSE);
-                }
-                break;
-            case IDC_DEFAULT:
-                if (newOptions->SetShowFlagsToDefault()) {
-                    enableApply = TRUE;
-                    SetShowOptionsCheckBoxes(hWnd, newOptions, TRUE);
-                }
-                break;
-            case IDC_SHOW_UNCONFIG:
-                newOptions->SetShowNonConfig((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_UNCONFIG));
-                enableApply = TRUE;
-                break;
-            case IDC_SHOW_ALL:
-                newOptions->SetShowNotPresent((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_ALL));
-                enableApply = TRUE;
-                break;
-            case IDC_SHOW_DEV_BOARDS:
-                newOptions->SetShowDevBoards((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_DEV_BOARDS));
-                enableApply = TRUE;
-                break;
-            case IDC_SHOW_RECENTDISC:
-                newOptions->SetShowRecentDisc((BOOL) IsDlgButtonChecked(hWnd, IDC_SHOW_RECENTDISC));
-                enableApply = TRUE;
-                break;
-            case IDC_OTHERSERIAL:
-                newOptions->SetShowAnySerial((BOOL) IsDlgButtonChecked(hWnd, IDC_OTHERSERIAL));
-                enableApply = TRUE;
-                break;
-            case IDC_ARRIVAL_REMOVAL_TIME:
-                // TODO make edit control not read-only, validate values
-                break;
-            }
-
-            if (enableApply && hWndParentDlg) {
-                SendMessage(hWndParentDlg, WM_APP, 0, 0);
-            }
-        }
-        break;
-
-    case WM_NOTIFY:
-        {
-            int wID = LOWORD (wParam);
-            int wNotification = ((NMHDR*)lParam)->code;
-            //HWND hChild = ((NMHDR*)lParam)->hwndFrom;
-            BOOL enableApply = FALSE; // whether change of options should enable Apply button
-
-            if ((wID == IDC_ARRIVAL_BUDDY) && (wNotification == UDN_DELTAPOS)) {
-                NMUPDOWN *updown = (NMUPDOWN*) lParam;
-                newOptions->SetArrivalOrRemovalTime(updown->iPos + updown->iDelta, FALSE);
-                enableApply = TRUE;
-            }
-
-            if (enableApply && hWndParentDlg) {
-                SendMessage(hWndParentDlg, WM_APP, 0, 0);
-            }
-        }
-        break;
-    }
-
-    return handled;
-}
-
-
-void SetNotifyOptionsCheckBoxes(HWND hWnd, MonOptions *aOptions)
-{
-    SendMessage(GetDlgItem(hWnd, IDC_RFID_ARR_FLASH), BM_SETCHECK, 
-        aOptions->NotifyRfidlerArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_BOOT_ARR_FLASH), BM_SETCHECK, 
-        aOptions->NotifyBootArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
-    SendMessage(GetDlgItem(hWnd, IDC_MICROCHIP_ARR_FLASH), BM_SETCHECK, 
-        aOptions->NotifyMicrochipArrFlash() ? BST_CHECKED : BST_UNCHECKED, 0);
-}
-
-
-BOOL CALLBACK NotificationsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    static MonOptions *newOptions;
-    static HWND       hWndParentDlg = NULL;
-
-    int handled = 0;
-
-    switch(iMsg) {
-    case WM_INITDIALOG:
-        hWndParentDlg = GetParent(GetParent(hWnd));
-        newOptions = (MonOptions *) lParam;
-        SetNotifyOptionsCheckBoxes(hWnd, newOptions);
-        EnableThemeDialogTexture(hWnd, ETDT_ENABLETAB);
-        return TRUE;
-
-    case WM_NOTIFYFORMAT:
-        return NFR_UNICODE;
-
-    case WM_COMMAND:
-        {
-            int wID = LOWORD (wParam);
-            BOOL enableApply = FALSE; // whether change of options should enable Apply button
-
-            switch (wID) 
-            {
-            case IDC_CHECK_SHOW_ALL:                
-                if (newOptions->SetNotifyFlagsToAll()) {
-                    enableApply = TRUE;
-                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
-                }
-                break;
-            case IDC_CHECK_SHOW_NONE:
-                if (newOptions->SetNotifyFlagsToNone()) {
-                    enableApply = TRUE;
-                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
-                }
-                break;
-            case IDC_DEFAULT:
-                if (newOptions->SetNotifyFlagsToDefault()) {
-                    enableApply = TRUE;
-                    SetNotifyOptionsCheckBoxes(hWnd, newOptions);
-                }
-                break;
-            case IDC_RFID_ARR_FLASH:
-                newOptions->SetNotifyRfidlerArrFlash((BOOL) IsDlgButtonChecked(hWnd, IDC_RFID_ARR_FLASH));
-                enableApply = TRUE;
-                break;
-            case IDC_BOOT_ARR_FLASH:
-                newOptions->SetNotifyBootArrFlash((BOOL) IsDlgButtonChecked(hWnd, IDC_BOOT_ARR_FLASH));
-                enableApply = TRUE;
-                break;
-            case IDC_MICROCHIP_ARR_FLASH:
-                newOptions->SetNotifyMicrochipArrFlash((BOOL) IsDlgButtonChecked(hWnd, IDC_MICROCHIP_ARR_FLASH));
-                enableApply = TRUE;
-                break;
-            }
-            if (enableApply && hWndParentDlg) {
-                // some selection changed, tell parent dialog to enable Apply button
-                SendMessage(hWndParentDlg, WM_APP, 0, 0);
-            }
-        }
-        break;
-    }
-
-    return handled;
-}
-
-
-BOOL CALLBACK OptionsDlgProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    const int KNumPropPages = 2;
-    static HWND hWndOptionsPage[KNumPropPages] = { NULL, NULL };
-    static MonOptions   *newOptions;
-    static BOOL         ApplyEnabled[KNumPropPages] = { FALSE, FALSE };
-    static int          currPage = 0;
-    static HWND         hWndTab;
-    int handled = 0;
-
-    // Option DlgProc works with tab control
-    switch (iMsg) {
-    case WM_INITDIALOG:
-        for (int i = 0; i < KNumPropPages; i++) {
-            ApplyEnabled[i] = FALSE;
-        }
-
-        // new copy of current options
-        newOptions = new MonOptions(DevTracker.GetOptions());
-        hWndTab = GetDlgItem(hWnd, IDC_TABOPTIONS);
-
-        // select initial dialog page
-        switch (lParam)
-        {
-        default:
-        case ID_SETTINGS_DEVTYPES:         currPage = 0; break;
-        case ID_SETTINGS_DEVNOTIFICATIONS: currPage = 1; break;
-        }
-
-        hWndOptionsPage[0] = InitShowControls(newOptions, hWndTab, 0 == currPage);
-        hWndOptionsPage[1] = InitNotificationControls(newOptions, hWndTab, 1 == currPage);
-        { 
-            /* mark Tab control as parent, dialog pages should already have this via DS_CONTROL
-               This should ensure tab key moves through all the controls correctly.
-               Minor Windows bug: tab key does select the the tab control, so it is hard
-               (impossible?) to change pages with keyboard.
-               */
-            LONG_PTR value = GetWindowLongPtr(hWndTab, GWL_EXSTYLE);
-            value |= WS_EX_CONTROLPARENT;
-            SetWindowLongPtr(hWndTab, GWL_EXSTYLE, value);
-        }
-        return TRUE;
-
-    case WM_COMMAND:
-        {
-            int wID = LOWORD (wParam);
-
-            switch (wID)
-            {
-            case IDOK:
-                DevTracker.SetOptions(*newOptions, DeviceTracker::SetAll);
-                // fall through
-            case IDCANCEL:
-                EndDialog(hWnd, wID);
-                handled++;
-                break;
-            case IDC_APPLY:
-                EnableWindow(GetDlgItem(hWnd, IDC_APPLY), FALSE);
-                ApplyEnabled[currPage] = FALSE;
-                // only apply changes to currently visible options page
-                DevTracker.SetOptions(*newOptions,
-                    (currPage == 0) ? DeviceTracker::SetShowOptions : DeviceTracker::SetNotifyOptions);
-                handled++;
-                break;
-            case IDC_CHECK_SHOW_ALL:                
-            case IDC_CHECK_SHOW_NONE:
-            case IDC_DEFAULT:
-                // send to the current options page
-                PostMessage(hWndOptionsPage[currPage], iMsg, wParam, lParam);
-                handled++;
-                break;
-            }
-        }
-        break;
-
-    case WM_APP: // enable apply button (request from current options page)
-        if (!ApplyEnabled[currPage]) {
-            EnableWindow(GetDlgItem(hWnd, IDC_APPLY), TRUE);
-            ApplyEnabled[currPage] = TRUE;
-        }
-        handled++;
-        break;
-
-    case WM_NOTIFY:
-        if (wParam == IDC_TABOPTIONS) {
-            NMHDR *pNm = (NMHDR *) lParam;
-            switch(pNm->code) {
-            case TCN_SELCHANGE:
-                int index = TabCtrl_GetCurSel(hWndTab);
-                switch (index) {
-                case 0:
-                case 1:
-                    // flip tabs, update Apply button state
-                    ShowWindow(hWndOptionsPage[0], index == 0 ? SW_SHOWNA :SW_HIDE);
-                    ShowWindow(hWndOptionsPage[1], index == 1 ? SW_SHOWNA :SW_HIDE);
-                    if (ApplyEnabled[currPage] != ApplyEnabled[index]) {
-                        EnableWindow(GetDlgItem(hWnd, IDC_APPLY), ApplyEnabled[index]);
-                    }
-                    currPage = index;
-                    break;
-                }
-                handled++;
-                break;
-            }
-        }
-        break;
-
-    case WM_CLOSE:
-        EndDialog(hWnd, 0);
-        handled++;
-        break;
-
-    case WM_DESTROY:
-        // destroy windows & release memory for option pages
-        for (int i = 0; i < KNumPropPages; i++) {
-            if (hWndOptionsPage[i]) {
-                DestroyWindow(hWndOptionsPage[i]);
-                hWndOptionsPage[i] = NULL;
-            }
-        }
-        break;
-    }
-
-    // 1 = handled here, 0 = pass to default handling
-    return handled;
-}   /* OptionsDlgProc() */
 
 
 /* retry wrapper around GetModuleFileName() with growing buffer */
@@ -1164,7 +909,7 @@ BOOL CheckLinkname(const wchar_t *shortcut, int csidl)
 wchar_t *CreateLinkname(const wchar_t *shortcut, int csidl)
 {
     ITEMIDLIST* pidl;
-    wchar_t lpPath[1024];
+    wchar_t lpPath[MAX_PATH];   // buffer for receiving Folder path
     wchar_t *link = NULL;
 
     HRESULT hRes = SHGetSpecialFolderLocation(NULL, csidl, &pidl);
@@ -1172,10 +917,11 @@ wchar_t *CreateLinkname(const wchar_t *shortcut, int csidl)
         if (SHGetPathFromIDList( pidl, lpPath )) {
             // +3 for '\' and double nil terminator
             size_t len = 3 + wcslen(lpPath) + wcslen(shortcut);
+
             link = (wchar_t *) calloc(len, sizeof(wchar_t));
             if (link) {
                 wcscpy_s(link, len, lpPath);
-                wcscat_s(link, len, _T("\\"));
+                wcscat_s(link, len, L"\\");
                 wcscat_s(link, len, shortcut);
                 link[len-1] = 0; // repair the nil placed by calloc & zapped by _s() functions
             }
@@ -1198,23 +944,23 @@ void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL
     HRESULT     hres;
 
     if (linkname) {
-#ifdef _DEBUG
-        PrintDebugStatus(_T("linkname = %s\n"), linkname);
+#if defined(_DEBUG)
+        PrintDebugStatus(L"linkname = %s\n", linkname);
 #endif
         if (aMakeShortcut) {
             hres = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
             if (SUCCEEDED(hres)) {
                 // Save the link by calling IPersistFile::Save.
                 hres = ppf->Save(linkname, FALSE);
-#ifdef _DEBUG
+#if defined(_DEBUG)
                 if (!SUCCEEDED(hres)) {
-                    PrintDebugStatus(_T("IID_IPersistFile.Save fail 0x%x\n"), hres);
+                    PrintDebugStatus(L"IID_IPersistFile.Save fail 0x%x\n", hres);
                 }
 #endif
                 ppf->Release();
-#ifdef _DEBUG
+#if defined(_DEBUG)
             } else {
-                PrintDebugStatus(_T("QueryInterface(IID_IPersistFile... fail 0x%x\n"), hres);
+                PrintDebugStatus(L"QueryInterface(IID_IPersistFile... fail 0x%x\n", hres);
 #endif
             }
         } else {
@@ -1235,7 +981,7 @@ void CreateOrBreakLink(IShellLink *psl, const wchar_t *shortcut, int csidl, BOOL
 void CreateProgramShortcuts(const wchar_t *fname, const wchar_t *shortcut, BOOL aDesktopShortcut, BOOL aStartupShortcut,
     BOOL aDeskLinkExists, BOOL aStartlinkExists)
 {
-    const wchar_t *desc = _T("RFIDler Monitor");
+    const wchar_t *desc = L"RFIDler Monitor";
 
     // something has changed from old settings?
     if (fname && ((aDesktopShortcut != aDeskLinkExists) || (aStartupShortcut != aStartlinkExists))) {
@@ -1248,24 +994,33 @@ void CreateProgramShortcuts(const wchar_t *fname, const wchar_t *shortcut, BOOL 
         if (SUCCEEDED(hres)) {
             // Set the path to the shortcut target and add the description. 
             hres = psl->SetPath(fname); 
-#ifdef _DEBUG
+#if defined(_DEBUG)
             if (!SUCCEEDED(hres)) {
-                PrintDebugStatus(_T("SetPath(%s) fail 0x%x\n"), fname, hres);
+                PrintDebugStatus(L"SetPath(%s) fail 0x%x\n", fname, hres);
             }
 #endif
             hres = psl->SetDescription(desc); 
-#ifdef _DEBUG
+#if defined(_DEBUG)
             if (!SUCCEEDED(hres)) {
-                PrintDebugStatus(_T("SetDescription(%s) fail 0x%x\n"), desc, hres);
+                PrintDebugStatus(L"SetDescription(%s) fail 0x%x\n", desc, hres);
             }
 #endif
 
-            // create or remove shortcuts
+            // create or remove shortcuts from: current Desktop, Statup Group
             if (aDesktopShortcut != aDeskLinkExists) {
                 CreateOrBreakLink(psl, shortcut, CSIDL_DESKTOP, aDesktopShortcut);
             }
             if (aStartupShortcut != aStartlinkExists) {
-                // TODO: add Argument(s) to indicate launch from Startup Shortcut
+                if (aStartupShortcut) {
+                    // add Argument to indicate launch from Startup Shortcut
+                    hres = psl->SetArguments(KStartupArgument);
+#if defined(_DEBUG)
+                    if (!SUCCEEDED(hres)) {
+                        PrintDebugStatus(L"SetArgument(%s) fail 0x%x\n", KStartupArgument, hres);
+                    }
+#endif
+                }
+
                 CreateOrBreakLink(psl, shortcut, CSIDL_STARTUP, aStartupShortcut);
             }
             psl->Release();
@@ -1281,12 +1036,12 @@ BOOL CALLBACK InstallConfigDlgProc (
     LPARAM // lParam
 )
 {
-    const wchar_t   *shortcut = _T("RFIDler Monitor.lnk");
+    const wchar_t   *shortcut = L"RFIDler Monitor.lnk";
     static wchar_t  *fname = NULL;
     static BOOL     deskLinkExists;
     static BOOL     startlinkExists;
 
-    int handled = 0;
+    BOOL handled = FALSE;
 
     // Dialog for configuring program shortcuts
     switch (iMsg) {
@@ -1318,19 +1073,24 @@ BOOL CALLBACK InstallConfigDlgProc (
                     BST_CHECKED == IsDlgButtonChecked(hWnd, IDC_STARTYES),
                     deskLinkExists, startlinkExists);
                 EndDialog(hWnd, 0);
-                handled++;
+                handled = TRUE;
                 break;
             case IDCANCEL:
                 EndDialog(hWnd, 1);
-                handled++;
+                handled = TRUE;
                 break;
             case IDC_APPLY:
-                CreateProgramShortcuts(fname, shortcut,
-                    BST_CHECKED == IsDlgButtonChecked(hWnd, IDC_DESKYES), 
-                    BST_CHECKED == IsDlgButtonChecked(hWnd, IDC_STARTYES),
-                    deskLinkExists, startlinkExists);
+                {
+                    BOOL newDeskLink = (BST_CHECKED == IsDlgButtonChecked(hWnd, IDC_DESKYES));
+                    BOOL newStartLink = (BST_CHECKED == IsDlgButtonChecked(hWnd, IDC_STARTYES));
+
+                    CreateProgramShortcuts(fname, shortcut,
+                        newDeskLink, newStartLink, deskLinkExists, startlinkExists);
+                    deskLinkExists = newDeskLink;
+                    startlinkExists = newStartLink;
+                }
                 EnableWindow(GetDlgItem(hWnd, IDC_APPLY), FALSE);
-                handled++;
+                handled = TRUE;
                 break;
             case IDC_DESKNO:
             case IDC_DESKYES:
@@ -1342,6 +1102,7 @@ BOOL CALLBACK InstallConfigDlgProc (
                 } else {
                     EnableWindow(GetDlgItem(hWnd, IDC_APPLY), FALSE);
                 }
+                handled = TRUE;
                 break;
             }
         }
@@ -1349,16 +1110,16 @@ BOOL CALLBACK InstallConfigDlgProc (
 
     case WM_CLOSE:
         EndDialog(hWnd, 0);
-        handled++;
+        handled = TRUE;
         break;
 
     case WM_DESTROY: // dialog closing
         ReleaseString(fname);
-        handled++;
+        handled = TRUE;
         break;
     }
 
-    // 1 = handled here, 0 = pass to default handling
+    // TRUE = handled here, FALSE = pass to default handling
     return handled;
 }   /* InatallConfigDlgProc() */
 
@@ -1372,47 +1133,47 @@ void ReleaseString(wchar_t *&string)
 }
 
 // program description and copyright licensing info
-static const wchar_t *helpTitle = _T("Help About RFIDLer Monitor %u.%u.%u");
+static const wchar_t *helpTitle = L"Help About RFIDLer Monitor %u.%u.%u";
 static const wchar_t *helpText =
-    _T("RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n")
-    _T("Windows driver for USB serial ports, usbser.sys.\r\n")
-    _T("\r\n")
-    _T("This RFIDler Monitor presents a list of the currently connected RFIDler LF devices. \r\n")
-    _T("If an RFIDler LF is connected and working it tells you what COM port name Windows \r\n")
-    _T("has assigned to the device. If the RFIDler is connected in Bootloader mode, waiting \r\n")
-    _T("to be programmed this is shown too. (Some other Microchip development tools in \r\n")
-    _T("Bootloader mode look the same to the Monitor and are therefore shown as well.)\r\n")
-    _T("\r\n")
-    _T("Options add to the display such things as Microchip development boards such as UBW32,\r\n")
-    _T("other serial ports or modems, similar serial devices remembered by Windows but not\r\n")
-    _T("currently connected. \r\n")
-    _T("\r\n")
-    _T("\r\n")
-    _T("Copyright (c) 2014 - 2015 Anthony Naggs. All rights reserved.\r\n")
-    _T("\r\n")
-    _T("Limited assignment of rights under the 'BSD 2-Clause License':\r\n")
-    _T("\r\n")
-    _T("Redistribution and use in source and binary forms, with or without modification, are \r\n")
-    _T("permitted provided that the following conditions are met:\r\n")
-    _T("\r\n")
-    _T("1. Redistributions of source code must retain the above copyright notice, this list of\r\n")
-    _T("     conditions and the following disclaimer.\r\n")
-    _T("\r\n")
-    _T("2. Redistributions in binary form must reproduce the above copyright notice, this list\r\n")
-    _T("     list of conditions and the following disclaimer in the documentation and/or other\r\n")
-    _T("     materials provided with the distribution.\r\n")
-    _T("\r\n")
-    _T("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \r\n")
-    _T("\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT \r\n")
-    _T("LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR \r\n")
-    _T("A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT \r\n")
-    _T("HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, \r\n")
-    _T("SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT \r\n")
-    _T("LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, \r\n")
-    _T("DATA, ORPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY \r\n")
-    _T("THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \r\n")
-    _T("(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE \r\n")
-    _T("OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.");
+    L"RFIDler LF appears to the computer as a USB serial port, and works with a standard \r\n"
+    L"Windows driver for USB serial ports, usbser.sys.\r\n"
+    L"\r\n"
+    L"This RFIDler Monitor presents a list of the currently connected RFIDler LF devices. \r\n"
+    L"If an RFIDler LF is connected and working it tells you what COM port name Windows \r\n"
+    L"has assigned to the device. If the RFIDler is connected in Bootloader mode, waiting \r\n"
+    L"to be programmed this is shown too. (Some other Microchip development tools in \r\n"
+    L"Bootloader mode look the same to the Monitor and are therefore shown as well.)\r\n"
+    L"\r\n"
+    L"Options add to the display such things as Microchip development boards such as UBW32,\r\n"
+    L"other serial ports or modems, similar serial devices remembered by Windows but not\r\n"
+    L"currently connected. \r\n"
+    L"\r\n"
+    L"\r\n"
+    L"Copyright (c) 2014 - 2016 Anthony Naggs. All rights reserved.\r\n"
+    L"\r\n"
+    L"Limited assignment of rights under the 'BSD 2-Clause License':\r\n"
+    L"\r\n"
+    L"Redistribution and use in source and binary forms, with or without modification, are \r\n"
+    L"permitted provided that the following conditions are met:\r\n"
+    L"\r\n"
+    L"1. Redistributions of source code must retain the above copyright notice, this list of\r\n"
+    L"     conditions and the following disclaimer.\r\n"
+    L"\r\n"
+    L"2. Redistributions in binary form must reproduce the above copyright notice, this list\r\n"
+    L"     list of conditions and the following disclaimer in the documentation and/or other\r\n"
+    L"     materials provided with the distribution.\r\n"
+    L"\r\n"
+    L"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \r\n"
+    L"\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT \r\n"
+    L"LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR \r\n"
+    L"A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT \r\n"
+    L"HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, \r\n"
+    L"SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT \r\n"
+    L"LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, \r\n"
+    L"DATA, ORPROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY \r\n"
+    L"THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \r\n"
+    L"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE \r\n"
+    L"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
 
 
 
@@ -1439,7 +1200,7 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
                         UINT rxInfoSize = 0;
 
                         if (GetFileVersionInfo(fname, 0, verSize, buffer) && 
-                                VerQueryValue(buffer, _T("\\"), &fInfo, &rxInfoSize) && fInfo && rxInfoSize) {
+                                VerQueryValue(buffer, L"\\", &fInfo, &rxInfoSize) && fInfo && rxInfoSize) {
                             VS_FIXEDFILEINFO *info = (VS_FIXEDFILEINFO *) fInfo;
 
                             if (info->dwSignature == 0xfeef04bd) {
@@ -1450,7 +1211,7 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
                                 gotfileversion = TRUE;
                             }
                         }
-  
+
                         free(buffer);
                     }
                 }
@@ -1458,16 +1219,15 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
             }
 
             if (!gotfileversion) {
-                // at least at 1.0.3
-                StringCchPrintf(dialogTitle, KTitleSize, helpTitle, 1, 0, 3);
+                // at least at 2.0.0
+                StringCchPrintf(dialogTitle, KTitleSize, helpTitle, 2, 0, 0);
             }
             SetWindowText(hDlg, dialogTitle);
 
             SetWindowText(GetDlgItem(hDlg, IDC_HELP_TEXT), helpText);
-            SetFocus( GetDlgItem (hDlg, IDOK));
         }
         // return TRUE  unless you set the focus to a control
-        return FALSE;
+        return TRUE;
 
     case WM_COMMAND: 
         switch (LOWORD(wParam)) {
@@ -1483,52 +1243,49 @@ INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM /* lPa
 }   /* AboutDlgProc() */
 
 
-void SetStatusBarPartitions(HWND hWndStatusBar, int parts)
-{
-    int sbWidths[4] = { 150, 350, 510, 0 };
-    SendMessage(hWndStatusBar, SB_SETPARTS, parts, (LPARAM) sbWidths);
-}
-
-
 void LVColumnClickAndSort(int sortColumn, HWND hwndFrom)
 {
-    int oldOrder = DevTracker.GetViewSortOrder();
-    int sortOrder = sortColumn;
-    BOOL reverse = false;
+    if (sortColumn <= lvDispMaxSort) {
+        ColumnSortParameters sortParams = DevTracker.GetViewSortOrder();
+        int oldColumn = (int) sortParams.mSortType;
 
-    // user clicked on column header, so sort by chosen criterion
-    if (oldOrder == sortColumn) {
-        sortOrder = sortColumn + lvRevDispName;
-        reverse = true;
-    }
-
-    // remember sort order, trigger timed state save
-    DevTracker.SetViewSortOrder(sortOrder);
-    // actually ysort items
-    ListView_SortItems(hwndFrom, DeviceInfo::CompareProc, (LPARAM)(sortOrder));
-
-    // move sort order mark between columns
-    HWND hWndHdr = ListView_GetHeader(hwndFrom);
-    if (hWndHdr) {
-        HDITEM hdrItem;
-        hdrItem.mask = HDI_FORMAT;
-        int oldColumn = (oldOrder < lvRevDispName) ? oldOrder : (oldOrder - lvRevDispName);
-
-        if ((oldColumn != sortColumn) && Header_GetItem(hWndHdr, oldColumn, &hdrItem) && (hdrItem.fmt & (HDF_SORTUP | HDF_SORTDOWN))) {
-            hdrItem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
-            Header_SetItem(hWndHdr, oldColumn, &hdrItem);
+        // user clicked on current column header, so reverse the sort
+        if (sortParams.mSortType == sortColumn) {
+            sortParams.mSortReverse = !sortParams.mSortReverse;
+        } else {
+            sortParams.mSortType = (lvColumn) sortColumn;
+            sortParams.mSortReverse = 0;
         }
 
-        if (Header_GetItem(hWndHdr, sortColumn, &hdrItem)) {
-            if (reverse) {
-                hdrItem.fmt &= ~HDF_SORTUP;
-                hdrItem.fmt |= HDF_SORTDOWN;
-            } else {
-                hdrItem.fmt &= ~HDF_SORTDOWN;
-                hdrItem.fmt |= HDF_SORTUP;
+        // remember sort order, trigger timed state save
+        DevTracker.SetViewSortOrder(sortParams);
+        // actually sort items
+        ListView_SortItems(hwndFrom, DeviceInfo::ViewSortCompareProc, (LPARAM)(&sortParams));
+
+        // move sort order mark between columns
+        HWND hWndHdr = ListView_GetHeader(hwndFrom);
+        if (hWndHdr) {
+            HDITEM hdrItem;
+            hdrItem.mask = HDI_FORMAT;
+
+            // remove sort up / down mark from old column
+            if ((oldColumn != sortColumn) && Header_GetItem(hWndHdr, oldColumn, &hdrItem) && (hdrItem.fmt & (HDF_SORTUP | HDF_SORTDOWN))) {
+                hdrItem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+                Header_SetItem(hWndHdr, oldColumn, &hdrItem);
             }
-            Header_SetItem(hWndHdr, sortColumn, &hdrItem);
-        }
+
+            // add mark to new column
+            if (Header_GetItem(hWndHdr, sortColumn, &hdrItem)) {
+                if (sortParams.mSortReverse) {
+                    hdrItem.fmt &= ~HDF_SORTUP;
+                    hdrItem.fmt |= HDF_SORTDOWN;
+                } else {
+                    hdrItem.fmt &= ~HDF_SORTDOWN;
+                    hdrItem.fmt |= HDF_SORTUP;
+                }
+                Header_SetItem(hWndHdr, sortColumn, &hdrItem);
+            }
+        } // valide new values
     }
 }
 
@@ -1542,13 +1299,14 @@ void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip)
     */
     DeviceInfo *dev = DevInfoFromListItem(pGetInfoTip->hdr.hwndFrom, pGetInfoTip->iItem);
 
+    // found a device under the mouse position?
     if (dev) {
         // with our DeviceInfo pointer we can now get the tooltip message
-        const wchar_t *infoTip = dev->InfoTip();
+        const wchar_t *infoTip = dev->InfoTip(TRUE);
 
-        StringCchPrintf(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, _T("%s"), infoTip);
-#ifdef _DEBUG
-        PrintDebugStatus(_T("InfoTip = %s\n"), infoTip);
+        StringCchPrintf(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, L"%s", infoTip);
+#if defined(_DEBUG)
+        PrintDebugStatus(L"InfoTip = %s\n", infoTip);
 #endif
     }
 }
@@ -1556,20 +1314,26 @@ void LVInfoTip(LPNMLVGETINFOTIP pGetInfoTip)
 
 void LVRightClickContextMenu(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
 {
-#ifdef _DEBUG
-    PrintDebugStatus(_T("NM_RCLICK iItem = %i, iSubItem = %i, lParam = %p, point = %i,%i\n"),
+#if defined(_DEBUG)
+    PrintDebugStatus(L"NM_RCLICK iItem = %i, iSubItem = %i, lParam = %p, point = %i,%i (hWnd 0x%x, hwndFrom %x, idFrom %u)\n",
         lpnmitem->iItem, lpnmitem->iSubItem, lpnmitem->lParam,
-        lpnmitem->ptAction.x, lpnmitem->ptAction.y);
+        lpnmitem->ptAction.x, lpnmitem->ptAction.y,
+        hWnd, lpnmitem->hdr.hwndFrom, lpnmitem->hdr.idFrom);
 #endif
-    /* 
-        lpnmitem->lParam points to something, but doesn't appear to be useful.
-        Need to map mouse coordinates to our Device Info.
-    */
-    DeviceInfo *dev = DevInfoFromListPoint(lpnmitem->hdr.hwndFrom,
-        lpnmitem->iItem, lpnmitem->ptAction);
 
-    if (dev) {
-        ContextMenuPopup(hInst, hWnd, lpnmitem->hdr.hwndFrom, dev, lpnmitem->ptAction);
+    if (IDC_RFIDLERLIST == lpnmitem->hdr.idFrom) {
+        /* 
+            lpnmitem->lParam points to something, but doesn't appear to be useful.
+            Need to map mouse coordinates to our Device Info.
+        */
+        DeviceInfo *dev = DevInfoFromListPoint(lpnmitem->hdr.hwndFrom,
+            lpnmitem->iItem, lpnmitem->ptAction);
+
+        if (dev) {
+            ContextMenuPopup(hInst, hWnd, lpnmitem->hdr.hwndFrom, dev, lpnmitem->ptAction);
+        } else {
+            DefaultContextMenuPopup(hInst, hWnd, lpnmitem->hdr.hwndFrom, lpnmitem->ptAction);
+        }
     }
 }
 
@@ -1599,7 +1363,7 @@ void LVSelectedItemContextMenu(HINSTANCE hInst, HWND hWnd, HWND hWndLV)
 void LVEmptyViewTest(NMLVEMPTYMARKUP *emptyMarkup)
 {
     // BUG: this doesn't have any effect, from documentation we expect this text to show when ListView is empty
-    StringCchCopy(emptyMarkup->szMarkup, L_MAX_URL_LENGTH, _T("No connected RFIDlers"));
+    StringCchCopy(emptyMarkup->szMarkup, L_MAX_URL_LENGTH, L"No connected RFIDlers");
     emptyMarkup->dwFlags = EMF_CENTERED;
 }
 
@@ -1611,26 +1375,12 @@ void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection)
     int i = 0;
 
     switch(selection) {
-    case ID_CONTEXT_COPYDEV_DETAILS: // skip Bootloader typename, as it just repeats DisplayName info
-    case ID_CONTEXT_COPYPORT_DETAILS:
-        strings[i++] = dev->DisplayName();
-        if (selection == ID_CONTEXT_COPYPORT_DETAILS) {
-            strings[i++] = dev->DevTypeName();
-        }
-        strings[i++] = dev->StateName();
-        string = dev->LocationString();
-        if (string) {
-            strings[i++] = string;
-        }
-        strings[i++] = dev->SerialNumber();
-        break;
     case ID_CONTEXT_COPYPORT_NAME:
         string = dev->PortName();
         if (string) {
             strings[i++] = string;
         }
         break;
-    //case ID_CONTEXT_COPYALL_DETAILS: // possible future fn, needs ListView iterator & string info buffers
     }
 
     // found strings to place in Clipboard?
@@ -1649,20 +1399,19 @@ void ContextMenuClipboardSelect(HWND hWndLV, DeviceInfo *dev, int selection)
         if (hglbCopy && OpenClipboard(hWndLV)) {
             EmptyClipboard();
 
-            // Lock the handle and copy the text to the buffer. 
- 
+            // Lock the handle and copy the text to the buffer.
             LPTSTR lptstrCopy = (LPTSTR) GlobalLock(hglbCopy); 
 
             for (j = 0; j < i; j++) {
                 if (j > 0) {
-                    StringCchCat(lptstrCopy, len, _T("\t"));
+                    StringCchCat(lptstrCopy, len, L"\t");
                     StringCchCat(lptstrCopy, len, strings[j]);
                 } else {
                     StringCchCopy(lptstrCopy, len, strings[j]);
                 }
             }
 
-            GlobalUnlock(hglbCopy); 
+            GlobalUnlock(hglbCopy);
  
             // Place the handle on the clipboard.
 #ifdef _UNICODE
@@ -1693,6 +1442,7 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
         defaultitem = ID_CONTEXT_RFIDLER_DETAILS;
         break;
     case DevMicroDevBoard:
+    case DevArduinoSerial:
     case DevOtherSerial:
         lpMenuName = MAKEINTRESOURCE(IDR_COMPORT_CONTEXT);
         defaultitem = ID_CONTEXT_PORT_DETAILS;
@@ -1703,73 +1453,133 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
         break;
     case DevUnconfigRfidlerCom:
     case DevUnconfigMicroDevBoard:
+    case DevHalfKayBootloader:
     default:
-        // TODO Context Menu for Unconfigured device? Maybe help text?
+        // TODO Context Menu for Unconfigured device? Other Bootloader types? Maybe help text?
         break;
     }
+
+    if (lpMenuName) {
+        HMENU hMenu = LoadMenu(hInst, lpMenuName);
+        if (hMenu) {
+            HMENU hMenuTrackPopup  = GetSubMenu(hMenu, 0);
+
+            if (defaultitem) {
+                // highlight default menu action in bold
+                SetMenuDefaultItem(hMenuTrackPopup, defaultitem, FALSE);
+            }
+
+#if !defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) && !defined(_DEBUG)
+            // disable development feature for release build
+            // TODO bootloader support
+            switch (dev->DeviceType()) {
+            case DevRfidlerCom:
+            case DevMicroBootloader:
+                // disable BOOTLOADER FLASH menu item
+                RemoveMenu(hMenuTrackPopup, ID_CONTEXT_OPEN_FOR_REFLASH, MF_BYCOMMAND); 
+                break;
+            }
+#endif
+
+            // ensure device node is not freed whilst we are using it
+            dev->LockForContextMenu();
+
+            // use timer to limit Popup Menu to 2 minutes
+            DevTracker.KickContextMenuTimer();
+            int selection = TrackPopupMenu(hMenuTrackPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+                scrPt.x, scrPt.y, 0, hWnd, NULL);
+            DevTracker.CancelContextMenuTimer();
+
+#if defined(_DEBUG)
+            PrintDebugStatus(L"Popup selection = %i\n", selection);
+#endif
+            if (selection > 0) {
+                switch(selection) {
+                case ID_CONTEXT_COPYPORT_NAME:
+                    ContextMenuClipboardSelect(hWnd, dev, selection);
+                    break;
+                case ID_CONTEXT_PORT_DETAILS:
+                case ID_CONTEXT_RFIDLER_DETAILS:
+                case ID_CONTEXT_BOOTLOADER_DETAILS:
+                        DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_DEVICE_DETAILS), hWnd, DeviceDetailsDlgProc,
+                            (LPARAM) dev);
+                    break;
+                case ID_CONTEXT_REBOOT_FOR_REFLASH: // todo implement opening COM port & rebooting Rfidler for Bootloader
+                    break;
+                case ID_CONTEXT_BOOTLOADER_REBOOT: // todo implement opening Bootloader & rebooting Rfidler
+                    break;
+#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
+                case ID_CONTEXT_OPEN_FOR_REFLASH: // TODO support Bootloader Reflash
+                    if (!dev->DeleteOnUnlock()) {
+                        // launch Bootloader Flash dialog
+                        BootloaderParams bl;
+                        bl.blDev = dev;
+                        DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOOTLOADERFLASH), hWnd, BootloaderDlgProc,
+                            (LPARAM) &bl);
+                    }
+                    break;
+#endif
+                }
+            }
+
+            dev->UnlockForContextMenu();
+            DestroyMenu(hMenu);
+        } // if (hMenu)
+    } // if (lpMenuName)
+}
+
+
+// context menu when no device is selected
+void DefaultContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, POINT lvWndPt)
+{
+    // context menu
+    LPCWSTR lpMenuName = MAKEINTRESOURCE(IDR_LISTVIEW_CONTEXT);
+
+    ClientToScreen(hWndLV, &lvWndPt);
 
     HMENU hMenu = LoadMenu(hInst, lpMenuName);
     if (hMenu) {
         HMENU hMenuTrackPopup  = GetSubMenu(hMenu, 0);
+        int selection;
+        int currentView = DevTracker.GetOptions().GetViewStyleButton();
 
-        if (defaultitem) {
-            // highlight default menu action in bold
-            SetMenuDefaultItem(hMenuTrackPopup, defaultitem, FALSE);
+        // check mark on current selection
+        CheckMenuItem(hMenuTrackPopup, currentView, MF_CHECKED);
+
+        // enable items depending on current view
+        if (currentView == ID_VIEW_DETAILS) {
+            EnableMenuItem(hMenuTrackPopup, ID_VIEW_DEF_COL_WIDTHS, MF_ENABLED); 
+            EnableMenuItem(hMenuTrackPopup, ID_VIEW_FIT_COL_WIDTHS, MF_ENABLED); 
         }
 
-#if !defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) && !defined(_DEBUG)
-        // disable development feature for release build
-        switch (dev->DeviceType()) {
-        case DevRfidlerCom:
-        case DevMicroBootloader:
-            // disable BOOTLOADER FLASH menu item
-            RemoveMenu(hMenuTrackPopup, ID_CONTEXT_OPEN_FOR_REFLASH, MF_BYCOMMAND); 
-            break;
-        }
+        // use timer to limit Popup Menu to 2 minutes
+        DevTracker.KickContextMenuTimer();
+        selection = TrackPopupMenu(hMenuTrackPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+            lvWndPt.x, lvWndPt.y, 0, hWnd, NULL);
+        DevTracker.CancelContextMenuTimer();
+
+#if defined(_DEBUG)
+        PrintDebugStatus(L"Popup selection = %i\n", selection);
 #endif
 
-        // ensure device is not freed whilst we are using it
-        dev->LockForContextMenu();
-
-        int selection = TrackPopupMenu(hMenuTrackPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-            scrPt.x, scrPt.y, 0, hWnd, NULL);
-#ifdef _DEBUG
-        PrintDebugStatus(_T("Popup selection = %i\n"), selection);
-#endif
-        if (selection > 0) {
+        if (selection != currentView) {
             switch(selection) {
-            case ID_CONTEXT_COPYDEV_DETAILS:
-            case ID_CONTEXT_COPYPORT_DETAILS:
-            case ID_CONTEXT_COPYPORT_NAME:
-            //case ID_CONTEXT_COPYALL_DETAILS: // possible future fn, needs ListView iterator & string info buffers
-                ContextMenuClipboardSelect(hWnd, dev, selection);
+            case ID_VIEW_LARGE_ICONS: // NB use the same view mode identifiers as the main window menu
+            case ID_VIEW_SMALL_ICONS:
+            case ID_VIEW_DETAILS:
+            case ID_VIEW_TILES:
+            case ID_VIEW_DEF_COL_WIDTHS:
+            case ID_VIEW_FIT_COL_WIDTHS:
+                // just pass to window to process
+                PostMessage(hWnd, WM_COMMAND, selection, 0);
                 break;
-            case ID_CONTEXT_PORT_DETAILS: // TODO implement this !!!
-            case ID_CONTEXT_RFIDLER_DETAILS:
-            case ID_CONTEXT_BOOTLOADER_DETAILS:
-#pragma warning("implement Device Details dialog")
+
+            default: // menu cancel
                 break;
-            case ID_CONTEXT_REBOOT_FOR_REFLASH:
-#pragma warning("implement opening COM port & rebooting Rfidler for Bootloader")
-                break;
-            case ID_CONTEXT_BOOTLOADER_REBOOT:
-#pragma warning("implement opening Bootloader & rebooting Rfidler")
-                break;
-#if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
-            case ID_CONTEXT_OPEN_FOR_REFLASH:
-                if (!dev->DeleteOnUnlock()) {
-                    // launch Bootloader Flash dialog
-                    BootloaderParams bl;
-                    bl.blDev = dev;
-                    DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOOTLOADERFLASH), hWnd, BootloaderDlgProc,
-                        (LPARAM) &bl);
-                }
-                break;
-#endif
             }
         }
 
-        dev->UnlockForContextMenu();
+        DestroyMenu(hMenu);
     }
 }
 
@@ -1777,8 +1587,8 @@ void ContextMenuPopup(HINSTANCE hInst, HWND hWnd, HWND hWndLV, DeviceInfo *dev, 
 void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
 {
      // launch default menu action, if any
-#ifdef _DEBUG
-    PrintDebugStatus(_T("LVN_ACTIVATE iItem = %i, iSubItem = %i, lParam = %p, point = %i,%i\n"),
+#if defined(_DEBUG)
+    PrintDebugStatus(L"LVN_ACTIVATE iItem = %i, iSubItem = %i, lParam = %p, point = %i,%i\n",
         lpnmitem->iItem, lpnmitem->iSubItem, lpnmitem->lParam,
         lpnmitem->ptAction.x, lpnmitem->ptAction.y);
 #endif
@@ -1790,6 +1600,7 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
         switch (dev->DeviceType()) {
         case DevRfidlerCom:
         case DevMicroDevBoard:
+        case DevArduinoSerial:
         case DevOtherSerial:
             // todo future enhancement, have a default menu item
             break;
@@ -1810,6 +1621,7 @@ void LVItemDoubleClick(HINSTANCE hInst, HWND hWnd, LPNMITEMACTIVATE lpnmitem)
             break;
         case DevUnconfigRfidlerCom:
         case DevUnconfigMicroDevBoard:
+        case DevHalfKayBootloader:
         default:
             break;
         }
@@ -1847,8 +1659,8 @@ DeviceInfo *DevInfoFromListPoint(HWND hWndLV, int iItem, POINT pt)
     lvhti.pt = pt;
     ListView_SubItemHitTest(hWndLV, &lvhti);
 
-#ifdef _DEBUG
-    PrintDebugStatus(_T("LVHITTESTINFO iItem = %i, iSubItem = %i, flags = %x\n"),
+#if defined(_DEBUG)
+    PrintDebugStatus(L"LVHITTESTINFO iItem = %i, iSubItem = %i, flags = %x\n",
         lvhti.iItem, lvhti.iSubItem, lvhti.flags);
 #endif
 
@@ -1913,6 +1725,299 @@ void BootloaderStatus(HWND hWndStatus, const wchar_t *format, ...)
 }
 
 
+const wchar_t *DeviceDescriptionText(DeviceInfo *pDev, const wchar_t *szLineEnding)
+{
+    // Device Description Strings
+    static wchar_t  szBuffer[1500];
+    const wchar_t   *szDetail;
+    const wchar_t   *szIntro;
+    unsigned        iterator;
+    DeviceLocation  deviceLocation = pDev->DevLocation();
+    BOOL            deviceIsUsb = (BusUSB == deviceLocation.devBusType);
+
+    // reset buffer contents
+    szBuffer[0] = 0;
+
+    for (iterator = 0; iterator < 100; iterator++) {
+        szDetail = NULL;
+        szIntro = NULL;
+
+        switch (iterator) {
+        case 0: // needs descriptive text that adapts to device type?
+            switch (pDev->DeviceType()) {
+            case DevRfidlerCom:
+            case DevMicroDevBoard:
+            case DevArduinoSerial:
+            case DevOtherSerial:
+                szDetail = pDev->DisplayName();
+                szIntro = L"Serial port: ";
+                break;
+            case DevMicroBootloader:
+            case DevHalfKayBootloader:
+            case DevUnconfigRfidlerCom:
+            case DevUnconfigMicroDevBoard:
+            default:
+                break;
+            }
+            break;
+
+        case 1:
+            szDetail = pDev->DevTypeName();
+            szIntro = L"Device type: ";
+            break;
+
+        case 2:
+            if (pDev->DevicePresent()) {
+                szDetail = pDev->LocationString();
+                szIntro = deviceIsUsb ? L"Device is connected to " : L"Device is connected by ";
+            }
+            break;
+
+        case 3: // USB: VID, PID, product Revision
+            if (deviceIsUsb) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"USB Vendor Id (VID) 0x%04x, Product Id (PID) 0x%04x%s%s",
+                    deviceLocation.usbVID,
+                    deviceLocation.usbPID, 
+                    deviceLocation.usbGotRevision ? L"," : L"",
+                    szLineEnding);
+                if (deviceLocation.usbGotRevision) {
+                    size_t offset = wcslen(szBuffer);
+
+                    StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                        L"    Product Revision (REV) 0x%04x%s", deviceLocation.usbRevision, szLineEnding);
+                }
+            }
+            break;
+
+        case 4: // Registry Maunfacturer name (usually from .inf rather than USB descriptor)
+            szDetail = pDev->DeviceManufacturer();
+            szIntro = L"Manufacturer: ";
+            break;
+
+        case 5: // is Device name from Setup API different from Friendly Name?
+            szDetail = pDev->DeviceName();
+            if (szDetail) {
+                const wchar_t   *szTemp = pDev->DeviceFriendlyName();
+                if (!szTemp || wcscmp(szTemp, szTemp)) {
+                    szIntro = L"Product: ";
+                } else {
+                    szDetail = NULL;
+                }
+            }
+            break;
+
+        case 6: // driver install .inf file
+            szDetail = pDev->DeviceDriverName();
+            szIntro = L"Device Driver: ";
+            break;
+
+        case 7: // driver file
+            szDetail = pDev->DeviceInfPath();
+            szIntro = L"Driver install file: ";
+            break;
+
+        // TODO ensure these USB details values are read & accessible from dialog
+        case 8:
+            if (deviceIsUsb && deviceLocation.usbFlags) {
+                szDetail = L"usbflags in registry:";
+            }
+            break;
+
+        case 9:
+            if (deviceIsUsb && (deviceLocation.usbFlags & KUsbFlag_osvc)) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"    osvc: Microsoft OS Descriptor Read %s (0x%02x), Vendor Id 0x%02x%s",
+                    (deviceLocation.usbFlagOsvc & 0xFF) ? L"success" : L"failed",
+                    deviceLocation.usbFlagOsvc & 0xFF,
+                    (deviceLocation.usbFlagOsvc >> 8) & 0xFF,
+                    szLineEnding);
+            }
+            break;
+
+        case 10:
+            if (deviceIsUsb && (deviceLocation.usbFlags & KUsbFlag_SkipContainerIdQuery)) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"    SkipContainerIdQuery: 0x%04x%s",
+                    deviceLocation.usbFlagSkipContainerIdQuery, szLineEnding);
+            }
+            break;
+
+        case 11:
+            if (deviceIsUsb && (deviceLocation.usbFlags & KUsbFlag_IgnoreHWSerNum)) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"   IgnoreHWSerNum: 0x%04x%s",
+                    deviceLocation.usbFlagIgnoreHWSerNum, szLineEnding);
+            }
+            break;
+
+        case 12:
+            if (deviceIsUsb && (deviceLocation.usbFlags & KUsbFlag_ResetOnResume)) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"    ResetOnResume: 0x%04x%s",
+                    deviceLocation.usbFlagResetOnResume, szLineEnding);
+            }
+            break;
+
+        case 13:
+            if (deviceIsUsb && (deviceLocation.usbFlags & KUsbFlag_NoClearTTBufferOnCancel)) {
+                size_t offset = wcslen(szBuffer);
+
+                StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                    L"    NoClearTTBufferOnCancel: 0x%04x%s",
+                    deviceLocation.usbFlagNoClearTTBufferOnCancel, szLineEnding);
+            }
+            break;
+
+        case 14: // list USB segment count
+            if (pDev->DevicePresent() && deviceIsUsb) {
+                unsigned segCount = pDev->UsbSegmentCount();
+
+                switch (segCount) {
+                case 0:
+                    break;
+                case 1:
+                    szDetail = L"Directly connected to USB root hub";
+                    break;
+                default:
+                    size_t offset = wcslen(szBuffer) - 1;
+
+                    if (offset < ARRAYSIZE(szBuffer)) {
+                        StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset,
+                            L"Connected through %u USB hub%s%s",
+                            segCount - 1, (segCount > 2) ? L"s" : L"",
+                            szLineEnding);
+                    }
+                    break;
+                }
+            }
+            break;
+
+        case 15:
+            szDetail = pDev->SerialNumber();
+            if (pDev->DeviceIsWindowsSerialNumber()) {
+                szIntro = L"Windows generated serial number: ";
+            } else {
+                szIntro = L"Serial number from device: ";
+            }
+            break;
+
+        case 16: // debug info for Bus Location
+#if defined(_DEBUG)
+            {
+                size_t offset = wcslen(szBuffer) - 1;
+
+                if (!IsEqualGUID(deviceLocation.debugBusGUID, GUID_NULL) && (offset < ARRAYSIZE(szBuffer))) {
+                    GUID *g = &deviceLocation.debugBusGUID;
+
+                    StringCchPrintf(szBuffer + offset, ARRAYSIZE(szBuffer) - offset, 
+                        L"Debug: BusGUID %08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                        g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], 
+                        g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+                    // always the last line if present, so we don't currently add a line ending
+                }
+            }
+            // fall through ...
+#endif
+        default:
+            // end of strings, return full buffer
+            return szBuffer;
+
+        }
+
+        // may have ptr to a const string to put in buffer
+        if (szDetail) {
+            if (szIntro) {
+                wcscat_s(szBuffer, szIntro);
+            }
+            wcscat_s(szBuffer, szDetail);
+            wcscat_s(szBuffer, szLineEnding);
+        }
+    };
+
+    // hush compiler warning about no return value, we shouldn't reach here
+    return szBuffer;
+}
+
+
+void SetDevDetailsDialogTitle(HWND hDlg, DeviceInfo *pDev)
+{
+    wchar_t szTitle[60];
+
+    // name text corresponding to the device
+    wcscpy_s(szTitle, pDev->InfoTip(FALSE));
+    wcscat_s(szTitle, L" device details");
+    SetWindowText(hDlg, szTitle);
+}
+
+
+INT_PTR CALLBACK DeviceDetailsDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    /* IDD_DEVICE_DETAILS */
+    static DeviceInfo *pDev;
+    static HICON hIcon = NULL;
+
+    switch (iMsg) {
+    case WM_INITDIALOG:
+        pDev = reinterpret_cast<DeviceInfo *> (lParam);
+
+        // lParam = NULL would be a bug
+        if (!pDev) {
+#if defined(_DEBUG)
+            PrintDebugStatus(L"DeviceDetailsDlgProc bad lParam\n");
+#endif
+            EndDialog(hDlg, 0);
+        }
+
+        // set icon corresponding to the device
+        hIcon = DeviceTracker::GetIcon(pDev->DeviceImage());
+        SendDlgItemMessage(hDlg, IDC_DEVICE_ICON, STM_SETICON, (WPARAM)hIcon, (LPARAM)0);
+
+        // set Window title
+        SetDevDetailsDialogTitle(hDlg, pDev);
+
+        // display device details
+        {
+            const wchar_t *szDesc = DeviceDescriptionText(pDev, L"\r\n");
+
+            if (szDesc) {
+                SetWindowText(GetDlgItem(hDlg, IDC_DEV_DETAILS), szDesc);
+            }
+        }
+        return TRUE; // TRUE unless you set the focus to a control
+
+    case WM_COMMAND: 
+        switch (LOWORD(wParam)) {
+        case IDOK:
+        case IDCANCEL: // Escape key
+            EndDialog (hDlg, wParam);
+            /* handled message */
+            return 1;
+        }
+        break;
+
+    case WM_DESTROY:
+        if (hIcon) {
+            DestroyIcon(hIcon);
+            hIcon = NULL;
+        }
+        return TRUE;
+    }
+
+    return 0;
+}   /* DeviceDetailsDlgProc() */
+
+
 #if defined(ENABLE_BOOTLOADER_FLASH_DIALOGS) || defined(_DEBUG)
 INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1929,28 +2034,28 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
 
         // try to open device
         {
-            const wchar_t *path = bl->blDev->DevicePath();
+            const wchar_t *path = bl->blDev->HidDevicePath();
 
             if (path) {
                 h = CreateFile(path, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
                     NULL, OPEN_EXISTING, 0, NULL);
-#ifdef _DEBUG
-                PrintDebugStatus(_T("tried opening %s, %s\n"), path, (h == INVALID_HANDLE_VALUE) ? _T("fail") : _T("success"));
+#if defined(_DEBUG)
+                PrintDebugStatus(L"tried opening %s, %s\n", path, (h == INVALID_HANDLE_VALUE) ? L"fail" : L"success");
 #endif
 
                 if (h != INVALID_HANDLE_VALUE) {
                     BootloaderEnableBaseControls(hDlg, TRUE);
-                    BootloaderStatus(hWndReport, _T("Bootloader device opened"));
+                    BootloaderStatus(hWndReport, L"Bootloader device opened");
 
                     if (InitHexFileList(hDlg)) {
                         BootloaderEnableProgramControls(hDlg, TRUE);
                     }
                 } else {
                     // report error
-                    BootloaderStatus(hWndReport, _T("Bootloader device open failed (%u)"), GetLastError());
+                    BootloaderStatus(hWndReport, L"Bootloader device open failed (%u)", GetLastError());
                 }
             } else {
-                BootloaderStatus(hWndReport, _T("Bootloader device not found"));
+                BootloaderStatus(hWndReport, L"Bootloader device not found");
             }
         }
         return TRUE; // unless you set the focus to a control
@@ -1959,18 +2064,18 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
         switch (LOWORD(wParam)) {
         case IDC_ERASE:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: Erase memory */
             }
             break;
         case IDC_PROGRAM:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: program device */
             }
             break;
         // IDC_FLASHPROGRESS               
         case IDC_HEX_READFILE:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: Open/Read hax file */
             }
             break;
         case IDC_BROWSE:
@@ -1981,25 +2086,25 @@ INT_PTR CALLBACK BootloaderDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM l
             break;
         case IDC_VERIFY:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: Verify memory */
             }
             break;
         case IDC_ERASEPROGRAMVERIFY:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: Erase, Program, and Verify memory */
             }
             break;
         case IDC_REBOOT:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
+                /* todo Bootloader: Reboot device (to run programmed memory) */
             }
             break;
         case IDC_SAVEHEX:
             if (h != INVALID_HANDLE_VALUE) {
-                /* todo */
-                // todo SaveHexFileToHistory(const wchar_t *filename)
+                // todo Bootloader: SaveHexFileToHistory(const wchar_t *filename)
             }
             break;
+
         case IDOK:
             EndDialog (hDlg, wParam);
             /* handled message */

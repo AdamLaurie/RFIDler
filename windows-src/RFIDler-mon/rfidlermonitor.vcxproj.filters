@@ -58,6 +58,24 @@
     <None Include="rfidler256.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="arduino-ok.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="arduino-remove.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="otherbootloader.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="icon1.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="modem.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="modem-remove.ico">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rfidmonitor.cpp">
@@ -79,6 +97,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="windowsversion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debugsupport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="options_propsheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial_propsheet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

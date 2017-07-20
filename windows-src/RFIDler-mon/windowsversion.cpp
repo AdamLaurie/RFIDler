@@ -1,6 +1,6 @@
 /* 
 
-    Project: RFIDler Monitor v0.1
+    Project: RFIDler Monitor v0.2
              Graphical monitor that lists which USB ports an RFIDler is 
              currently connected to, and watches for changes.
              Tool for Aperture Labs RFIDler LF.
@@ -9,7 +9,7 @@
 
     Author: Anthony Naggs, 2014-2015
 
-    Copyright (c) 2014-2015 Anthony Naggs.
+    Copyright (c) 2014-2017 Anthony Naggs.
     All rights reserved.
 
     Limited assignment of rights under the 'BSD 2-Clause License':
@@ -40,7 +40,7 @@
 
 /*
     windowsversion.cpp seeded with:
-    StartOrStopProgressMarquee() fn from rfidler-install program
+    CheckWindowsVersion() fn from Windows RFIDler Driver Install project
  */
 
 BOOL CheckWindowsVersion(enum WinVersion request)

@@ -41,7 +41,7 @@
 /*
  taskbarfeatures.cpp seeded with StartOrStopProgressMarquee() fn from rfidler-install program
 
- TODO add fn to manage Taskbar icon overlays
+ TODO? add fn to manage Taskbar icon overlays
  */
 
 

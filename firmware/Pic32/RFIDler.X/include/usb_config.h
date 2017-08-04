@@ -95,6 +95,44 @@
 #define USB_SPEED_OPTION USB_FULL_SPEED
 //#define USB_SPEED_OPTION USB_LOW_SPEED //(not valid option for PIC24F devices)
 
+
+//When implemented, the Microsoft OS Descriptor allows the WinUSB driver package
+//installation to be automatic on Windows 8, and is therefore recommended.
+#define IMPLEMENT_MICROSOFT_OS_DESCRIPTOR
+
+//Some definitions, only needed when using the MS OS descriptor.
+#if defined(IMPLEMENT_MICROSOFT_OS_DESCRIPTOR)
+    #define MICROSOFT_OS_DESCRIPTOR_INDEX   (unsigned char)0xEE //Magic string index number for the Microsoft OS descriptor
+    #define GET_MS_DESCRIPTOR               (unsigned char)0x2A //(arbitarily assigned, but should not clobber/overlap normal bRequests)
+                                                                // Vendor Code, arbitrary non-zero value chosen once by vendor, DO NOT CHANGE as cached by Windows
+    #define EXTENDED_COMPAT_ID              (WORD)0x0004
+    #define EXTENDED_PROPERTIES             (WORD)0x0005
+    typedef struct __attribute__ ((packed)) _MS_OS_DESCRIPTOR{BYTE bLength;BYTE bDscType;WORD string[7];BYTE vendorCode;BYTE bPad;}MS_OS_DESCRIPTOR;
+    typedef struct __attribute__ ((packed)) _MS_COMPAT_ID_FEATURE_DESC{DWORD dwLength;WORD bcdVersion;WORD wIndex;BYTE bCount;BYTE Reserved[7];BYTE bFirstInterfaceNumber;BYTE Reserved1;BYTE compatID[8];BYTE subCompatID[8];BYTE Reserved2[6];}MS_COMPAT_ID_FEATURE_DESC;
+// 1 2 or 3
+#define MS_FEATURES 1
+#if (MS_FEATURES == 3)
+#define MS_FEATURE2
+#define MS_FEATURE3
+#elif (MS_FEATURES == 2)
+#define MS_FEATURE2
+#endif
+    // Note below structure edited for RFIDler to have 3 features, Note character array sizes must match the Unicode string lenghts!
+    typedef struct __attribute__ ((packed)) _MS_EXT_PROPERTY_FEATURE_DESC{DWORD dwLength;WORD bcdVersion;WORD wIndex;WORD wCount;
+        DWORD dwSize1;DWORD dwPropertyDataType1;WORD wPropertyNameLength1;WORD bPropertyName1[20];DWORD dwPropertyDataLength1;WORD bPropertyData1[39];
+#if defined(MS_FEATURE2)
+        DWORD dwSize2;DWORD dwPropertyDataType2;WORD wPropertyNameLength2;WORD bPropertyName2[6];DWORD dwPropertyDataLength2;WORD bPropertyData2[11];
+#endif
+#if defined(MS_FEATURE3)
+        DWORD dwSize3;DWORD dwPropertyDataType3;WORD wPropertyNameLength3;WORD bPropertyName3[6];DWORD dwPropertyDataLength3;WORD bPropertyData3[38];
+#endif
+        }MS_EXT_PROPERTY_FEATURE_DESC;
+    extern ROM MS_OS_DESCRIPTOR MSOSDescriptor;
+    extern ROM MS_COMPAT_ID_FEATURE_DESC CompatIDFeatureDescriptor;
+    extern ROM MS_EXT_PROPERTY_FEATURE_DESC ExtPropertyFeatureDescriptor;
+#endif
+
+
 #define USB_SUPPORT_DEVICE
 
 #define USB_NUM_STRING_DESCRIPTORS 4

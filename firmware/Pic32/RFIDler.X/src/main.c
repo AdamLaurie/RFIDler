@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -551,6 +551,115 @@ BYTE ProcessIO(void)
     CDCTxService();
 }		//end ProcessIO
 
+// USBCheckVendorRequest() function is from Microchip USB Library for Applications dated 2013-12-20
+/********************************************************************
+	Function:
+		void USBCheckVendorRequest(void)
+
+ 	Summary:
+ 		This routine handles vendor class specific requests that happen on EP0.
+        This function should be called from the USBCBCheckOtherReq() call back
+        function whenever implementing a custom/vendor class device.
+
+ 	Description:
+ 		This routine handles vendor specific requests that may arrive on EP0 as
+ 		a control transfer.  These can include, but are not necessarily
+ 		limited to, requests for Microsft specific OS feature descriptor(s).
+ 		This function should be called from the USBCBCheckOtherReq() call back
+ 		function whenever using a vendor class device.
+
+        Typical Usage:
+        <code>
+        void USBCBCheckOtherReq(void)
+        {
+            //Since the stack didn't handle the request I need to check
+            //  my class drivers to see if it is for them
+            USBCheckVendorRequest();
+        }
+        </code>
+
+	PreCondition:
+		None
+
+	Parameters:
+		Although this function has a void input, this handler function will
+		typically need to look at the 8-byte SETUP packet contents that the
+		host just sent, which may contain the vendor class specific request.
+
+		Therefore, the statically allocated SetupPkt structure may be looked
+		at while in the context of this function, and it will contain the most
+		recently received 8-byte SETUP packet data.
+
+	Return Values:
+		None
+
+	Remarks:
+		This function normally gets called within the same context as the
+		USBDeviceTasks() function, just after a new control transfer request
+		from the host has arrived.  If the USB stack is operated in
+		USB_INTERRUPT mode (a usb_config.h option), then this function
+		will be executed in the interrupt context.  If however the USB stack
+		is operated in the USB_POLLING mode, then this function executes in the
+		main loop context.
+
+		In order to respond to class specific control transfer request(s) in
+		this handler function, it is suggested to use one or more of the
+		USBEP0SendRAMPtr(), USBEP0SendROMPtr(), or USBEP0Receive() API
+		functions.
+
+ *******************************************************************/
+void USBCheckVendorRequest(void)
+{
+    #if defined(IMPLEMENT_MICROSOFT_OS_DESCRIPTOR)
+        uint16_t Length;
+
+        //Check if the most recent SETUP request is class specific
+        if(SetupPkt.bmRequestType == 0b11000000)    //Class specific, device to host, device level target
+        {
+            //Check if the host is requesting an MS feature descriptor
+            if(SetupPkt.bRequest == GET_MS_DESCRIPTOR)
+            {
+                //Figure out which descriptor is being requested
+                if(SetupPkt.wIndex == EXTENDED_COMPAT_ID)
+                {
+                    //Determine number of bytes to send to host
+                    //Lesser of: requested amount, or total size of the descriptor
+                    Length = CompatIDFeatureDescriptor.dwLength;
+                    if(SetupPkt.wLength < Length)
+                    {
+                        Length = SetupPkt.wLength;
+                    }
+
+                    //Prepare to send the requested descriptor to the host
+                    USBEP0SendROMPtr((const uint8_t*)&CompatIDFeatureDescriptor, Length, USB_EP0_ROM | USB_EP0_INCLUDE_ZERO);
+                }
+            }
+        }//if(SetupPkt.bmRequestType == 0b11000000)
+        else if(SetupPkt.bmRequestType == 0b11000001)    //Class specific, device to host, interface target
+        {
+            //Check if the host is requesting an MS feature descriptor
+            if(SetupPkt.bRequest == GET_MS_DESCRIPTOR)
+            {
+                //Figure out which descriptor is being requested
+                if(SetupPkt.wIndex == EXTENDED_PROPERTIES)
+                {
+                    //Determine number of bytes to send to host
+                    //Lesser of: requested amount, or total size of the descriptor
+                    Length = ExtPropertyFeatureDescriptor.dwLength;
+                    if(SetupPkt.wLength < Length)
+                    {
+                        Length = SetupPkt.wLength;
+                    }
+
+                    //Prepare to send the requested descriptor to the host
+                    USBEP0SendROMPtr((const uint8_t*)&ExtPropertyFeatureDescriptor, Length, USB_EP0_ROM | USB_EP0_INCLUDE_ZERO);
+                }
+            }
+        }//else if(SetupPkt.bmRequestType == 0b11000001)
+    #endif  //#if defined(IMPLEMENT_MICROSOFT_OS_DESCRIPTOR)
+}//void USBCheckVendorRequest(void)
+
+
 /*******************************************************************
  * Function:        void USBCBCheckOtherReq(void)
  *
@@ -581,7 +690,17 @@ BYTE ProcessIO(void)
  *******************************************************************/
 void USBCBCheckOtherReq(void)
 {
-    USBCheckCDCRequest();
+    // Check for Microsoftt Windows special descriptor stuff - IMPLEMENT_MICROSOFT_OS_DESCRIPTOR
+    // Vendor specific, device to host, device level target or Vendor specific, device to host, interface target
+    if ((SetupPkt.bmRequestType == 0b11000000) || (SetupPkt.bmRequestType == 0b11000001))
+    {
+        USBCheckVendorRequest();
+    }
+    else
+    {
+        // Class Specific: CDC (Serial) interface request
+        USBCheckCDCRequest();
+    }
 }//end
 
 

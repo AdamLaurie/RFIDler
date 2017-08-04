@@ -130,8 +130,8 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 
-// BCD hardware revision for usb descriptor (usb_descriptors.c)
-#define RFIDLER_HW_VERSION        0x020
+// BCD hardware/product revision for usb descriptor (usb_descriptors.c)
+#define RFIDLER_HW_VERSION        0x021
 
 // max sizes in BITS
 #define MAXBLOCKSIZE        512

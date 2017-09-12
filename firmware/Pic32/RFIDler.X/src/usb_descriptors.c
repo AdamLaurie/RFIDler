@@ -307,15 +307,13 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
     (ROM BYTE *ROM)&sd003
 };
 
-#if 1
     /*
         MS_OS_DESCRIPTOR, MS_COMPAT_ID_FEATURE_DESC and MS_EXT_PROPERTY_FEATURE_DESC
-        are defined in Microchip's USB Library for Applications dated 2013/12/20
+        are defined in Microchip's USB Library for Applications dated 2013-12-20
         Adapted for RFIDler-LF in July 2017.
         Note: if string text is changed ensure usb_config.h string lengths are updated too!
     */
 
-//defined(IMPLEMENT_MICROSOFT_OS_DESCRIPTOR)
     //Microsoft "OS Descriptor" - This descriptor is based on a Microsoft specific
     //specification (not part of the standard USB 2.0 specs or class specs).
     //Implementing this special descriptor allows WinUSB driver package installation
@@ -356,7 +354,7 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
         sizeof(ExtPropertyFeatureDescriptor),   //dwLength
         0x0100,                                 //bcdVersion = 1.00
         EXTENDED_PROPERTIES,                    //wIndex
-        MS_FEATURES,                            //wCount - 0x0001 "Property Sections" implemented in this descriptor
+        3,                                      //wCount - 0x0001 "Property Sections" implemented in this descriptor
         //----------Property Section 1----------
         132,                                    //dwSize - 132 bytes in this Property Section
         0x00000001,                             //dwPropertyDataType (Unicode string)
@@ -376,7 +374,6 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
         //*HACK* instead of generating unique GUID we use standard GUID for COM & LPT ports
         //= '{4d36e978-e325-11ce-bfc1-08002be10318}' to get installed as a COM port
         {'{','4','d','3','6','e','9','7','8','-','e','3','2','5','-','1','1','c','e','-','b','f','c','1','-','0','8','0','0','2','b','e','1','0','3','1','8','}',0x0000},  //bPropertyData - this is the actual GUID value.  Make sure this matches the PC application code trying to connect to the device.
-#if defined(MS_FEATURE2)
         //----------Property Section 2----------
         14 + 12 + 22,                           //dwSize - 14 bytes + 2 nul terminated Unicode strings in this Property Section
         0x00000001,                             //dwPropertyDataType (Unicode string)
@@ -385,8 +382,6 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
         22,                                     //dwPropertyDataLength - 22 bytes in the bPropertyData field
                                                 //bPropertyData - device label = "RFIDler-LF"
         {'R','F','I','D','l','e','r','-','L','F',0x0000},
-#endif
-#if defined(MS_FEATURE3)
         //----------Property Section 3----------
         14 + 12 + 76,                           //dwSize - 14 bytes + 2 nul terminated Unicode strings in this Property Section
         0x00000002,                             //dwPropertyDataType (Unicode string with environment variables)
@@ -395,9 +390,7 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
         76,                                     //dwPropertyDataLength - 22 bytes in the bPropertyData field
                                                 //bPropertyData - "%SystemRoot%\\system32\\Shell32.dll,-13"
         {'%','S','y','s','t','e','m','R','o','o','t','%','\\','s','y','s','t','e','m','3','2','\\','S','h','e','l','l','3','2','.','d','l','l',',','-','1','3',0x0000}
-#endif
     };
-#endif
 
 #pragma code
 

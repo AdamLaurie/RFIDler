@@ -551,7 +551,7 @@ BYTE ProcessIO(void)
     CDCTxService();
 }		//end ProcessIO
 
-// USBCheckVendorRequest() function is from Microchip USB Library for Applications dated 2013-12-20
+// USBCheckVendorRequest() function is taken from usb_generic_device.c in Microchip USB Library for Applications dated 2013-12-20
 /********************************************************************
 	Function:
 		void USBCheckVendorRequest(void)

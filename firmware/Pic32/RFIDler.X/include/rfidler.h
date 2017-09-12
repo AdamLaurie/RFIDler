@@ -131,6 +131,7 @@
 
 
 // BCD hardware/product revision for usb descriptor (usb_descriptors.c)
+// 0x20 - first version shipped, 0x21 - version with Microsoft OS USB descriptors
 #define RFIDLER_HW_VERSION        0x021
 
 // max sizes in BITS

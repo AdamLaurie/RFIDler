@@ -354,7 +354,7 @@ ROM BYTE *ROM USB_SD_Ptr[USB_NUM_STRING_DESCRIPTORS]=
         sizeof(ExtPropertyFeatureDescriptor),   //dwLength
         0x0100,                                 //bcdVersion = 1.00
         EXTENDED_PROPERTIES,                    //wIndex
-        3,                                      //wCount - 0x0001 "Property Sections" implemented in this descriptor
+        3,                                      //wCount - number of "Property Sections" implemented in this descriptor
         //----------Property Section 1----------
         132,                                    //dwSize - 132 bytes in this Property Section
         0x00000001,                             //dwPropertyDataType (Unicode string)

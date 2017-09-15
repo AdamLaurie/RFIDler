@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -153,6 +153,8 @@ const BYTE *Hitag2_Modes[]= {"Public Mode B", "Public Mode A", "Public Mode C", 
 // crypto globals
 Hitag_State Hitag_Crypto_State;
 BOOL CryptoActive= FALSE;
+
+extern BYTE Sniffstore;
 
 // crypto hints:
 //
@@ -556,12 +558,15 @@ BOOL hitag2_crypto_auth(BYTE *response, BYTE *hexkey)
     uid= hexreversetoulong(tmp);
     key= hexreversetoulonglong(hexkey);
 
-    // generate 32 bit PRN for challenge
-    srand(Led_Count);
+    // generate 32 bit PRN for challenge 
+    // seed random number generator
+    // done here to try to add a bit more randomness by using LED count which is updated
+    // by the main loop
+    //srand((int) (Led_Count / 2));
     initvec= rand();
     initvec <<= 16;
     initvec += rand();
-
+    
     // prepare to send IV in the clear to tag
     ulongtobinstring(tmp, initvec, 32);
 
@@ -917,6 +922,10 @@ BOOL hitag2_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int 
                  
                 // crypto handshake
                 case 64:
+                    if (Sniffstore)
+                    {
+                        store_pwm(out);
+                    }
                     UserMessage("\r\n%s, PRN:", out);
                     memcpy(tmp, out, 32);
                     tmp[32]= '\0';
@@ -976,6 +985,81 @@ BOOL hitag2_config_block_show(BYTE *config, BYTE *password, BYTE *key)
     printhexreadable(config + 2, 3);
     UserMessage("%s", "\r\n");
     return TRUE;
+}
+
+void hitag2_pwm_nvm_clear()
+{
+    uint32_t count = 0;
+    NVMProgram((void *) HITAG2_PWM_NVM_ADDRESS, (const void *) &count, sizeof(uint32_t), (void*) TmpBuff);
+}
+
+
+void store_pwm(BYTE *data)
+{
+    uint32_t count;
+    BYTE *entry;
+    BYTE datastr[20];
+    
+    memcpy(&count, (void *)HITAG2_PWM_NVM_ADDRESS, 4);
+    
+//    UserMessage("current count: %d\r\n", count);
+    
+    if (count >= HITAG2_PWM_NVM_MAX)
+    {
+        return;
+    }
+    
+    // convert data from bits to hexstring
+    binstringtohex(datastr, data);
+    
+    // store data
+    entry = (BYTE *)HITAG2_PWM_NVM_DATA + (20 * count);
+    NVMProgram((void *) entry, (const void *) datastr, 20, (void*) TmpBuff);
+    
+    // update count
+    count++;
+    NVMProgram((void *) HITAG2_PWM_NVM_ADDRESS, (const void *) &count, sizeof(uint32_t), (void*) TmpBuff);
+//    return;
+    
+
+}
+
+void hitag2_pwm_display_nrars()
+{
+    uint32_t count;
+    uint32_t index;
+    int i;
+    BYTE tmp[20];
+    
+    memcpy(&count, (void *)HITAG2_PWM_NVM_ADDRESS, 4);
+    
+    UserMessage("%s", "\r\n");
+    
+    if (count == 0)
+    {
+        UserMessage("%s", "No HiTag2 PWM stored\r\n");
+        return;
+    }
+        
+    if (count > HITAG2_PWM_NVM_MAX)
+    {
+        UserMessage("%s", "Count overflow\r\n");
+        return;
+    }
+    
+    tmp[8] = 0x00;
+    for (index=0; index<count; index++)
+    {
+//        UserMessage("nRaR number %d\r\n", index);
+//        memcpy(tmp, (BYTE *)HITAG2_PWM_NVM_DATA + (index * 20), 20);
+        memcpy(tmp, (BYTE *)HITAG2_PWM_NVM_DATA + (index * 20), 8);
+        tmp[8] = ' ';
+        memcpy(tmp + 9, (BYTE *)HITAG2_PWM_NVM_DATA + (index * 20) + 8, 8);
+        tmp[17] = 0x00;
+        UserMessage("%s\r\n", tmp);
+    }
+    
+    return;
 }
 
 // end optimisation

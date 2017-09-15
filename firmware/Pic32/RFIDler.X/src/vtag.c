@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -382,42 +382,52 @@ BOOL vtag_write_to_tag(BYTE *pass)
     get_tag_uid(tmp);
 
     // re-auth
-    if(!tag_login(block, tmp, pass))
-        tag_auth(block, tmp, pass);
+    if(!(auth = tag_login(block, tmp, pass)))
+        auth = tag_auth(block, tmp, pass);
 
     // initialise target in default mode
     // get config block number
     if(!config_block_number(&config_block_no, RFIDlerConfig.TagType))
         return FALSE;
 
-    // get default config block data
-    tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
-    if (!config_block(tmp, RFIDlerConfig.TagType, RFIDlerConfig.TagType))
+    // don't write default config block for HiTag2
+    if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
     {
-        memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
-        return FALSE;
+
+        // get default config block data
+        tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
+        if (!config_block(tmp, RFIDlerConfig.TagType, RFIDlerConfig.TagType))
+        {
+            memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
+            return FALSE;
+        }
+
+        // write default config
+        if(!write_tag(config_block_no, tmp, VERIFY))
+        {
+            memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
+            return FALSE;
+         }
+
+        // reset tag again
+        get_tag_uid(tmp);
     }
-
-    // write default config
-    if(!write_tag(config_block_no, tmp, VERIFY))
-    {
-        memcpy(&RFIDlerConfig, &tmptag, sizeof(RFIDlerConfig));
-        return FALSE;
-     }
     
-    // reset tag again
-    get_tag_uid(tmp);
-
     // write all VTAG blocks with valid data in them
     // but avoid writing config block until last as tag may stop responding
     tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
     for(block= 0 ; block < RFIDlerVTag.DataBlocks ; ++block)
-        if(block != config_block_no && RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * block)])
+        if(block != config_block_no && RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * block)] &&
+                (block != 0 || RFIDlerConfig.TagType != TAG_TYPE_HITAG2))
         {
-            // try to login/auth in case target tag requires it
-            // don't care if we fail
-            if(!(auth= tag_login(block, tmp, pass)))
-                auth= tag_auth(block, tmp, pass);
+            // don't reauth for HiTag2
+            if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
+            {
+                // try to login/auth in case target tag requires it
+                // don't care if we fail
+                if(!(auth= tag_login(block, tmp, pass)))
+                    auth= tag_auth(block, tmp, pass);
+            }
             
             memcpy(tmp, &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * block)], HEXDIGITS(RFIDlerVTag.BlockSize));
             UserMessageNum("\r\n%d: ", block);
@@ -433,9 +443,13 @@ BOOL vtag_write_to_tag(BYTE *pass)
 
     // write config block (no verify as some tags stop talking after config change)
 
-    if(!tag_login(block, tmp, pass))
-        tag_auth(block, tmp, pass);
-
+    // don't reauth for HiTag2
+    if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
+    {
+        if(!tag_login(block, tmp, pass))
+            tag_auth(block, tmp, pass);
+    }
+    
     tmp[HEXDIGITS(RFIDlerVTag.BlockSize)]= '\0';
     memcpy(tmp, &RFIDlerVTag.Data[HEXDIGITS(RFIDlerVTag.BlockSize * config_block_no)], HEXDIGITS(RFIDlerVTag.BlockSize));
     UserMessageNum("\r\n\r\n%d: ", config_block_no);

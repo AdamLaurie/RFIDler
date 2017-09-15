@@ -57,6 +57,7 @@
       <itemPath>include/sniff.h</itemPath>
       <itemPath>include/tamagotchi.h</itemPath>
       <itemPath>include/hdx.h</itemPath>
+      <itemPath>include/hitag2crack.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -126,6 +127,7 @@
       <itemPath>src/sniff.c</itemPath>
       <itemPath>src/tamagotchi.c</itemPath>
       <itemPath>src/hdx.c</itemPath>
+      <itemPath>src/hitag2crack.c</itemPath>
     </logicalFolder>
     <logicalFolder name="windows driver"
                    displayName="Windows Driver"

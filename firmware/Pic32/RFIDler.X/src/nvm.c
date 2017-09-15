@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2014 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -163,6 +163,7 @@ BOOL loadconfig(void)
         memset(&RFIDlerConfig, 0x00, sizeof(RFIDlerConfig));
         memcpy(RFIDlerConfig.Name, "RFIDler", 7);
         saveconfig();
+        hitag2_nvm_clear();
         return FALSE;
     }
     // load VTAG

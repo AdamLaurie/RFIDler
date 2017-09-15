@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -129,113 +129,19 @@
 
 // Author: Adam Laurie <adam@aperturelabs.com>
 
-
-// hitag1 commands
-#define HITAG1_SET_CC               "00110"         // get UID when in Anti-Collision mode
-#define HITAG1_SELECT               "00000"         // select tag for read/write
-#define HITAG1_WRPPAGE              "1000"          // write page plaintext mode (page is 32 bits, number 0-63)
-#define HITAG1_WRPBLK               "1001"          // write block plaintext mode (block is 4 pages)
-#define HITAG1_WRCPAGE              "1010"          // write page crypto mode
-#define HITAG1_WRCBLK               "1011"          // write block crypto mode
-#define HITAG1_RDPPAGE              "1100"          // read page plaintext mode
-#define HITAG1_RDPBLK               "1101"          // read block plaintext mode
-#define HITAG1_RDCPAGE              "1110"          // read page crypto mode
-#define HITAG1_RDCBLK               "1111"          // read block crypto mode
-#define HITAG1_HALT                 "0111"          // halt selected tag
-
-#define HITAG1_CRC_POLYNOM          0x1D
-#define HITAG1_CRC_PRESET           0xFF
-
-#define HITAG1_BLOCKSIZE            32              // read returns block sizes of 32, 64, 96 or 128 Bit, but we will only use 32
-#define HITAG1_MAX_COMMAND_LEN      46              // longest command as binstring, plus NULL
-#define HITAG1_DATABLOCKS           64              // total blocks
-#define HITAG1_CONFIG_BLOCK_NUM     1               // config block
-#define HITAG1_USER_DATA_BLOCK_NUM  4               // 1st user data block
-
-#define HITAG1_WRITE_DELAY          726             // time to complete write in FCs
-
-// hitag2 commands
-#define HITAG2_START_AUTH           "11000"         // get UID and/or start the authentication process
-#define HITAG2_READ_PAGE            "11"            // read page after auth
-#define HITAG2_READ_PAGE_INVERTED   "01"            // as read page but all bits inverted
-#define HITAG2_WRITE_PAGE           "10"            // write page after auth
-#define HITAG2_HALT                 "00"            // silence currently authenticated tag
-
-#define HITAG2_PWD_DEFAULT          "4D494B52"      // hitag default PWD ("MIKR")
-
-#define HITAG2_KEY_LOW              "4D494B52"      // hitag default KEY_LOW
-#define HITAG2_KEY_HIGH             "4F4E"          // hitag default KEY_HIGH ("ON")
-#define HITAG2_KEY_DEFAULT          "4F4E4D494B52"  // hitag default key in correct order for AUTH command ("ONMIKR")
-
-#define HITAG2_BLANK_BLOCK          "00000000"
-
-#define HITAG2_PW_BLOCK_NUM         1               // password block number
-#define HITAG2_KEY_BLOCK_NUM        2               // crypto key block number
-#define HITAG2_CONFIG_BLOCK_NUM     3               // hitag2 config block
-#define HITAG2_USER_DATA_BLOCK_NUM  4               // 1st user data block
-#define HITAG2_BLOCKSIZE            32              // block size in bits
-#define HITAG2_DATABLOCKS           8               // total number of blocks
-
-#define HITAG2_WRITE_DELAY          614             // time to complete write in FCs
-
-// config blocks
-#define HITAG2_DEFAULT_CONFIG_BLOCK "06AA4854"      // hitag2 native, password mode
-#define HITAG2_CRYPTO_CONFIG_BLOCK  "0EAA4854"      // hitag2 native, crypto mode
-#define HITAG2_FDXB_CONFIG_BLOCK    "00AA4854"      // public-mode b
-#define HITAG2_UNIQUE_CONFIG_BLOCK  "02AA4854"      // public-mode a
-#define HITAG2_EM4X02_CONFIG_BLOCK  "02AA4854"      // public-mode a
-#define HITAG2_MODEC_CONFIG_BLOCK   "04AA4854"      // public-mode c - PCF793X
-
-// config block masks
-
-#define HITAG2_MASK_PAGE_1_2_OTP_PROTECT    0b10000000
-#define HITAG2_MASK_PAGE_3_OTP_PROTECT      0b01000000
-#define HITAG2_MASK_PAGE_4_5_PROTECT        0b00100000
-#define HITAG2_MASK_PAGE_6_7_PROTECT        0b00010000
-#define HITAG2_MASK_SECURITY                0b00001000
-#define HITAG2_MASK_MODE                    0b00000110
-#define HITAG2_MASK_MODULATION              0b00000001
-
-// config block bit shifts
-#define HITAG2_SHIFT_PAGE_1_2_OTP_PROTECT   7
-#define HITAG2_SHIFT_PAGE_3_OTP_PROTECT     6
-#define HITAG2_SHIFT_PAGE_4_5_PROTECT       5
-#define HITAG2_SHIFT_PAGE_6_7_PROTECT       4
-#define HITAG2_SHIFT_SECURITY               3
-#define HITAG2_SHIFT_MODE                   1
-#define HITAG2_SHIFT_MODULATION             0
-
-#define HITAG2_PWM_NVM_PAGES 2
-#define HITAG2_PWM_NVM_SIZE (NVM_PAGE_SIZE * HITAG2_PWM_NVM_PAGES)
-#define HITAG2_PWM_NVM_ADDRESS (RFIDLER_NVM_ADDRESS - HITAG2_PWM_NVM_SIZE)
-#define HITAG2_PWM_NVM_DATA (HITAG2_PWM_NVM_ADDRESS + 4)
-#define HITAG2_PWM_NVM_MAX ((HITAG2_PWM_NVM_SIZE / 20) - 1)
+/*
+ * Hitag Crypto support macros
+ * These macros reverse the bit order in a byte, or *within* each byte of a
+ * 16 , 32 or 64 bit unsigned integer. (Not across the whole 16 etc bits.)
+ */
+#define rev8(X)   ((((X) >> 7) &1) + (((X) >> 5) &2) + (((X) >> 3) &4) \
+                  + (((X) >> 1) &8) + (((X) << 1) &16) + (((X) << 3) &32) \
+                  + (((X) << 5) &64) + (((X) << 7) &128) )
+#define rev16(X)  (rev8 (X) + (rev8 (X >> 8) << 8))
+#define rev32(X)  (rev16(X) + (rev16(X >> 16) << 16))
+#define rev64(X)  (rev32(X) + (rev32(X >> 32) << 32))
 
 
-BOOL hitag1_get_uid(BYTE *response);
-BOOL hitag1_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag1_select(BYTE *response, BYTE *uid);
-BOOL hitag1_read_page(BYTE *response, BYTE block);
-BOOL hitag1_send_command(BYTE *response, BYTE *command, BOOL reset, BOOL sync, BYTE response_length, BOOL ack);
-void hitag1_binarray_crc(BYTE *crc, BYTE *bin, BYTE length);
-void hitag1_crc(BYTE *crc, BYTE data, BYTE bits);
-BOOL hitag1_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
+unsigned long hexreversetoulong(BYTE *hex);
+unsigned long long hexreversetoulonglong(BYTE *hex);
 
-BOOL hitag2_get_uid(BYTE *response);
-BOOL hitag2_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL hitag2_pwd_auth(BYTE *response, BYTE *pwd);
-BOOL hitag2_read_page(BYTE *response, BYTE block);
-BOOL hitag2_write_page(BYTE block, BYTE *data);
-void hitag2_test_rwd(unsigned int gapmin, unsigned int gapmax, unsigned int zeromin, unsigned int zeromax, unsigned int onemin, unsigned int onemax, BYTE *pass);
-BOOL hitag2_hex_crypt(BYTE *target, BYTE *source);
-void hitag2_binstring_crypt(BYTE *target, BYTE *source);
-void hitag2_binarray_crypt(BYTE *target, BYTE *source, unsigned int length);
-unsigned long hitag2_crypt(unsigned long source, BYTE length);
-unsigned int hitag_ac_to_bin(BYTE *target, BYTE *source, unsigned int length);
-BOOL hitag2_emulate_config_block(BYTE *config, BYTE target_tagtype);
-BOOL hitag2_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
-BOOL hitag2_config_block_show(BYTE *config, BYTE *password, BYTE *key);
-
-void hitag2_pwm_nvm_clear();
-void store_pwm(BYTE *data);
-void hitag2_pwm_display_nrars();

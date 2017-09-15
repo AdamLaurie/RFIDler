@@ -15,7 +15,7 @@
  * o RFIDler-LF Nekkid                                                     *
  *                                                                         *
  *                                                                         *
- * RFIDler is (C) 2013-2015 Aperture Labs Ltd.                             *
+ * RFIDler is (C) 2013-2017 Aperture Labs Ltd.                             *
  *                                                                         *
  * This program is free software; you may redistribute and/or modify it    *
  * under the terms of the GNU General Public License as published by the   *
@@ -128,6 +128,9 @@
  ***************************************************************************/
 
 // Author: Adam Laurie <adam@aperturelabs.com>
+//
+// HITAG2 Cracking additions:
+// Author: Kevin Sheldrake <kev@headhacking.com>
 
 #include "HardwareProfile.h"
 
@@ -149,7 +152,10 @@
 #include "config.h"
 #include "detect.h"
 #include "emulate.h"
+#include "hitag.h"
 #include "hitagcrypto.h"
+#include "hitag2crack.h"
+//#include "hitag2emu.h"
 #include "indala.h"
 #include "iso_7816.h"
 #include "login.h"
@@ -221,6 +227,8 @@ unsigned int DataBuffCount= 0;
 
 BYTE Interface= INTERFACE_API;       // no menu/prompts by default
 BYTE CommsChannel= COMMS_NONE;
+
+BYTE Sniffstore = 0;
 
 const BYTE *OnOff[]= {
     "Off",
@@ -410,7 +418,7 @@ BYTE ProcessIO(void)
 
     //Blink the LEDs according to the comms device status
     BlinkCommsStatus();
-
+    
     if(CommsChannel == COMMS_USB)
     {
         // User Application USB tasks
@@ -872,6 +880,12 @@ void show_usage(char *command)
         "FREQUENCY                                                    Show resonant frequency of coil\r\n",
         "HELP                                                         Show this help\r\n",
         "HEXTOBIN <HEX>                                               Show HEX as BINARY string\r\n",
+        "HITAG2-CRACK <NR/PRN> <AR/SECRET>                            Crack HiTag2 card crypto (SNIFF-PWM first)\r\n",
+        "HITAG2-KEYSTREAM <NR/PRN> <AR/SECRET>                        Retrieve HiTag2 card crypto keystream (SNIFF-PWM first)\r\n",
+        "HITAG2-READER [KEY] [S]                                      Reader mode for crypto authenticated HiTag2 operations - S stores to NVRAM\r\n",
+        "HITAG2-CLEARSTOREDTAGS                                       Clears the HiTag2 tags from NVRAM\r\n",
+        "HITAG2-COUNTSTOREDTAGS                                       Displays the number of HiTag2 tags stored in NVRAM\r\n",
+        "HITAG2-LISTSTOREDTAGS [START] [END]                          Displays the stored tags from START to END\r\n",
         "LOAD                                                         Load config from NVM\r\n",
         "LED <1-6>                                                    Toggle LED\r\n",
         "LEDOFF <0-6>                                                 LED off (0 for ALL)\r\n",
@@ -910,6 +924,7 @@ void show_usage(char *command)
         "SET VTAG <TYPE>                                              Set Virtual TAG TYPE\r\n",
         "SNIFFER                                                      Go into SNIFFER mode (continuously sniff UID)\r\n",
         "SNIFF-PWM [MIN GAP] [MIN PULSE] [MESG GAP]                   Sniff PWM on external clock with READER coil. Values in uS (default 12/0/0).\r\n",
+        "SNIFF-PWM <C|S|L>                                            Sniff PWM (HiTag2 mode) to NVRAM - CLEAR, STORE, LIST\r\n",
         "STOP                                                         Stop any running clocks\r\n",
         "TAGS                                                         Show known TAG TYPES\r\n",
         "TCONFIG                                                      Show TAG's config block\r\n",
@@ -1494,6 +1509,160 @@ BYTE ProcessSerialCommand(char *command)
         printhexasbin(command + 9);
         eod();
     }
+    
+        
+    if (strncmp(command, "HITAG2-CRACK ", 13) == 0)
+    {
+        if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
+            commandok = command_nack("TAG type must be HITAG2!");
+        else
+        {
+            if (hitag2_crack(DataBuff, command + 13))
+            {
+                commandok= command_ack(DATA);
+                UserMessage("%s\r\n", DataBuff);
+                eod();
+            }
+            else
+                commandok= command_nack("read error!");
+        }
+            
+    }
+
+    
+    if (strncmp(command, "HITAG2-KEYSTREAM ", 17) == 0)
+    {
+        if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
+            commandok = command_nack("TAG type must be HITAG2!");
+        else
+        {
+            if (hitag2_keystream(DataBuff, command + 17))
+            {
+                commandok= command_ack(DATA);
+                UserMessage("%s\r\n", DataBuff);
+                eod();
+            }
+            else
+                commandok= command_nack("read error!");
+        }
+            
+    }
+    
+    if (strncmp(command, "HITAG2-READER", 13) == 0)
+    {
+        if (RFIDlerConfig.TagType != TAG_TYPE_HITAG2)
+            commandok = command_nack("TAG type must be HITAG2!");
+        else
+        {
+            // scan for HEX key and use default if not present
+            local_tmp[0]= '\0';
+            local_tmp1[0]= '\0';
+            tmpint= 1; // interactive TRUE
+            if(sscanf(command + 14, "%s %s", local_tmp, local_tmp1) < 2)
+            {
+                if(!strcmp("S", local_tmp))
+                {
+                    strcpy(local_tmp, HITAG2_KEY_DEFAULT);
+                    tmpint= 0;
+                }
+            }
+            if(!strcmp("S", local_tmp1))
+                tmpint= 0;
+            
+            commandok= command_ack(DATA);
+            while(!get_user_abort())
+            {
+                hitag2_reader(DataBuff, local_tmp, (BOOL) tmpint);
+                mLED_Comms_Toggle();
+            }
+            
+            eod();
+            stop_HW_clock();
+        }
+    }
+    
+    if (strncmp(command, "HITAG2-CLEARSTOREDTAGS", 22) == 0)
+    {
+        commandok = command_ack(NO_DATA);
+        hitag2_nvm_clear();
+    }
+    
+    if (strncmp(command, "HITAG2-COUNTSTOREDTAGS", 22) == 0)
+    {
+        commandok = command_ack(DATA);
+        hitag2_nvm_count_tags();
+        eod();
+    }
+    
+    if (strncmp(command, "HITAG2-LISTSTOREDTAGS", 21) == 0)
+    {
+        commandok = command_ack(DATA);
+        
+        if (strlen(command) > 21)
+        {
+            tmpint2= sscanf(command + 21,"%u %u", &tmpint, &tmpint1);
+
+            if (tmpint2 <= 0)
+            {
+                // no tag numbers specified, default to display all tags
+                tmpint = 0;
+                tmpint1 = 0;
+            }
+            else if (tmpint2 == 1)
+            {
+                // only start tag specified, default to display 1 tag
+                tmpint1 = tmpint;
+            }
+            
+        } else
+        {
+            tmpint = 0;
+            tmpint1 = 0;
+        }
+        
+        hitag2_nvm_display_tags(tmpint, tmpint1);
+            
+        eod();
+    }
+    
+    if (strncmp(command, "HITAG2-RNGINIT ", 15) == 0)
+    {
+        if (hitag2crack_rng_init(DataBuff, command + 15))
+        {
+            commandok = command_ack(DATA);
+            UserMessage("%s\r\n", DataBuff);
+            eod();
+        }
+        else
+            commandok= command_nack("read error!");
+
+    }
+    
+    if (strncmp(command, "HITAG2-DECRYPTHEX ", 18) == 0)
+    {
+        if (hitag2crack_decrypt_hex(DataBuff, command + 18))
+        {
+            commandok = command_ack(DATA);
+            UserMessage("%s\r\n", DataBuff);
+            eod();
+        }
+        else
+            commandok= command_nack("read error!");
+
+    }
+    
+    if (strncmp(command, "HITAG2-DECRYPTBIN ", 18) == 0)
+    {
+        if (hitag2crack_decrypt_bin(DataBuff, command + 18))
+        {
+            commandok = command_ack(DATA);
+            UserMessage("%s\r\n", DataBuff);
+            eod();
+        }
+        else
+            commandok= command_nack("read error!");
+
+    }
 
     if (strncmp(command, "LED ", 4) == 0)
     {
@@ -1973,8 +2142,24 @@ BYTE ProcessSerialCommand(char *command)
        SnifferMode= FALSE;
     }
 
-    if (strncmp(command, "SNIFF-PWM", 9) == 0)
+    if (strncmp(command, "SNIFF-PWM C", 11) == 0)
     {
+        hitag2_pwm_nvm_clear();
+        commandok= command_ack(NO_DATA);
+    } else if (strncmp(command, "SNIFF-PWM L", 11) == 0)
+    {
+        hitag2_pwm_display_nrars();
+        commandok= command_ack(NO_DATA);
+        eod();
+    } else if (strncmp(command, "SNIFF-PWM S", 11) == 0)
+    {
+        Sniffstore = 1;
+        sniff_pwm(12, 0, 100, 0);
+        commandok= command_ack(NO_DATA);
+        eod();
+    } else if (strncmp(command, "SNIFF-PWM", 9) == 0)
+    {
+        Sniffstore = 0;
         tmpint= 0;
         tmpint1= 0;
         tmpint2= 0;
@@ -2181,7 +2366,7 @@ BYTE ProcessSerialCommand(char *command)
                 commandok= command_nack("read error!");
         }
     }
-
+    
     // version number is generated by pre-processor macro counting number of commits to git repo
     // VERSION=`git rev-list HEAD --count`
     // hardware revision is defined in

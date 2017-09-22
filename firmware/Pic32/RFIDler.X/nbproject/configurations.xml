@@ -58,6 +58,7 @@
       <itemPath>include/tamagotchi.h</itemPath>
       <itemPath>include/hdx.h</itemPath>
       <itemPath>include/hitag2crack.h</itemPath>
+      <itemPath>include/paxton.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -128,6 +129,7 @@
       <itemPath>src/tamagotchi.c</itemPath>
       <itemPath>src/hdx.c</itemPath>
       <itemPath>src/hitag2crack.c</itemPath>
+      <itemPath>src/paxton.c</itemPath>
     </logicalFolder>
     <logicalFolder name="windows driver"
                    displayName="Windows Driver"

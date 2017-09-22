@@ -157,6 +157,7 @@
 #define T55X7_DEFAULT_CONFIG_BLOCK      "000880E8"      // compat mode, data rate 32, manchester, ST, 7 data blocks
 #define T55X7_RAW_CONFIG_BLOCK          "000880E0"      // compat mode, data rate 32, manchester, 7 data blocks
 #define T55X7_EM_UNIQUE_CONFIG_BLOCK    "00148040"      // emulate em4x02/unique - compat mode, manchester, data rate 64, 2 data blocks
+#define T55X7_EM_PAXTON_CONFIG_BLOCK    "00148040"      // emulate em4x02/paxton - compat mode, manchester, data rate 64, 2 data blocks
 // FDXB requires data inversion and BiPhase 57 is simply BipHase 50 inverted, so we can either do it using the modulation scheme or the inversion flag
 // we've done both below to prove that it works either way, and the modulation value for BiPhase 50 in the Atmel data sheet of binary "10001" (17) is a typo,
 // and it should actually be "10000" (16)

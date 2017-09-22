@@ -184,6 +184,7 @@
 #define HITAG2_FDXB_CONFIG_BLOCK    "00AA4854"      // public-mode b
 #define HITAG2_UNIQUE_CONFIG_BLOCK  "02AA4854"      // public-mode a
 #define HITAG2_EM4X02_CONFIG_BLOCK  "02AA4854"      // public-mode a
+#define HITAG2_PAXTON_CONFIG_BLOCK  "02AA4854"      // public-mode a
 #define HITAG2_MODEC_CONFIG_BLOCK   "04AA4854"      // public-mode c - PCF793X
 
 // config block masks

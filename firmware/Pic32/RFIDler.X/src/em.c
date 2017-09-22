@@ -568,6 +568,7 @@ BOOL em4x05_emulate_config_block(BYTE *config, BYTE target_tagtype)
         case TAG_TYPE_EM4X02:
         case TAG_TYPE_Q5:
         case TAG_TYPE_UNIQUE:
+        case TAG_TYPE_PAXTON:
             memcpy(config, EM4X05_UNIQUE_CONFIG_BLOCK, HEXDIGITS(EM4X05_BLOCKSIZE));
             return TRUE;
 

@@ -226,6 +226,15 @@ BOOL ulongtohex(BYTE *target, unsigned long source)
     return TRUE;
 }
 
+BOOL ulonglongtohex(BYTE *target, unsigned long long source)
+{
+    BYTE tmp[17];
+
+    sprintf(tmp, "%016llX", source);
+    memcpy(target, tmp, 16);
+    return TRUE;
+}
+
 // convert integer to binstring, limited to specified number of LSB
 void inttobinstring(BYTE *target, unsigned int source, unsigned int bits)
 {

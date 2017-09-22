@@ -130,85 +130,83 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 
+#include "HardwareProfile.h"
+#include "ask.h"
+#include "rfidler.h"
+#include "paxton.h"
+#include "em.h"
+#include "util.h"
 
+// support routines for Paxton tags
+// thanks to the proxmark3 project for figuring this out!
 
-#define Q5_SOFT_RESET           "00"        // reset (test mode)
-#define Q5_DIRECT_ACCESS        "10"        // direct read in pwd or non-pwd mode
-#define Q5_WRITE_P0             "10"        // write page 0
-#define Q5_WRITE_P1             "11"        // write page 1
-#define Q5_GET_TRACE_DATA       "11"        // get 64 bits tracebility data
-#define Q5_AOR                  "10"        // Answer On Request (wakeup)
-#define Q5_MODULATION_DEFEAT    "00011"     // tell tag to go quiet
-#define Q5_READ_CONFIG_BLOCK    "100000"    // direct read, no PWD, address 000
+BOOL paxton_get_uid(BYTE *response)
+{ 
+    return ask_raw_get_uid(response);
+}
 
-#define Q5_START_GAP            48          // start gap in FC - range 10 - 50, must be greater than command gap
-#define Q5_WRITE_DELAY          1000        // time needed to complete write operation in FC - 648 in the docs, so round up a bit
+BOOL paxton_hex_to_uid(BYTE *response, BYTE *hex)
+{
+    BYTE tmp[40];
 
-#define Q5_BLOCKSIZE            32          // blocksize in bits
-#define Q5_DATABLOCKS           8           // total number of blocks
-#define Q5_CONFIG_BLOCK_NUM     0           // config block number
-#define Q5_USER_DATA_BLOCK_NUM  1           // 1st user data block
-#define Q5_PW_BLOCK_NUM         7           // password block number
-#define Q5_BLANK_BLOCK          "00000000"
+    if(em4x02_hex_to_uid(response, hex))
+        return paxton_hex_to_hex(response, response);
+    return FALSE;
+}
 
-#define Q5_DEFAULT_PWD          "00000000"  // default password
+// convert null-terminated hex UID (10 digits) to em4x02 encoded hex
+BOOL hex_to_paxton_hex(unsigned char *paxton, unsigned char *hex)
+{
+    if(hex_to_paxton_bin(paxton, hex))
+        return binarraytohex(paxton, paxton, 64);
+    else
+        return FALSE;
+}
 
-// config blocks
-#define Q5_DEFAULT_CONFIG_BLOCK      "E601F004"      // q5 native mode (also em4x02/unique/paxton)
-#define Q5_PWD_CONIG_BLOCK           "E601F404"      // q5 native mode with PWD enabled
-#define Q5_AOR_CONIG_BLOCK           "E601F804"      // q5 native mode with AOR enabled
-#define Q5_PWD_AOR_CONIG_BLOCK       "E601FC04"      // q5 native mode with PWD and AOR enabled
-#define Q5_FDXB_CONFIG_BLOCK         "E600F0E8"      // emulate fdx-b
-#define Q5_HID_26_CONFIG_BLOCK       "E6018056"      // hid 26 bit
-#define Q5_INDALA_64_CONFIG_BLOCK    "E600F014"      // emulate indala 64 bit
-#define Q5_INDALA_224_CONFIG_BLOCK   "E600F01E"      // emulate indala 224 bit
+// convert 64 bit em4x02 encoded hex to paxton 8 hex digit 32 bit UID
+// this is the same as em4x02 but discard 2nd byte and add magic number
+BOOL paxton_hex_to_hex(unsigned char *hex, unsigned char *paxton)
+{
+    unsigned long out;
+    unsigned char tmp[8];
+    
+    // copy first 2 hex digits
+    memcpy(tmp, paxton, 2);
+    // copy last 6 hex digits
+    memcpy(&tmp[2], &paxton[4], 6);
+    out= hextoulong(tmp);
+    out += 0x143e00UL; // add magic number
+    ulongtohex(hex, out);
+    hex[8]= 0x00;
+    return TRUE;
+}
 
-// note that Q5 sends data in LSB order, so everything in the datasheet is effectively reversed
-// what is shown as "bit 32" is actually bit 0
+// convert null-terminated hex UID (8 digits) to paxton encoded 64 bit binary array
+// which is the same as EM4X02 but with source hex arranged in a different order
+// and we are missing the 2nd BYTE value which is assumed to be 00 (or may be ignored?)
+BOOL hex_to_paxton_bin(unsigned char *paxton, unsigned char *hex)
+{
+    unsigned char tmp1[8], tmp2[40], tmp3[11];
+    unsigned long id;
+    
+    if(strlen(hex) > 8)
+        return FALSE;
 
-// config block masks
-#define Q5_MASK_PAGE_SELECT              0b00000000000010000000000000000000
-#define Q5_MASK_FAST_WRITE               0b00000000000001000000000000000000
-#define Q5_MASK_DATA_BIT_RATE            0b00000000000000111111000000000000
-#define Q5_MASK_USE_AOR                  0b00000000000000000000100000000000
-#define Q5_MASK_USE_PWD                  0b00000000000000000000010000000000
-#define Q5_MASK_PSK_CARRIER_FREQ         0b00000000000000000000001100000000
-#define Q5_MASK_INVERSE_DATA             0b00000000000000000000000010000000
-#define Q5_MASK_MODULATION               0b00000000000000000000000001110000
-#define Q5_MASK_MAX_BLOCK                0b00000000000000000000000000001110
-#define Q5_MASK_ST                       0b00000000000000000000000000000001
-
-// config block bit shifts
-#define Q5_SHIFT_PAGE_SELECT            19
-#define Q5_SHIFT_FAST_WRITE             18
-#define Q5_SHIFT_DATA_BIT_RATE          12
-#define Q5_SHIFT_USE_AOR                11
-#define Q5_SHIFT_USE_PWD                10
-#define Q5_SHIFT_PSK_CARRIER_FREQ        8
-#define Q5_SHIFT_INVERSE_DATA            7
-#define Q5_SHIFT_MODULATION              4
-#define Q5_SHIFT_MAX_BLOCK               1
-#define Q5_SHIFT_ST                      0
-
-// Q5 modulation settings
-#define Q5_MOD_MANCHESTER               0
-#define Q5_MOD_PSK1                     1
-#define Q5_MOD_PSK2                     2
-#define Q5_MOD_PSK3                     3
-#define Q5_MOD_FSK1                     4
-#define Q5_MOD_FSK2                     5
-#define Q5_MOD_BIPHASE                  6
-#define Q5_MOD_DIRECT                   7
-
-
-BOOL q5_send_command(BYTE *response, BYTE *command, BYTE length, BOOL reset, BOOL sync, BYTE response_length);
-BOOL q5_get_uid(BYTE *response);
-BOOL q5_hex_to_uid(BYTE *response, BYTE *hex);
-BOOL q5_read_block(BYTE *response, BYTE block);
-BOOL q5_write_block(BYTE block, BYTE *data, BOOL lock, BOOL verify);
-BOOL q5_get_config(BYTE *response);
-BOOL q5_login(BYTE *response, BYTE *pass);
-BOOL q5_rwd_test(BYTE *pattern);
-BOOL q5_config_block_show(BYTE *config, BYTE *password);
-BOOL q5_emulate_config_block(BYTE *config, BYTE target_tagtype);
-BOOL q5_decode_pwm(unsigned int pulses[], unsigned int gaps[], unsigned int count);
+    // pad to 8 hex digits
+    memset(tmp1, '0', 8);
+    memcpy(tmp1 + 8 - strlen(hex), hex, strlen(hex));
+    
+    id= hextoulong(tmp1);
+    id -= 0x143e00UL;
+    memset(tmp3, '0', 10);
+    ulongtohex(&tmp3[2], id);
+    memcpy(tmp3, &tmp3[2], 2);
+    tmp3[2]= '0';
+    tmp3[3]= '0';
+    tmp3[10]= 0x00;
+    
+    hextobinarray(tmp2, tmp3);
+    // encode for em4x02
+    bin_to_em4x02_bin(paxton, tmp2);
+    return TRUE;
+}

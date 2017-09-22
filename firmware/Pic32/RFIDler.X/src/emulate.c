@@ -135,6 +135,7 @@
 #include "rfidler.h"
 #include "emulate.h"
 #include "unique.h"
+#include "paxton.h"
 #include "em.h"
 #include "indala.h"
 #include "ask.h"
@@ -176,6 +177,11 @@ BOOL emulate_tag(unsigned char *UID)
                 return FALSE;
             return send_ask_bin(TmpBuff, RFIDlerConfig.DataBits, RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.Repeat);
 
+        case TAG_TYPE_PAXTON:
+            if(!hex_to_paxton_bin(TmpBuff, UID))
+                return FALSE;
+            return send_ask_bin(TmpBuff, RFIDlerConfig.DataBits, RFIDlerConfig.FrameClock, RFIDlerConfig.DataRate, RFIDlerConfig.Repeat);
+            
         case TAG_TYPE_INDALA_64:
         case TAG_TYPE_INDALA_224:
             // how to generate indala hex from UID is unknown, so for now we will need to be fed RAW HEX

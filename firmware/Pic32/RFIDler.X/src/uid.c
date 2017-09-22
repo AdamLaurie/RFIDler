@@ -139,6 +139,7 @@
 #include "em.h"
 #include "indala.h"
 #include "unique.h"
+#include "paxton.h"
 #include "psk.h"
 #include "hitag.h"
 #include "q5.h"
@@ -199,6 +200,9 @@ BOOL get_tag_uid(BYTE *response)
 
         case TAG_TYPE_UNIQUE:
             return unique_get_uid(response);
+            
+        case TAG_TYPE_PAXTON:
+            return paxton_get_uid(response);
 
         default:
             break;
@@ -265,6 +269,9 @@ BOOL interpret_uid(BYTE *response, BYTE *hex, BYTE tagtype)
 
         case TAG_TYPE_UNIQUE:
             return unique_hex_to_uid(response, hex);
+            
+        case TAG_TYPE_PAXTON:
+            return paxton_hex_to_uid(response, hex);
 
         default:
             break;

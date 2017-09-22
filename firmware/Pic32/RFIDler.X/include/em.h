@@ -207,6 +207,7 @@
 #define EM4X05_WRITE_LOGIN_CONFIG_BLOCK         "0012005F"  // as per default, but with WRITE LOGIN set
 #define EM4X05_READ_WRITE_LOGIN_CONFIG_BLOCK    "0016005F"  // as per default, but with READ & WRITE LOGIN set
 #define EM4X05_UNIQUE_CONFIG_BLOCK              "0001805F"  // EM4X02/Unique - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
+#define EM4X05_PAXTON_CONFIG_BLOCK              "0001805F"  // EM4X02/Paxton - Manchester, RF/64, maxword 6 (64 data bits / 2 words)
 #define EM4X05_FDXB_CONFIG_BLOCK                "0002108F"  // FDX-B ISO-11784/5 - BiPhase ('57 - inverted), Delay ON BP/4, RF/32, maxword 8 (128 data bits / 4 words)
 
 

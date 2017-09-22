@@ -155,6 +155,7 @@ void ulonglongtobinarray(BYTE *target, unsigned long long source, unsigned int b
 void inttobinstring(BYTE *target, unsigned int source, unsigned int bits);
 void ulongtobinstring(BYTE *target, unsigned long source, unsigned int bits);
 BOOL ulongtohex(BYTE *target, unsigned long source);
+BOOL ulonglongtohex(BYTE *target, unsigned long long source);
 unsigned int binarraytoint(BYTE *bin, BYTE length);
 unsigned long long binarraytolonglong(BYTE *bin, BYTE length);
 unsigned long binarraytoulong(BYTE *bin, BYTE length);

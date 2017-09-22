@@ -501,6 +501,7 @@ BOOL t55x7_emulate_config_block(BYTE *config, BYTE target_tagtype)
 
         case TAG_TYPE_EM4X02:
         case TAG_TYPE_UNIQUE:
+        case TAG_TYPE_PAXTON:
             memcpy(config, T55X7_EM_UNIQUE_CONFIG_BLOCK, HEXDIGITS(T55X7_BLOCKSIZE));
             return TRUE;
 

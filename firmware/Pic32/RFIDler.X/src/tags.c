@@ -147,6 +147,7 @@
 #include "tags.h"
 #include "uid.h"
 #include "unique.h"
+#include "paxton.h"
 #include "util.h"
 #include "write.h"
 
@@ -173,6 +174,7 @@ const BYTE *TagTypes[]= {
     "EM4X05",
     "TAMAGOTCHI",
     "HDX",
+    "PAXTON",
     NULL
 };
 
@@ -326,6 +328,9 @@ unsigned int tag_get_databits(BYTE tag)
 
         case TAG_TYPE_UNIQUE:
             return UNIQUE_DATABITS;
+            
+        case TAG_TYPE_PAXTON:
+            return PAXTON_DATABITS;
 
         default:
             return 0;
@@ -423,6 +428,7 @@ BOOL tag_set(BYTE tag)
               
         case TAG_TYPE_EM4X02:
         case TAG_TYPE_UNIQUE:
+        case TAG_TYPE_PAXTON:
             RFIDlerConfig.FrameClock= 800;
             RFIDlerConfig.Manchester= TRUE;
             RFIDlerConfig.Modulation= MOD_MODE_ASK_OOK;
@@ -773,6 +779,11 @@ BOOL tag_uid_to_hex(BYTE *hex, BYTE *uid, BYTE tagtype)
 
         case TAG_TYPE_UNIQUE:
             if(!hex_to_unique_hex(hex, uid))
+                return FALSE;
+            return TRUE;
+            
+        case TAG_TYPE_PAXTON:
+            if(!hex_to_paxton_hex(hex, uid))
                 return FALSE;
             return TRUE;
 

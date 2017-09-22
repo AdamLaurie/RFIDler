@@ -1,12 +1,12 @@
 # RFIDler
 
 
-##Firmware
+## Firmware
 
 The 'firmware' directory contains code for the dev platform(s).
 Currently that is Pic32, but we will add a new section if and when required.
 
-##Hardware
+## Hardware
 
 A fully built RFIDler board can be purchased here: [http://aperturelabs.com/tools.html](http://aperturelabs.com/tools.html)
 

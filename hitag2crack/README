@@ -6,9 +6,12 @@ Author: Kevin Sheldrake <kev@headhacking.com>
 Introduction
 ------------
 
-These tools are implementations of the three attacks detailed in the paper,
+These tools are implementations of the four attacks detailed in the papers,
 Gone In 360 Seconds - Hijacking With HiTag 2 by Roel Verdult, Flavio Garcia
-and Josep Balasch.
+and Josep Balasch, and Lock It And Still Lose It - on the (In)Security of
+Automotive Remote Keyless Entry Systems by Flavio Garcia, David Oswald,
+Timo Kasper and Pierre Pavlides.  The first three attacks come from the first
+paper and the fourth attack comes from the second paper.
 
 Attack 1
 --------
@@ -75,6 +78,17 @@ PRNG output.  By capturing 136 encrypted nonce and challenge response pairs,
 candidates for the first 34 bits of the key can be identified, and for each
 the remaining 14 bits can be brute forced.
 
+Attack 4
+--------
+
+Attack 4 is a fast correlative attack on the key based on a number of captured
+encrypted nonce and challenge response pairs (up to 32, but 16 usually
+sufficient).  It starts by guessing the first 16 bits of the key and scores
+all these guesses against how likely they are to be the correct key, given the
+encrypted nonces and the keystream they should produce.  Each guess is then
+expanded by 1 bit and the process iterates, with only the best guesses taken
+forward to the next iteration.
+
 Usage details
 -------------
 
@@ -125,6 +139,14 @@ RFIDler: SNIFF-PWM L
 RFIDler: UID
 Copy/paste the encrypted nonce and challenge response pairs into a file.
 ./ht2crack3 <tag UID> <nR aR file>
+
+Attack 4 requires the same information as attack 3, but only 16-32 encrypted
+nonce and challenge response pairs are required.
+./ht2crack4 -u <tag UID> -n <nR aR file> [-N <number of nonces to use>]
+   [-t <table size>]
+
+Start with -N 16 and -t 500000.  If the attack fails to find the key, double
+the table size and try again, repeating if it still fails.
 
 Once the key has been recovered using one of these attacks, the RFIDler can
 be configured to operate as a RWD and will capture tags using that key.

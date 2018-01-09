@@ -1035,16 +1035,31 @@ BOOL hitag2_reader(BYTE *response, BYTE *key, BOOL interactive)
 {
     BYTE tmp[9];
     int i;
-        
+    
+    response[0] = '\0';
     // auth to tag
     if (hitag2_crypto_auth(tmp, key))
     {
-        // read tag
-        if(!read_tag(response, 0, 7))
-            return FALSE;
-        else
+        // read tag, one page at a time
+        for (i= 0; i <= 7; ++i)
         {
-            if (interactive)
+            if(!read_tag(tmp, i, i))
+            {
+                // if read fails, it could be because of auth,
+                // so try to reauth
+                if (!hitag2_crypto_auth(tmp, key))
+                {
+                    // if we can't reauth, it's a real failure
+                    return FALSE;
+                }
+                // temp failure (probably due to page protections)
+                strcpy(tmp, "XXXXXXXX");               
+            }
+            // page contents are in tmp
+            strcat(response, tmp);
+        }    
+
+        if (interactive)
             {
                 tmp[8]= '\0';
                 for(i= 0; i <= 7 ; ++i)
@@ -1060,8 +1075,6 @@ BOOL hitag2_reader(BYTE *response, BYTE *key, BOOL interactive)
                 hitag2_nvm_store_tag(response);
             }
             return TRUE;
-        }
-
     }
     else
     {

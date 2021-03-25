@@ -8,7 +8,7 @@ Currently that is Pic32, but we will add a new section if and when required.
 
 ## Hardware
 
-A fully built RFIDler board can be purchased here: [http://aperturelabs.com/tools.html](http://aperturelabs.com/tools.html)
+A fully built RFIDler board can be purchased here: [http://rfidiot.org/#Hardware](http://rfidiot.org/#Hardware)
 
 ### Pic32
 
@@ -68,7 +68,7 @@ https://github.com/ApertureLabsLtd/mphidflash
 
 mphidflash v1.3 has some known bugs where for some ROM binaries programming fails and a verification error is reported.
 	
-If you hit this problem check for a newer release of mphidflash. Pre-compiled executables for all platforms are available [here](https://github.com/ApertureLabsLtd/mphidflash)
+If you hit this problem check for a newer release of mphidflash. Pre-compiled executables for all platforms are available [here](https://github.com/AdamLaurie/mphidflash)
 
 ### Software Build
 
@@ -193,7 +193,7 @@ sudo make install64
 
 Option 2, latest:
 ```shell
-git clone https://github.com/ApertureLabsLtd/mphidflash.git
+git clone https://github.com/AdamLaurie/mphidflash.git
 cd mphidflash
 sudo make install64
 ```

@@ -366,6 +366,7 @@ BOOL tag_set(BYTE tag)
     RFIDlerConfig.Manchester= FALSE;
     RFIDlerConfig.HalfDuplex= FALSE;
     RFIDlerConfig.Invert= FALSE;
+    RFIDlerConfig.Hextobin= FALSE;
     RFIDlerConfig.Modulation= MOD_MODE_NONE;
     RFIDlerConfig.PotLow= 0;
     RFIDlerConfig.PotHigh= 0;

@@ -188,6 +188,7 @@ void showconfig(void)
     UserMessage("\r\n  Manchester:          %s", (BYTE *) OnOff[RFIDlerConfig.Manchester]);
     UserMessage("\r\n  BiPhase:             %s", (BYTE *) OnOff[RFIDlerConfig.BiPhase]);
     UserMessage("\r\n  Invert:              %s", (BYTE *) OnOff[RFIDlerConfig.Invert]);
+    UserMessage("\r\n  Hextobin:            %s", (BYTE *) OnOff[RFIDlerConfig.Hextobin]);
     UserMessageNum("\r\n  Data Rate RF/n:      %d", RFIDlerConfig.DataRate);
     UserMessageNum("\r\n  Data Rate Sub 0:     %d", RFIDlerConfig.DataRateSub0);
     UserMessageNum("\r\n  Data Rate Sub 1:     %d", RFIDlerConfig.DataRateSub1);

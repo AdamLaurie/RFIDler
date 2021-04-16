@@ -132,8 +132,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// BCD hardware revision for usb descriptor (usb_descriptors.c)
-#define RFIDLER_HW_VERSION        0x020
+// BCD hardware/product revision for usb descriptor (usb_descriptors.c)
+// 0x20 - 2.0 first version shipped, 0x21 - 2.1 version with Microsoft OS USB descriptors
+#define RFIDLER_HW_VERSION        0x021
 
 // max sizes in BITS
 #define MAXBLOCKSIZE        512

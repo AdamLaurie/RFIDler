@@ -156,11 +156,11 @@ class RFIDler(object):
         """
         try:
             if self.Debug:
-                print '\r\n>>>', tosend,
-            self.Connection.write(tosend + "\r\n")
+                print('\r\n>>>', tosend,
+            self.Connection.write(tosend + "\r\n"))
         except:
             if self.Debug:
-                print '(fail!)'
+                print('(fail!)')
             return False, "Serial communications failure (send)!"
 
         if self.Debug:
@@ -168,17 +168,17 @@ class RFIDler(object):
         try:
             result = self.Connection.read(1)
             if self.Debug:
-                print '\r\n<<<',
+                print('\r\n<<<'),
             if not result in '.+!?':
                 if self.Debug:
-                    print result, '(fail!)'
+                    print (result, '(fail!)')
                 return False, result
             if self.Debug:
-                print result
+                print(result)
             return True, result
         except:
             if self.Debug:
-                print '(fail!)'
+                print('(fail!)')
             return False, "Serial communications failure (receive)!"
 
     def command(self, tosend):
@@ -208,7 +208,7 @@ class RFIDler(object):
             while 42:
                 item = self.Connection.readline().replace('\r', '').replace('\n', '')
                 if self.Debug:
-                    print '<<<', item
+                    print('<<<', item)
                 if item == '*':
                     return True, data
                 data.append(item)

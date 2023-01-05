@@ -157,7 +157,7 @@ POT_To_Volts = 0.019607843  # 5 / 255
 
 def output(message):
     if not Quiet:
-        print message
+        print(message)
 
 
 def store_data(data,  filename_prefix = "dump"):
@@ -173,7 +173,7 @@ def load_data(fname):
     try:
         with open(fname, "r") as f:
             lines = f.readlines()
-    except Exception, e:
+    except (Exception, e):
         return [False, str(e)]
 
     return [True, lines]
@@ -338,7 +338,7 @@ def plot_data(data):
     pyplot.show()
 
 if len(sys.argv) < 3:
-    print """
+    print("""
  usage: {0} <PORT> <COMMAND> [ARGS] [COMMAND [ARGS] ...]
 
    Commands:
@@ -356,14 +356,14 @@ if len(sys.argv) < 3:
    Commands will be executed sequentially.
    Unrecognised commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
-""".format(*sys.argv)
+""".format(*sys.argv))
     exit(True)
 
 port = sys.argv[1]
 rfidler = RFIDler.RFIDler()
 result, reason = rfidler.connect(port)
 if not result:
-    print 'Warning - could not open serial port:', reason
+    print('Warning - could not open serial port:', reason)
 
 current = 2
 # process each command
@@ -377,7 +377,7 @@ while current < len(sys.argv):
             if sys.argv[current].upper() == 'OFF':
                 rfidler.Debug = False
             else:
-                print 'Unknown option:', sys.argv[current]
+                print('Unknown option:', sys.argv[current])
                 exit(True)
         current += 1
         continue
@@ -386,17 +386,17 @@ while current < len(sys.argv):
         if not os.path.exists('/dev/RFIDlerBL'):
             result, reason = rfidler.command('BL')
             if not result:
-                print 'could not set bootloader mode!'
+                print('could not set bootloader mode!')
                 exit(True)
         rfidler.disconnect()
         time.sleep(1)
         if os.path.exists('/dev/RFIDlerBL'):
-            print 'bootloader mode - flashing...'
+            print('bootloader mode - flashing...')
             os.system('mphidflash -r -w %s' % sys.argv[current])
         else:
-            print 'bootloader not detected!'
+            print('bootloader not detected!')
             exit(True)
-        print 'Waiting for reboot...'
+        print('Waiting for reboot...')
         while 42:
             result, reason = rfidler.connect(port)
             if result:
@@ -405,7 +405,7 @@ while current < len(sys.argv):
                     break
         if command == 'FLASHP':
             time.sleep(1)
-            print 'Load next board'
+            print('Load next board')
             # wait for disconnect
             while 42:
                 try:
@@ -415,7 +415,7 @@ while current < len(sys.argv):
                         break
                 except:
                     break
-            print 'Waiting for board...'
+            print('Waiting for board...')
             # wait for new board in normal or bootloader mode
             while 42:
                 result, reason = rfidler.connect(port)
@@ -464,22 +464,22 @@ while current < len(sys.argv):
     # requires hardware to be placed on test jig
     if command == 'TEST':
         test = 1
-        print 'Testing H/W. Hit <ESC> to end.'
+        print('Testing H/W. Hit <ESC> to end.')
         while 42:
-            print 'waiting for board...'
+            print('waiting for board...')
             while 42:
                 rfidler.disconnect()
                 result, reason = rfidler.connect(port)
                 if result:
                     break
                 if os.path.exists('/dev/RFIDlerBL'):
-                    print 'bootloader mode - flashing...'
+                    print('bootloader mode - flashing...')
                     os.system(
                         'mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
 
             os.system('clear')
             test_result = 'Pass'
-            print 'Starting test', test
+            print('Starting test', test)
             for x in 'PING', \
                      'DEBUGOFF 0', \
                      'DEBUGON 4', \
@@ -487,19 +487,19 @@ while current < len(sys.argv):
                      'DEBUGON 3', 'SET TAG INDALA64', 'UID', 'DEBUGOFF 3', \
                      'TEST-WIEGAND', 'TEST-SC', 'TEST-SD', \
                      'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
-                print '  Test %s - ' % x,
-                sys.stdout.flush()
+                print('  Test %s - ' % x,
+                sys.stdout.flush())
                 for z in range(10):
                     result, data = rfidler.command(x)
                     if result:
                         break
-                print result, data
+                print(result, data)
                 if not result:
                     test_result = 'Fail!'
             # now wait for board to change
             os.system('figlet ' + test_result)
             test += 1
-            print 'load next board'
+            print('load next board')
             while 42:
                 try:
                     result, data = rfidler.command('PING')
@@ -540,7 +540,7 @@ while current < len(sys.argv):
     result, data = rfidler.command(command)
     if result:
         for line in data:
-            print line
+            print(line)
     else:
         output('Failed: ' + data)
     continue

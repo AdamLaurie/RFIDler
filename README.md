@@ -62,7 +62,7 @@ For convenience, a copy of the bootloader hex and an MPLAB hex load project is p
 
 The Bootloader client, mphidflash, runs on Linux/Mac/Windows and transmits & verifies the new firmware.
 
-https://github.com/ApertureLabsLtd/mphidflash
+https://github.com/AdamLaurie/mphidflash
 
 #### Notes
 
@@ -183,7 +183,7 @@ The device will be programmed and will then reboot. `dmesg` should show:
 ## Install mphidflash from source
 Option 1, v1.6:
 ```shell
-curl https://github.com/ApertureLabsLtd/mphidflash/blob/master/dist/mphidflash-1.6-src.tar.gz > mphidflash1-6.tar.gz
+curl https://github.com/AdamLaurie/mphidflash/blob/master/dist/mphidflash-1.6-src.tar.gz > mphidflash1-6.tar.gz
 mkdir mphidflash1-6
 tar -zxvf mphidflash1-6.tar.gz -C mphidflash1-6
 cd mphidflash1-6

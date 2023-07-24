@@ -198,25 +198,32 @@ BOOL t55x7_get_uid(BYTE *response)
 
 BOOL t55x7_read_block(BYTE *response, BYTE block)
 {
-    BYTE tmp[39], retry, reset= FALSE;
+    BYTE tmp[39], p, retry, reset= FALSE;
 
     if(block > T55X7_DATABLOCKS - 1)
         return FALSE;
 
-    // create 6 or 38 bit command block: Q5_DIRECT_ACCESS + PWD_Mode + [PWD] + 3 bits address
-    memset(tmp, '\0', 39);
+    // create 6 or 38 bit command block: T55X7_DIRECT_ACCESS + [PWD] + single '0' + 3 bits address
+    memset(tmp, '\0', sizeof(tmp));
+
+    // command
     memcpy(tmp, T55X7_DIRECT_ACCESS, 2);
+    p = 2;
+
+    // password
     if(PWD_Mode)
     {
-        tmp[2]= '1';
-        hextobinstring(tmp + 3, Password);
-        inttobinstring(tmp + 34, (unsigned int) block, 3);
+        hextobinstring(tmp + p, Password);
+        p += 32;
     }
-    else
-    {
-        tmp[2]= '0';
-        inttobinstring(tmp + 3, (unsigned int) block, 3);
-    }
+
+    // single '0'
+    tmp[p]= '0';
+    ++p;
+
+    // address
+    inttobinstring(tmp + p, (unsigned int) block, 3);
+    p += 3;
 
     retry= RFIDlerConfig.Repeat;
     while(retry--)

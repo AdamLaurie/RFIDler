@@ -134,15 +134,25 @@
 
 """
 
+# pylint: disable=line-too-long,invalid-name
+
+# serial needs to be pyserial
+# https://stackoverflow.com/questions/64383756/has-python-package-serial-been-renamed-to-pyserial
+from typing import Union, Tuple
 import serial
+import serial.tools.list_ports
 
 
-class RFIDler(object):
+class RFIDler():
+    # pylint: disable=broad-exception-caught
+    """Class for communicating with RFIDler hardware"""
+
     # globals
     Connection = None
     Debug = False
+    used_port = None
 
-    def send_command(self, tosend):
+    def send_command(self, tosend: str) -> Tuple[bool, str]:
         """
         low level send a command
         internal use only - external code should call 'command()'
@@ -155,33 +165,39 @@ class RFIDler(object):
             '?' - command not recognised
         """
         try:
+            cmd_str = f"{tosend}\r\n".encode('ascii')
             if self.Debug:
-                print '\r\n>>>', tosend,
-            self.Connection.write(tosend + "\r\n")
-        except:
-            if self.Debug:
-                print '(fail!)'
+                print(f'\r\n>>> {cmd_str}', end='')
+
+            self.Connection.write(cmd_str)
+        except serial.serialutil.SerialException as _e:
+            print(f"SerialException: {_e}")
+            return False, f"Send SerialException {_e}"
+        except Exception as _e:
+            print(f"Exception: Send: '{_e}'")
             return False, "Serial communications failure (send)!"
 
         if self.Debug:
-            print
+            print("")
         try:
-            result = self.Connection.read(1)
+            result = self.Connection.read(1).decode('ascii')
             if self.Debug:
-                print '\r\n<<<',
-            if not result in '.+!?':
+                print('\r\n<<<', end='')
+            if result not in '.+!?':
                 if self.Debug:
-                    print result, '(fail!)'
+                    print(result, '(fail!)')
                 return False, result
             if self.Debug:
-                print result
+                print(result)
             return True, result
-        except:
-            if self.Debug:
-                print '(fail!)'
+        except serial.serialutil.SerialException as _e:
+            print(f"SerialException: {_e}")
+            return False, f"Read SerialException {_e}"
+        except Exception as _e:  # pylint: disable=broad-exception-caught
+            print(f"Exception: Read: {_e}")
             return False, "Serial communications failure (receive)!"
 
-    def command(self, tosend):
+    def command(self, tosend: str) -> Tuple[bool, str]:
         """
         send command
         args: command line to send
@@ -197,7 +213,7 @@ class RFIDler(object):
             return False, "Command not recognised!"
         # if '!', command failed
         if data == '!':
-            data = self.Connection.readline().replace('\r', '').replace('\n', '')
+            data = self.Connection.readline().decode('ascii').rstrip('\r\n')
             return False, data
         # if '.', we're done
         if data == '.':
@@ -206,25 +222,43 @@ class RFIDler(object):
         if data == '+':
             data = []
             while 42:
-                item = self.Connection.readline().replace('\r', '').replace('\n', '')
+                item = self.Connection.readline()
+                item = item.decode('ascii').rstrip('\r\n')
+
                 if self.Debug:
-                    print '<<<', item
+                    print('<<<', item)
                 if item == '*':
                     return True, data
                 data.append(item)
 
-    def connect(self, port="/dev/RFIDler", baud=115200, timeout=1):
+        # possible return / fall through that should never happen
+        return False, ''
+
+    # port="/dev/RFIDler"
+    def connect(self, port: str = None, baud: int = 115200, timeout: int = 1) -> Tuple[bool, str]:
         """
         open a serial connection to RFIDler and switch to API mode
         args: port="/dev/RFIDler", baud= 115200, timeout= 1
         return: True/False, reason for failure
         """
+        if port is None:
+            port = self._find_port()
+
+        if port is None:
+            return False, "Can't find port"
+
+        print(f"Using: {port}")
         try:
             self.Connection = serial.Serial(port, baud, timeout=timeout)
             self.Connection.flushInput()
             self.Connection.flushOutput()
-        except:
-            return False, "Can't open serial port"
+        except serial.serialutil.SerialException as _e:
+            print(f"SerialException: {_e}")
+            return False, f"Can't open serial port: {_e}"
+        except Exception as _e:
+            return False, f"Exception Error: {_e}"
+        # Save for later if needed elsewhere
+        self.used_port = port
         # make sure we're in API mode - send it twice as RFIDler's serial buffer may already have some crap in it
         self.command("API")
         while self.Connection.readline():
@@ -233,12 +267,30 @@ class RFIDler(object):
             return False, "Can't switch to API mode"
         return True, ""
 
-    def disconnect(self):
+    # COM4: USB Serial Device (COM4) [USB VID:PID=0483:5740 SER=FLIP_UNYANA LOCATION=1-3:x.0]
+    # /dev/cu.usbmodemflip_Unyana1: Flipper Unyana [USB VID:PID=0483:5740 SER=flip_Unyana LOCATION=20-2]
+    def _find_port(self) -> Union[str, None]:
+        """find serial device"""
+
+        if self.Debug:
+            print("find serial device")
+        ports = serial.tools.list_ports.comports()
+        for p in ports:
+            if self.Debug:
+                print(f"{p.name}: {p.description} [{p.hwid}]")
+
+            if p.description.startswith("RFIDler") or (p.product and p.product.startswith("RFIDler")):
+                return p.device
+
+        return None
+
+    # pylint: disable=bare-except
+    def disconnect(self) -> bool:
         """
         close serial connection to RFIDler
         """
         try:
             self.Connection.close()
-        except:
+        except Exception as _e:
             pass
         return True

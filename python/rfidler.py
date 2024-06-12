@@ -144,11 +144,15 @@ import os
 import time
 from typing import Tuple
 import xml.etree.ElementTree as ET
-import collections
+from collections import Counter
 from matplotlib import pyplot
-import numpy
+from numpy import correlate
 import RFIDler
 
+# try:
+#     from matplotlib import pyplot
+# except ImportError as e:
+#     pyplot=None
 
 # global flags
 Quiet = False
@@ -160,6 +164,7 @@ POT_To_Volts = 0.019607843  # 5 / 255
 
 # should this take command name args for more detailed help???
 def print_help() -> None:
+    """ Print help test """
     print(f"""
  usage: {sys.argv[0]} [PORT] <COMMAND> [ARGS] [COMMAND [ARGS] ...]
 
@@ -231,6 +236,7 @@ def run_test() -> None:
 
 
 def flash_board(cmd: str, cmd_arg: str) -> None:
+    # pylint: disable=too-many-branches
     if cmd in ['FLASH', 'FLASHP']:
         if not os.path.exists('/dev/RFIDlerBL'):
             f_result, _reason = rfidler.command('BL')
@@ -284,6 +290,7 @@ def output(message: str) -> None:
 
 
 def store_data(dat, filename_prefix="dump") -> None:
+    """ Write data to file """
     root = ET.fromstring(''.join(dat))
     # wrap it in an ElementTree instance, and save as XML
     tree = ET.ElementTree(root)
@@ -294,7 +301,8 @@ def store_data(dat, filename_prefix="dump") -> None:
 
 
 def load_data(fname: str) -> Tuple[bool, list]:
-    try:
+    """ Read data to file """
+    try:    # ET.ElementTree write in "utf-8" format by default
         with open(fname, "r", encoding="utf-8") as f:
             lines = f.readlines()
     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -312,8 +320,8 @@ def autocorr(data) -> Tuple[int, int]:
     x1 = 400
     x2 = 1000
 
-    result1 = numpy.correlate(data, data[:x1], mode='full')
-    result2 = numpy.correlate(data, data[:x2], mode='full')
+    result1 = correlate(data, data[:x1], mode='full')
+    result2 = correlate(data, data[:x2], mode='full')
     print(len(result1))
 
     print(len(result2))
@@ -345,17 +353,15 @@ def plot_data(data) -> None:
     tag = xml.find('Tag')
     pots = xml.find('Pots')
 
+    title = tag.find('Tag_Type')
+    pyplot.title('RFIDler - ' + title.find('Data').text)
+    print(dir(fig))
+
     # raw coil data
     raw = samples.find('Coil_Data')
-    # print("type raw", type(raw))
-    # print("RAW", raw)
     data = raw.find('Data')
-    # print("type data", type(data))
-    # print("data", data[:100])
     out = data.text.replace(' ', '')
-    # print("out", out[:100])
     out = list(bytes.fromhex(out))
-    # out = map(ord, out.decode("hex"))
     out[:] = [x * ADC_To_Volts for x in out]
     r = range(len(out))
     ax2.plot(r, out, color='b', label="Raw Data")
@@ -371,19 +377,6 @@ def plot_data(data) -> None:
     count = 0
     prev = out[0]
     bitcounts = []
-
-#    for i in range(len(out)):
-#        if out[i] != prev:
-#            prev = out[i]
-#            bitcounts.append(count)
-#            count = 1
-#        else:
-#            count = count +1
-#
-#        if out[i]:
-#            out[i] = 258
-#        else:
-#            out[i] = 4
 
     # convert to value that will show on scale
     # for pylint consider-using-enumerate
@@ -405,7 +398,7 @@ def plot_data(data) -> None:
 
     #  C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
     print("Most common bit periods:")
-    print("\n".join(["%d : %d" % kv for kv in collections.Counter(bitcounts).most_common(10)]))
+    print("\n".join(["%d : %d" % kv for kv in Counter(bitcounts).most_common(10)]))
 
     #   Not  yet finished
     ax_corr2 = ax_corr.twinx()
@@ -415,7 +408,9 @@ def plot_data(data) -> None:
     # x_data = x_data+x_data+x_data+x_data
     # Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
     (autoc_1, autoc_2) = autocorr(out)
-    ax_corr.plot(range(len(autoc_1)), autoc_1, range(len(autoc_1)), "-", color='b', label="Autocorrelation (full)")
+    ax_corr.title.set_text("Autocorrelation")
+    ax_corr.plot(range(len(autoc_1)), autoc_1, range(len(autoc_1)), "-", color='m', label="Autocorrelation (full)")
+    ax_corr.legend(loc=1)  # bbox_to_anchor=(1.04, 1))
     ax_corr2.plot(range(len(autoc_2)), autoc_2, range(len(autoc_2)), "-", color='g', label="Autocorrelation (500 samples)")
 
     ax1.plot(r, out, '-', color='g', label='Reader Logic')
@@ -434,9 +429,7 @@ def plot_data(data) -> None:
     raw = samples.find('Bit_Period')
     data = raw.find('Data')
     out = data.text.replace(' ', '')
-    # out = map(ord, out.decode("hex"))
-    bb = bytes.fromhex(out)
-    out = list(bb)
+    out = list(bytes.fromhex(out))
 
     # show bit period as single vertical stripe
     prev = out[0]
@@ -481,7 +474,8 @@ def plot_data(data) -> None:
             break
     legend = tag.find('Data_Rate')
     data = legend.find('Data').text
-    ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs', color='r', alpha=0.5, rotation=270,
+    # Do we want this Rotated (Can't read it)
+    ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs', color='r', alpha=0.5,  # rotation=270,
              ha='center', va='top')
 
     # pot settings
@@ -501,9 +495,9 @@ def plot_data(data) -> None:
     # done - label and show graph
     # ADC scale needs to match volts (5v / 3.3v)
     ax1.set_ylim(-5, 256 * 1.515151515)
-    title = tag.find('Tag_Type')
+    # title = tag.find('Tag_Type')
     pyplot.xlim(0, len(r))
-    pyplot.title('RFIDler - ' + title.find('Data').text)
+    # pyplot.title('RFIDler - ' + title.find('Data').text)
     ax1.set_ylabel('Signal Strength (ADC)')
     ax1.set_xlabel('Sample Number')
     ax1.legend(loc=2)
@@ -512,11 +506,16 @@ def plot_data(data) -> None:
     # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
     # we can't see token samples above 3.3v
     ax2.set_ylim(0, 5.0)
-    ax2.set_ylabel('Signal Strength (Volts)', rotation=270)
+    # use "labelpad" so it moves off tic marks on right
+    ax2.set_ylabel('Signal Strength (Volts)', rotation=270, labelpad=8.0)
     ax2.legend(loc=1)
+
+    pyplot.subplots_adjust(hspace=0.5)
+
     pyplot.show()
 
 
+# part arg is now optional
 if __name__ == '__main__':
 
     port = None
@@ -529,9 +528,12 @@ if __name__ == '__main__':
 
     rfidler = RFIDler.RFIDler()
 
+    # if there is more then 1 arg AND 1st arg is a path
+    # assume it is a path to port
     if ac > 2 and av[0][0] == '/':
         port = av.pop(0)
 
+    # if port is None code will scan for the correct port
     result, reason = rfidler.connect(port)
     if not result:
         print(f'Warning - could not open serial port: {port}')
@@ -543,7 +545,7 @@ if __name__ == '__main__':
         command = av.pop(0)
         command_option = None
         if rfidler.Debug:
-            print(f"COMMAND is {command}")
+            print(f"COMMAND is '{command}'")
 
         if command.upper() == 'DEBUG':
             if av:
@@ -557,6 +559,8 @@ if __name__ == '__main__':
                     sys.exit(True)
             continue
 
+        # HELP gets you the python help, "HELP COMMANDS" or "HELP RFIDLER"
+        # will get the RFIDler board help info
         if command.upper() in ['HELP', 'USAGE']:
             if av:
                 command_option = av.pop(0).upper()
@@ -605,7 +609,12 @@ if __name__ == '__main__':
 
             if result:
                 if command in ['PLOT', 'PLOTN', 'LOAD']:
-                    plot_data(rdata)
+                    try:
+                        plot_data(rdata)
+                    except KeyboardInterrupt as _e:
+                        print("KeyboardInterrupt: exiting.....")
+                        continue
+
                 elif command in ['STORE']:
                     if av:
                         command_option = av.pop(0)

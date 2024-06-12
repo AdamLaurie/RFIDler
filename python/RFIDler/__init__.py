@@ -234,18 +234,18 @@ class RFIDler():
         # possible return / fall through that should never happen
         return False, ''
 
-    # port="/dev/RFIDler"
     def connect(self, port: str = None, baud: int = 115200, timeout: int = 1) -> Tuple[bool, str]:
         """
         open a serial connection to RFIDler and switch to API mode
-        args: port="/dev/RFIDler", baud= 115200, timeout= 1
+        args: port =None, baud= 115200, timeout= 1
+        if port is None, code will scan for the correct port
         return: True/False, reason for failure
         """
         if port is None:
             port = self._find_port()
 
         if port is None:
-            return False, "Can't find port"
+            return False, "Unable to find correct port"
 
         print(f"Using: {port}")
         try:

@@ -149,10 +149,16 @@ from matplotlib import pyplot
 from numpy import correlate
 import RFIDler
 
+# if we want Partial functionality with missing libraries
+#
 # try:
 #     from matplotlib import pyplot
 # except ImportError as e:
 #     pyplot=None
+#
+# # later....
+# if not pyplot
+#    print PLot command not supported without 'matplotlib" lib
 
 # global flags
 Quiet = False
@@ -355,7 +361,7 @@ def plot_data(data) -> None:
 
     title = tag.find('Tag_Type')
     pyplot.title('RFIDler - ' + title.find('Data').text)
-    print(dir(fig))
+    # $ print(dir(fig))
 
     # raw coil data
     raw = samples.find('Coil_Data')
@@ -410,8 +416,9 @@ def plot_data(data) -> None:
     (autoc_1, autoc_2) = autocorr(out)
     ax_corr.title.set_text("Autocorrelation")
     ax_corr.plot(range(len(autoc_1)), autoc_1, range(len(autoc_1)), "-", color='m', label="Autocorrelation (full)")
-    ax_corr.legend(loc=1)  # bbox_to_anchor=(1.04, 1))
     ax_corr2.plot(range(len(autoc_2)), autoc_2, range(len(autoc_2)), "-", color='g', label="Autocorrelation (500 samples)")
+    leg_corr = ax_corr.legend(loc=1)  # bbox_to_anchor=(1.04, 1))
+    leg_corr.set_draggable(state=True)
 
     ax1.plot(r, out, '-', color='g', label='Reader Logic')
     # show compressed version
@@ -500,7 +507,7 @@ def plot_data(data) -> None:
     # pyplot.title('RFIDler - ' + title.find('Data').text)
     ax1.set_ylabel('Signal Strength (ADC)')
     ax1.set_xlabel('Sample Number')
-    ax1.legend(loc=2)
+    leg_ax1 = ax1.legend(loc=2)
     fig.canvas.manager.set_window_title('RFIDler plot')
     # volts scale up to 5.0v as that is max pot setting
     # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
@@ -508,7 +515,10 @@ def plot_data(data) -> None:
     ax2.set_ylim(0, 5.0)
     # use "labelpad" so it moves off tic marks on right
     ax2.set_ylabel('Signal Strength (Volts)', rotation=270, labelpad=8.0)
-    ax2.legend(loc=1)
+    leg_ax2 = ax2.legend(loc=1)
+
+    leg_ax1.set_draggable(state=True)
+    leg_ax2.set_draggable(state=True)
 
     pyplot.subplots_adjust(hspace=0.5)
 

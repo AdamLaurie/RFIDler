@@ -135,7 +135,7 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 """
-# pylint: disable=line-too-long
+# p ylint: disable=line-too-long
 # pylint: disable=invalid-name, missing-function-docstring
 
 import sys
@@ -162,6 +162,7 @@ import RFIDler
 
 # global flags
 Quiet = False
+Verbose = False
 
 # global constants
 ADC_To_Volts = 0.012890625  # 3.3 / 256
@@ -194,13 +195,18 @@ def print_help() -> None:
 
 
 def run_test() -> None:
+    """
+        perform hardware tests for manufacturing assurance
+        requires hardware to be placed on test jig
+    """
+    # pylint: disable=line-too-long
     test = 1
     print('Testing H/W. Hit <ESC> to end.')
     while 42:
         print('waiting for board...')
         while 42:
             rfidler.disconnect()
-            t_result, _ = rfidler.connect(port)
+            t_result, _ = rfidler.connect(rfidler.used_port)
             if t_result:
                 break
             if os.path.exists('/dev/RFIDlerBL'):
@@ -242,13 +248,23 @@ def run_test() -> None:
 
 
 def flash_board(cmd: str, cmd_arg: str) -> None:
+    """
+    reload firmware
+    uses "mphidflash" command
+    """
     # pylint: disable=too-many-branches
     if cmd in ['FLASH', 'FLASHP']:
+
+        if not os.path.exists(cmd_arg):
+            print(f'could file/open code file: {cmd_arg}')
+            sys.exit(True)
+
         if not os.path.exists('/dev/RFIDlerBL'):
             f_result, _reason = rfidler.command('BL')
             if not result:
                 print('could not set bootloader mode!')
                 sys.exit(True)
+
         rfidler.disconnect()
         time.sleep(1)
         if os.path.exists('/dev/RFIDlerBL'):
@@ -265,6 +281,7 @@ def flash_board(cmd: str, cmd_arg: str) -> None:
                 f_result, _rdata = rfidler.command('PING')
                 if f_result:
                     break
+
         if cmd == 'FLASHP':
             time.sleep(1)
             print('Load next board')
@@ -291,6 +308,7 @@ def flash_board(cmd: str, cmd_arg: str) -> None:
 
 
 def output(message: str) -> None:
+    """ optionally print message """
     if not Quiet:
         print(message)
 
@@ -322,16 +340,17 @@ def autocorr(data) -> Tuple[int, int]:
     See
     http://stackoverflow.com/questions/643699/how-can-i-use-numpy-correlate-to-do-autocorrelation
     """
-    # ptlint: disable=redefined-outer-name
     x1 = 400
     x2 = 1000
 
     result1 = correlate(data, data[:x1], mode='full')
     result2 = correlate(data, data[:x2], mode='full')
-    print(len(result1))
 
-    print(len(result2))
-    print(len(data))
+    if Verbose:
+        print(len(result1))
+        print(len(result2))
+        print(len(data))
+
     # return (result1, result2)
     return (result1[x1 - 1:], result2[x2 - 1:])
 
@@ -343,8 +362,7 @@ def plot_data(data) -> None:
     """
         process data for pyplot
     """
-    # pylint: disable=too-many-statements, too-many-branches, too-many-locals
-    # pylint: disable=unsubscriptable-object, unsupported-assignment-operation
+    # pylint: disable=too-many-statements, too-many-branches, too-many-locals, line-too-long
 
     # create graphic objects
     # fig, ax1 = pyplot.subplots()
@@ -361,7 +379,6 @@ def plot_data(data) -> None:
 
     title = tag.find('Tag_Type')
     pyplot.title('RFIDler - ' + title.find('Data').text)
-    # $ print(dir(fig))
 
     # raw coil data
     raw = samples.find('Coil_Data')
@@ -399,12 +416,13 @@ def plot_data(data) -> None:
         else:
             out[i] = 4
 
-    print("Bit periods")
-    print(bitcounts)
+    if Verbose:
+        print("Bit periods")
+        print(bitcounts)
 
-    #  C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
-    print("Most common bit periods:")
-    print("\n".join(["%d : %d" % kv for kv in Counter(bitcounts).most_common(10)]))
+        #  C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
+        print("Most common bit periods:")
+        print("\n".join(["%d : %d" % kv for kv in Counter(bitcounts).most_common(10)]))  # pylint: disable=consider-using-f-string
 
     #   Not  yet finished
     ax_corr2 = ax_corr.twinx()
@@ -421,13 +439,21 @@ def plot_data(data) -> None:
     leg_corr.set_draggable(state=True)
 
     ax1.plot(r, out, '-', color='g', label='Reader Logic')
-    # show compressed version
 
-    for i in range(len(out)):  # pylint: disable=consider-using-enumerate
-        if out[i] == 258:
+    # show compressed version
+#     for i in range(len(out)):  # pylint: disable=consider-using-enumerate
+#         if out[i] == 258:
+#             out[i] = 320
+#         else:
+#             out[i] = 300
+
+    # show compressed version
+    for i, out_dat in enumerate(out):
+        if out_dat == 258:
             out[i] = 320
         else:
             out[i] = 300
+
     ax1.plot(r, out, '-', color='g')
 
     # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
@@ -444,19 +470,6 @@ def plot_data(data) -> None:
     fill1 = 0
     toggle = True
 
-    for i, out_dat in enumerate(out):
-        if out_dat != prev:
-            prev = out_dat
-            if fill1:
-                fill = fill1
-                fill1 = i
-            else:
-                fill1 = i
-            # fill every other stripe
-            if toggle:
-                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
-            toggle = not toggle
-
 #    for i in range(len(out)):
 #        if out[i] != prev:
 #            prev = out[i]
@@ -469,6 +482,19 @@ def plot_data(data) -> None:
 #            if toggle:
 #                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
 #            toggle = not toggle
+
+    for i, out_dat in enumerate(out):
+        if out_dat != prev:
+            prev = out_dat
+            if fill1:
+                fill = fill1
+                fill1 = i
+            else:
+                fill1 = i
+            # fill every other stripe
+            if toggle:
+                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
+            toggle = not toggle
 
 #    # find first stripe and add legend
 #    for i in range(len(out)):
@@ -517,10 +543,17 @@ def plot_data(data) -> None:
     ax2.set_ylabel('Signal Strength (Volts)', rotation=270, labelpad=8.0)
     leg_ax2 = ax2.legend(loc=1)
 
+    # make legend moveable
+    # https://matplotlib.org/stable/api/legend_api.html#matplotlib.legend.Legend.set_draggable
     leg_ax1.set_draggable(state=True)
     leg_ax2.set_draggable(state=True)
 
-    pyplot.subplots_adjust(hspace=0.5)
+    # tight_layout does subplots_adjust automatically
+    # pyplot.subplots_adjust(hspace=0.5)
+
+    # https://matplotlib.org/stable/users/explain/axes/tight_layout_guide.html
+    # https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.tight_layout.html
+    pyplot.tight_layout()
 
     pyplot.show()
 
@@ -543,7 +576,7 @@ if __name__ == '__main__':
     if ac > 2 and av[0][0] == '/':
         port = av.pop(0)
 
-    # if port is None code will scan for the correct port
+    # if port is None, connect() will scan for the correct port
     result, reason = rfidler.connect(port)
     if not result:
         print(f'Warning - could not open serial port: {port}')
@@ -553,17 +586,23 @@ if __name__ == '__main__':
     # process each command
     while av:
         command = av.pop(0)
+        command_up = command.upper()
         command_option = None
-        if rfidler.Debug:
+
+        if rfidler.Debug or Verbose:
             print(f"COMMAND is '{command}'")
 
-        if command.upper() == 'DEBUG':
+        if command_up == 'VERBOSE':
+            Verbose = True
+            continue
+
+        if command_up == 'DEBUG':
             if av:
                 command_option = av.pop(0).upper()
                 if command_option == 'ON':
-                    rfidler.Debug = True
+                    rfidler.Debug = Verbose = True
                 elif command_option == 'OFF':
-                    rfidler.Debug = False
+                    rfidler.Debug = Verbose = False
                 else:
                     print(f'Unknown option: {command_option}')
                     sys.exit(True)
@@ -571,7 +610,7 @@ if __name__ == '__main__':
 
         # HELP gets you the python help, "HELP COMMANDS" or "HELP RFIDLER"
         # will get the RFIDler board help info
-        if command.upper() in ['HELP', 'USAGE']:
+        if command_up in ['HELP', 'USAGE']:
             if av:
                 command_option = av.pop(0).upper()
             if command_option in ['COMMANDS', 'RFIDLER']:
@@ -585,21 +624,21 @@ if __name__ == '__main__':
 
             continue
 
-        if command.upper() in ['FLASH', 'FLASHP']:
+        if command_up in ['FLASH', 'FLASHP']:
             if ac:
                 command_option = av.pop(0)
-                flash_board(command.upper(), command_option)
+                flash_board(command_up, command_option)
             else:
                 print(f"{command} missing argument")
+                sys.exit(1)
 
             continue
 
-        if command.upper() == 'XKCD':
+        if command_up == 'XKCD':
             pyplot.xkcd()
             continue
 
-        if command.upper() in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
-            command = command.upper()
+        if command_up in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
 
             if av:
                 command_option = av.pop(0)
@@ -607,25 +646,25 @@ if __name__ == '__main__':
                 print(f"command:{command} option missing")
                 sys.exit(1)
 
-            if command in ['PLOT', 'STORE']:
+            if command_up in ['PLOT', 'STORE']:
                 result, rdata = rfidler.command(f'ANALOGUE {command_option}')
-            elif command in ['PLOTN', 'STOREN']:
+            elif command_up in ['PLOTN', 'STOREN']:
                 result, rdata = rfidler.command(f'ANALOGUEN {command_option}')
-            elif command in ['LOAD']:
+            elif command_up in ['LOAD']:
                 result, rdata = load_data(command_option)
             else:
                 print("Command Parse Error: This should never happen")
                 sys.exit(1)
 
             if result:
-                if command in ['PLOT', 'PLOTN', 'LOAD']:
+                if command_up in ['PLOT', 'PLOTN', 'LOAD']:
                     try:
                         plot_data(rdata)
                     except KeyboardInterrupt as _e:
                         print("KeyboardInterrupt: exiting.....")
                         continue
 
-                elif command in ['STORE']:
+                elif command_up in ['STORE']:
                     if av:
                         command_option = av.pop(0)
                     else:
@@ -640,7 +679,7 @@ if __name__ == '__main__':
                 output('Failed: ' + rdata)
             continue
 
-        if command == 'PROMPT':
+        if command_up == 'PROMPT':
             if av:
                 command_option = av.pop(0)
             else:
@@ -650,14 +689,14 @@ if __name__ == '__main__':
 
         # perform hardware tests for manufacturing assurance
         # requires hardware to be placed on test jig
-        if command == 'TEST':
+        if command_up == 'TEST':
             try:
                 run_test()
             except KeyboardInterrupt as _e:
                 print("KeyboardInterrupt: exiting.....")
                 continue
 
-        if command == 'SLEEP':
+        if command_up == 'SLEEP':
             if av:
                 command_option = float(av.pop(0))
             else:
@@ -668,23 +707,24 @@ if __name__ == '__main__':
             time.sleep(command_option)
             continue
 
-        if command == 'TERMINAL':
+        if command_up == 'TERMINAL':
             while 42:
-                while rfidler.Connection.inWaiting():
-                    sys.stdout.write(rfidler.Connection.readline(1))
+                while rfidler.connection.inWaiting():
+                    sys.stdout.write(rfidler.connection.readline(1))
                     sys.stdout.flush()
                 # send typed characters
                 while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     x = sys.stdin.read(1)
-                    rfidler.Connection.write(x)
+                    rfidler.connection.write(x)
                     # read back echo
-                    x = rfidler.Connection.read(1)
+                    x = rfidler.connection.read(1)
                     sys.stdout.write(x)
                     sys.stdout.flush()
 
         # set quiet flag so we only see responses, not sent commands
-        if command == 'QUIET':
+        if command_up == 'QUIET':
             Quiet = True
+            Verbose = False
             continue
 
         # catchall - pass command directly
@@ -696,4 +736,5 @@ if __name__ == '__main__':
                 print(line)
         else:
             output('Failed: ' + rdata)
+
         continue

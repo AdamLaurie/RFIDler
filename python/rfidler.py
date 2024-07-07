@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.12
 
 """
 /***************************************************************************
@@ -135,17 +135,30 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 """
+# pylint: disable=line-too-long
+# pylint: disable=invalid-name, missing-function-docstring
 
 import sys
 import select
 import os
 import time
+from typing import Tuple
 import xml.etree.ElementTree as ET
-import collections
+from collections import Counter
 from matplotlib import pyplot
-import numpy
+from numpy import correlate
 import RFIDler
 
+# if we want Partial functionality with missing libraries
+#
+# try:
+#     from matplotlib import pyplot
+# except ImportError as e:
+#     pyplot=None
+#
+# # later....
+# if not pyplot
+#    print PLot command not supported without 'matplotlib" lib
 
 # global flags
 Quiet = False
@@ -155,52 +168,186 @@ ADC_To_Volts = 0.012890625  # 3.3 / 256
 POT_To_Volts = 0.019607843  # 5 / 255
 
 
-def output(message):
+# should this take command name args for more detailed help???
+def print_help() -> None:
+    """ Print help test """
+    print(f"""
+ usage: {sys.argv[0]} [PORT] <COMMAND> [ARGS] [COMMAND [ARGS] ...]
+
+   Commands:
+
+     DEBUG <OFF|ON>                      Show serial comms
+     FLASH[P] <IMAGE.HEX>                Set bootloader mode and flash IMAGE.HEX [in Production mode]
+     PLOT[N] <SAMPLES>                   Plot raw coil samples ([N]o local clock)
+     STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
+     LOAD <file>                         Load and plot saved sample-file
+     PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
+     QUIET                               Supress confirmation of sent command (show results only)
+     SLEEP <SECONDS>                     Pause for SECONDS
+     HELP COMMANDS                       Print RFIDler Commands
+     TEST                                Run hardware manufacting test suite
+
+   Commands will be executed sequentially.
+   Unrecognised commands will be passed directly to RFIDler.
+   Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
+""")
+
+
+def run_test() -> None:
+    test = 1
+    print('Testing H/W. Hit <ESC> to end.')
+    while 42:
+        print('waiting for board...')
+        while 42:
+            rfidler.disconnect()
+            t_result, _ = rfidler.connect(port)
+            if t_result:
+                break
+            if os.path.exists('/dev/RFIDlerBL'):
+                print('bootloader mode - flashing...')
+                os.system(
+                    'mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
+
+        os.system('clear')
+        test_result = 'Pass'
+        print('Starting test', test)
+        for t in 'PING', \
+                 'DEBUGOFF 0', \
+                 'DEBUGON 4', \
+                 'DEBUGON 2', 'SET TAG HITAG2', 'UID', 'DEBUGOFF 2', \
+                 'DEBUGON 3', 'SET TAG INDALA64', 'UID', 'DEBUGOFF 3', \
+                 'TEST-WIEGAND', 'TEST-SC', 'TEST-SD', \
+                 'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
+            print(f'  Test {t} - ', end='')
+            sys.stdout.flush()
+            for _z in range(10):
+                t_result, t_rdata = rfidler.command(t)
+                if t_result:
+                    break
+            print(t_result, t_rdata)
+            if not t_result:
+                test_result = 'Fail!'
+
+        # now wait for board to change
+        os.system('figlet ' + test_result)
+        test += 1
+        print('load next board')
+        while 42:
+            try:
+                t_result, t_rdata = rfidler.command('PING')
+                if not t_result:
+                    break
+            except Exception as _e:   # pylint: disable=broad-exception-caught
+                break
+
+
+def flash_board(cmd: str, cmd_arg: str) -> None:
+    # pylint: disable=too-many-branches
+    if cmd in ['FLASH', 'FLASHP']:
+        if not os.path.exists('/dev/RFIDlerBL'):
+            f_result, _reason = rfidler.command('BL')
+            if not result:
+                print('could not set bootloader mode!')
+                sys.exit(True)
+        rfidler.disconnect()
+        time.sleep(1)
+        if os.path.exists('/dev/RFIDlerBL'):
+            print('bootloader mode - flashing...')
+            os.system(f'mphidflash -r -w {cmd_arg}')
+        else:
+            print('bootloader not detected!')
+            sys.exit(True)
+
+        print('Waiting for reboot...')
+        while 42:
+            f_result, _reason = rfidler.connect(rfidler.used_port)
+            if f_result:
+                f_result, _rdata = rfidler.command('PING')
+                if f_result:
+                    break
+        if cmd == 'FLASHP':
+            time.sleep(1)
+            print('Load next board')
+            # wait for disconnect
+            while 42:
+                try:
+                    time.sleep(.5)
+                    f_result, _rdata = rfidler.command('PING')
+                    if not f_result:
+                        break
+                except Exception as _e:   # pylint: disable=broad-exception-caught
+                    break
+            print('Waiting for board...')
+            # wait for new board in normal or bootloader mode
+            while 42:
+                f_result, _reason = rfidler.connect(rfidler.used_port)
+                if f_result:
+                    f_result, _rdata = rfidler.command('PING')
+                    if f_result:
+                        break
+                rfidler.disconnect()
+                if os.path.exists('/dev/RFIDlerBL'):
+                    break
+
+
+def output(message: str) -> None:
     if not Quiet:
-        print message
+        print(message)
 
 
-def store_data(data,  filename_prefix = "dump"):
-    root = ET.fromstring(''.join(data))
+def store_data(dat, filename_prefix="dump") -> None:
+    """ Write data to file """
+    root = ET.fromstring(''.join(dat))
     # wrap it in an ElementTree instance, and save as XML
     tree = ET.ElementTree(root)
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    filename = "%s_%s.xml" % (filename_prefix, timestr)
+    filename = f"{filename_prefix}_{timestr}.xml"
     tree.write(filename)
-    output("Wrote dump to %s" % filename)
+    output(f"Wrote dump to {filename}")
 
-def load_data(fname):
-    try:
-        with open(fname, "r") as f:
+
+def load_data(fname: str) -> Tuple[bool, list]:
+    """ Read data to file """
+    try:    # ET.ElementTree write in "utf-8" format by default
+        with open(fname, "r", encoding="utf-8") as f:
             lines = f.readlines()
-    except Exception, e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return [False, str(e)]
 
     return [True, lines]
 
 
-
-def autocorr(data):
+def autocorr(data) -> Tuple[int, int]:
     """
-    See 
+    See
     http://stackoverflow.com/questions/643699/how-can-i-use-numpy-correlate-to-do-autocorrelation
     """
-    x1 = 400 
+    # ptlint: disable=redefined-outer-name
+    x1 = 400
     x2 = 1000
 
-    result1 = numpy.correlate( data,data[:x1], mode='full')
-    result2 = numpy.correlate( data,data[:x2], mode='full')
+    result1 = correlate(data, data[:x1], mode='full')
+    result2 = correlate(data, data[:x2], mode='full')
     print(len(result1))
 
     print(len(result2))
     print(len(data))
-    #return (result1, result2)
-    return (result1[x1-1:], result2[x2-1:])
+    # return (result1, result2)
+    return (result1[x1 - 1:], result2[x2 - 1:])
 
-def plot_data(data):
-    
+
+# Pylink hates this funtion
+#
+# unsubscriptable-object false positive: https://github.com/pylint-dev/pylint/issues/4577
+def plot_data(data) -> None:
+    """
+        process data for pyplot
+    """
+    # pylint: disable=too-many-statements, too-many-branches, too-many-locals
+    # pylint: disable=unsubscriptable-object, unsupported-assignment-operation
+
     # create graphic objects
-#    fig, ax1 = pyplot.subplots()
+    # fig, ax1 = pyplot.subplots()
     fig, (ax1, ax_corr) = pyplot.subplots(2)
 
     # we need second subplot for voltage scale
@@ -212,66 +359,76 @@ def plot_data(data):
     tag = xml.find('Tag')
     pots = xml.find('Pots')
 
+    title = tag.find('Tag_Type')
+    pyplot.title('RFIDler - ' + title.find('Data').text)
+    # $ print(dir(fig))
+
     # raw coil data
     raw = samples.find('Coil_Data')
     data = raw.find('Data')
     out = data.text.replace(' ', '')
-    out = map(ord, out.decode("hex"))
+    out = list(bytes.fromhex(out))
     out[:] = [x * ADC_To_Volts for x in out]
-    x = range(len(out))
-    ax2.plot(x, out, color='b', label="Raw Data")
+    r = range(len(out))
+    ax2.plot(r, out, color='b', label="Raw Data")
 
     # reader HIGH/LOW
     raw = samples.find('Reader_Output')
     data = raw.find('Data')
     out = data.text.replace(' ', '')
-    out = map(ord, out.decode("hex"))
+    # out = map(ord, out.decode("hex"))
+    out = list(bytes.fromhex(out))
 
-    #Use a counter to help calc bit period
+    # Use a counter to help calc bit period
     count = 0
     prev = out[0]
     bitcounts = []
 
     # convert to value that will show on scale
-    for i in range(len(out)):
-        if out[i] != prev:
-            prev = out[i]
+    # for pylint consider-using-enumerate
+    for i, out_dat in enumerate(out):
+        if out_dat != prev:
+            prev = out_dat
             bitcounts.append(count)
             count = 1
         else:
-            count = count +1
+            count = count + 1
 
-        if out[i]:
+        if out_dat:
             out[i] = 258
         else:
             out[i] = 4
 
     print("Bit periods")
     print(bitcounts)
-    
+
+    #  C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
     print("Most common bit periods:")
-    print("\n".join(["%d : %d" % kv for kv in collections.Counter(bitcounts).most_common(10)]))
+    print("\n".join(["%d : %d" % kv for kv in Counter(bitcounts).most_common(10)]))
 
- #   Not  yet finished
+    #   Not  yet finished
     ax_corr2 = ax_corr.twinx()
-    #Show autocorrelation
-    #Some test-data
-    #x_data = [0]*200+[1,2,3,4,5,6,7,8,9,500]*10+[0]*200
-    #x_data = x_data+x_data+x_data+x_data
-    #Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
+    # Show autocorrelation
+    # Some test-data
+    # x_data = [0]*200+[1,2,3,4,5,6,7,8,9,500]*10+[0]*200
+    # x_data = x_data+x_data+x_data+x_data
+    # Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
     (autoc_1, autoc_2) = autocorr(out)
-    ax_corr.plot(range(len(autoc_1)) , autoc_1 , range(len(autoc_1)) , "-", color='b',label = "Autocorrelation (full)")
-    ax_corr2.plot(range(len(autoc_2)) , autoc_2 , range(len(autoc_2)) , "-", color='g',label = "Autocorrelation (500 samples)")
+    ax_corr.title.set_text("Autocorrelation")
+    ax_corr.plot(range(len(autoc_1)), autoc_1, range(len(autoc_1)), "-", color='m', label="Autocorrelation (full)")
+    ax_corr2.plot(range(len(autoc_2)), autoc_2, range(len(autoc_2)), "-", color='g', label="Autocorrelation (500 samples)")
+    leg_corr = ax_corr.legend(loc=1)  # bbox_to_anchor=(1.04, 1))
+    leg_corr.set_draggable(state=True)
 
-
-    ax1.plot(x, out, '-', color='g', label='Reader Logic')
+    ax1.plot(r, out, '-', color='g', label='Reader Logic')
     # show compressed version
-    for i in range(len(out)):
+
+    for i in range(len(out)):  # pylint: disable=consider-using-enumerate
         if out[i] == 258:
             out[i] = 320
         else:
             out[i] = 300
-    ax1.plot(x, out, '-', color='g')
+    ax1.plot(r, out, '-', color='g')
 
     # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
 
@@ -279,15 +436,17 @@ def plot_data(data):
     raw = samples.find('Bit_Period')
     data = raw.find('Data')
     out = data.text.replace(' ', '')
-    out = map(ord, out.decode("hex"))
+    out = list(bytes.fromhex(out))
+
     # show bit period as single vertical stripe
     prev = out[0]
     fill = 0
     fill1 = 0
     toggle = True
-    for i in range(len(out)):
-        if out[i] != prev:
-            prev = out[i]
+
+    for i, out_dat in enumerate(out):
+        if out_dat != prev:
+            prev = out_dat
             if fill1:
                 fill = fill1
                 fill1 = i
@@ -297,15 +456,34 @@ def plot_data(data):
             if toggle:
                 ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
             toggle = not toggle
-    # find first stripe and add legend
-    for i in range(len(out)):
-        if (out[i]):
+
+#    for i in range(len(out)):
+#        if out[i] != prev:
+#            prev = out[i]
+#            if fill1:
+#                fill = fill1
+#                fill1 = i
+#            else:
+#                fill1 = i
+#            # fill every other stripe
+#            if toggle:
+#                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
+#            toggle = not toggle
+
+#    # find first stripe and add legend
+#    for i in range(len(out)):
+#        if out[i]:
+#            break
+
+    # https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/consider-using-enumerate.html
+    for i, out_dat in enumerate(out):
+        if out_dat:
             break
     legend = tag.find('Data_Rate')
     data = legend.find('Data').text
-    ax1.text(i + ((fill1 - fill) / 2), -10, 'Bit Period\n%s FCs' % data, color='r', alpha=0.5, rotation=270,
+    # Do we want this Rotated (Can't read it)
+    ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs', color='r', alpha=0.5,  # rotation=270,
              ha='center', va='top')
-
 
     # pot settings
     color = 'r'
@@ -313,234 +491,209 @@ def plot_data(data):
         raw = pots.find(element.strip())
         data = raw.find('Data').text
         # convert pot setting to volts
-        out = [float(data) * POT_To_Volts] * len(x)
-        ax2.plot(x, out, '--', color=color,
-                 label=element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
+        fdata = float(data)
+        out = [fdata * POT_To_Volts] * len(r)
+        ax2.plot(r, out, '--', color=color,
+                 label=f"{element} {(fdata * POT_To_Volts):0.2f}v (Pot: {data})")
+        # label=element + ' %0.2fv (Pot: %s)' % (float(data) * POT_To_Volts, data))
         # ax2.text(len(x) + 16, out[0], '%s: %0.2fv\n(%s)' % (element, float(data) * POT_To_Volts, data), color= color)
         color = 'm'
 
     # done - label and show graph
     # ADC scale needs to match volts (5v / 3.3v)
     ax1.set_ylim(-5, 256 * 1.515151515)
-    title = tag.find('Tag_Type')
-    pyplot.xlim(0, len(x))
-    pyplot.title('RFIDler - ' + title.find('Data').text)
+    # title = tag.find('Tag_Type')
+    pyplot.xlim(0, len(r))
+    # pyplot.title('RFIDler - ' + title.find('Data').text)
     ax1.set_ylabel('Signal Strength (ADC)')
     ax1.set_xlabel('Sample Number')
-    ax1.legend(loc=2)
-    fig.canvas.set_window_title('RFIDler plot')
+    leg_ax1 = ax1.legend(loc=2)
+    fig.canvas.manager.set_window_title('RFIDler plot')
     # volts scale up to 5.0v as that is max pot setting
     # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
     # we can't see token samples above 3.3v
     ax2.set_ylim(0, 5.0)
-    ax2.set_ylabel('Signal Strength (Volts)', rotation=270)
-    ax2.legend(loc=1)
+    # use "labelpad" so it moves off tic marks on right
+    ax2.set_ylabel('Signal Strength (Volts)', rotation=270, labelpad=8.0)
+    leg_ax2 = ax2.legend(loc=1)
+
+    leg_ax1.set_draggable(state=True)
+    leg_ax2.set_draggable(state=True)
+
+    pyplot.subplots_adjust(hspace=0.5)
+
     pyplot.show()
 
-if len(sys.argv) < 3:
-    print """
- usage: {0} <PORT> <COMMAND> [ARGS] [COMMAND [ARGS] ...]
 
-   Commands:
+# part arg is now optional
+if __name__ == '__main__':
 
-     DEBUG <OFF|ON>                      Show serial comms
-     FLASH[P] <IMAGE.HEX>                Set bootloader mode and flash IMAGE.HEX [in Production mode]
-     PLOT[N] <SAMPLES>                   Plot raw coil samples ([N]o local clock)
-     STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
-     LOAD <file>                         Load and plot saved sample-file        
-     PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
-     QUIET                               Supress confirmation of sent command (show results only)
-     SLEEP <SECONDS>                     Pause for SECONDS
-     TEST                                Run hardware manufacting test suite
-    
-   Commands will be executed sequentially.
-   Unrecognised commands will be passed directly to RFIDler.
-   Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
-""".format(*sys.argv)
-    exit(True)
+    port = None
+    ac = len(sys.argv)
+    av = sys.argv[1:]
 
-port = sys.argv[1]
-rfidler = RFIDler.RFIDler()
-result, reason = rfidler.connect(port)
-if not result:
-    print 'Warning - could not open serial port:', reason
+    if ac < 2:
+        print_help()
+        sys.exit(True)
 
-current = 2
-# process each command
-while current < len(sys.argv):
-    command = sys.argv[current].upper()
-    current += 1
-    if command == 'DEBUG':
-        if sys.argv[current].upper() == 'ON':
-            rfidler.Debug = True
-        else:
-            if sys.argv[current].upper() == 'OFF':
-                rfidler.Debug = False
-            else:
-                print 'Unknown option:', sys.argv[current]
-                exit(True)
-        current += 1
-        continue
+    rfidler = RFIDler.RFIDler()
 
-    if command == 'FLASH' or command == 'FLASHP':
-        if not os.path.exists('/dev/RFIDlerBL'):
-            result, reason = rfidler.command('BL')
-            if not result:
-                print 'could not set bootloader mode!'
-                exit(True)
-        rfidler.disconnect()
-        time.sleep(1)
-        if os.path.exists('/dev/RFIDlerBL'):
-            print 'bootloader mode - flashing...'
-            os.system('mphidflash -r -w %s' % sys.argv[current])
-        else:
-            print 'bootloader not detected!'
-            exit(True)
-        print 'Waiting for reboot...'
-        while 42:
-            result, reason = rfidler.connect(port)
-            if result:
-                result, data = rfidler.command('PING')
-                if result:
-                    break
-        if command == 'FLASHP':
-            time.sleep(1)
-            print 'Load next board'
-            # wait for disconnect
-            while 42:
-                try:
-                    time.sleep(.5)
-                    result, data = rfidler.command('PING')
-                    if not result:
-                        break
-                except:
-                    break
-            print 'Waiting for board...'
-            # wait for new board in normal or bootloader mode
-            while 42:
-                result, reason = rfidler.connect(port)
-                if result:
-                    result, data = rfidler.command('PING')
-                    if result:
-                        break
-                rfidler.disconnect()
-                if os.path.exists('/dev/RFIDlerBL'):
-                    break
-            current -= 1
+    # if there is more then 1 arg AND 1st arg is a path
+    # assume it is a path to port
+    if ac > 2 and av[0][0] == '/':
+        port = av.pop(0)
+
+    # if port is None code will scan for the correct port
+    result, reason = rfidler.connect(port)
+    if not result:
+        print(f'Warning - could not open serial port: {port}')
+        print(f'Reason: {reason}')
+        sys.exit(1)
+
+    # process each command
+    while av:
+        command = av.pop(0)
+        command_option = None
+        if rfidler.Debug:
+            print(f"COMMAND is '{command}'")
+
+        if command.upper() == 'DEBUG':
+            if av:
+                command_option = av.pop(0).upper()
+                if command_option == 'ON':
+                    rfidler.Debug = True
+                elif command_option == 'OFF':
+                    rfidler.Debug = False
+                else:
+                    print(f'Unknown option: {command_option}')
+                    sys.exit(True)
             continue
-        current += 1
-        continue
 
-    if command == 'XKCD':
-        pyplot.xkcd()
-        continue
-
-    if command in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
-        if command in ['PLOT', 'STORE']:
-            result, data = rfidler.command('ANALOGUE %s' % sys.argv[current])
-        elif command in ['PLOTN', 'STOREN']:
-            result, data = rfidler.command('ANALOGUEN %s' % sys.argv[current])
-        else:
-            result, data = load_data(sys.argv[current])
-
-        current += 1
-        if result:
-            if command in ['PLOT', 'PLOTN','LOAD']:
-                plot_data(data)
-            else:
-                # Store
-                store_data(data, sys.argv[current])
-                current += 1
-        else:
-            output('Failed: ' + data)
-        continue
-
-    if command == 'PROMPT':
-        raw_input(sys.argv[current])
-        current += 1
-        continue
-
-    # perform hardware tests for manufacturing assurance
-    # requires hardware to be placed on test jig
-    if command == 'TEST':
-        test = 1
-        print 'Testing H/W. Hit <ESC> to end.'
-        while 42:
-            print 'waiting for board...'
-            while 42:
-                rfidler.disconnect()
-                result, reason = rfidler.connect(port)
+        # HELP gets you the python help, "HELP COMMANDS" or "HELP RFIDLER"
+        # will get the RFIDler board help info
+        if command.upper() in ['HELP', 'USAGE']:
+            if av:
+                command_option = av.pop(0).upper()
+            if command_option in ['COMMANDS', 'RFIDLER']:
+                result, rdata = rfidler.command(command)
                 if result:
-                    break
-                if os.path.exists('/dev/RFIDlerBL'):
-                    print 'bootloader mode - flashing...'
-                    os.system(
-                        'mphidflash -r -w /home/software/unpacked/RFIDler/firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex')
+                    for line in rdata:
+                        print(line)
+            else:
+                print_help()
+                sys.exit(0)
 
-            os.system('clear')
-            test_result = 'Pass'
-            print 'Starting test', test
-            for x in 'PING', \
-                     'DEBUGOFF 0', \
-                     'DEBUGON 4', \
-                     'DEBUGON 2', 'SET TAG HITAG2', 'UID', 'DEBUGOFF 2', \
-                     'DEBUGON 3', 'SET TAG INDALA64', 'UID', 'DEBUGOFF 3', \
-                     'TEST-WIEGAND', 'TEST-SC', 'TEST-SD', \
-                     'SET TAG HID26', 'ENCODE 12345678 HID26', 'EMULATOR BG', 'WIEGAND-OUT OFF', 'TEST-WIEGAND-READ 1':
-                print '  Test %s - ' % x,
-                sys.stdout.flush()
-                for z in range(10):
-                    result, data = rfidler.command(x)
-                    if result:
-                        break
-                print result, data
-                if not result:
-                    test_result = 'Fail!'
-            # now wait for board to change
-            os.system('figlet ' + test_result)
-            test += 1
-            print 'load next board'
+            continue
+
+        if command.upper() in ['FLASH', 'FLASHP']:
+            if ac:
+                command_option = av.pop(0)
+                flash_board(command.upper(), command_option)
+            else:
+                print(f"{command} missing argument")
+
+            continue
+
+        if command.upper() == 'XKCD':
+            pyplot.xkcd()
+            continue
+
+        if command.upper() in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
+            command = command.upper()
+
+            if av:
+                command_option = av.pop(0)
+            else:
+                print(f"command:{command} option missing")
+                sys.exit(1)
+
+            if command in ['PLOT', 'STORE']:
+                result, rdata = rfidler.command(f'ANALOGUE {command_option}')
+            elif command in ['PLOTN', 'STOREN']:
+                result, rdata = rfidler.command(f'ANALOGUEN {command_option}')
+            elif command in ['LOAD']:
+                result, rdata = load_data(command_option)
+            else:
+                print("Command Parse Error: This should never happen")
+                sys.exit(1)
+
+            if result:
+                if command in ['PLOT', 'PLOTN', 'LOAD']:
+                    try:
+                        plot_data(rdata)
+                    except KeyboardInterrupt as _e:
+                        print("KeyboardInterrupt: exiting.....")
+                        continue
+
+                elif command in ['STORE']:
+                    if av:
+                        command_option = av.pop(0)
+                    else:
+                        command_option = None
+                    # Store
+                    store_data(rdata, command_option)
+                else:
+                    print("Command Parse Error: This should never happen")
+                    sys.exit(1)
+
+            else:
+                output('Failed: ' + rdata)
+            continue
+
+        if command == 'PROMPT':
+            if av:
+                command_option = av.pop(0)
+            else:
+                command_option = '-->'
+            input(command_option)
+            continue
+
+        # perform hardware tests for manufacturing assurance
+        # requires hardware to be placed on test jig
+        if command == 'TEST':
+            try:
+                run_test()
+            except KeyboardInterrupt as _e:
+                print("KeyboardInterrupt: exiting.....")
+                continue
+
+        if command == 'SLEEP':
+            if av:
+                command_option = float(av.pop(0))
+            else:
+                print("command: SLEEP option missing")
+                sys.exit(1)
+
+            output(f'Sleeping for {command_option} seconds')
+            time.sleep(command_option)
+            continue
+
+        if command == 'TERMINAL':
             while 42:
-                try:
-                    result, data = rfidler.command('PING')
-                    if not result:
-                        break
-                except:
-                    break
+                while rfidler.Connection.inWaiting():
+                    sys.stdout.write(rfidler.Connection.readline(1))
+                    sys.stdout.flush()
+                # send typed characters
+                while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                    x = sys.stdin.read(1)
+                    rfidler.Connection.write(x)
+                    # read back echo
+                    x = rfidler.Connection.read(1)
+                    sys.stdout.write(x)
+                    sys.stdout.flush()
+
+        # set quiet flag so we only see responses, not sent commands
+        if command == 'QUIET':
+            Quiet = True
+            continue
+
+        # catchall - pass command directly
+        output(f"sending {command}")
+        sys.stdout.flush()
+        result, rdata = rfidler.command(command)
+        if result:
+            for line in rdata:
+                print(line)
+        else:
+            output('Failed: ' + rdata)
         continue
-
-    if command == 'SLEEP':
-        output('Sleeping for %s seconds' % sys.argv[current])
-        time.sleep(float(sys.argv[current]))
-        current += 1
-        continue
-
-    if command == 'TERMINAL':
-        while 42:
-            while rfidler.Connection.inWaiting():
-                sys.stdout.write(rfidler.Connection.readline(1))
-                sys.stdout.flush()
-            # send typed characters
-            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                x = sys.stdin.read(1)
-                rfidler.Connection.write(x)
-                # read back echo
-                x = rfidler.Connection.read(1)
-                sys.stdout.write(x)
-                sys.stdout.flush()
-
-    # set quiet flag so we only see responses, not sent commands
-    if command == 'QUIET':
-        Quiet = True
-        continue
-
-    # catchall - pass command directly
-    output("sending '%s'" % command)
-    sys.stdout.flush()
-    result, data = rfidler.command(command)
-    if result:
-        for line in data:
-            print line
-    else:
-        output('Failed: ' + data)
-    continue

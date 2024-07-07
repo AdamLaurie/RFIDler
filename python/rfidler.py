@@ -606,6 +606,9 @@ if __name__ == '__main__':
                 else:
                     print(f'Unknown option: {command_option}')
                     sys.exit(True)
+            else:
+                print(f"{command} missing argument: ON / OFF")
+                sys.exit(1)
             continue
 
         # HELP gets you the python help, "HELP COMMANDS" or "HELP RFIDLER"

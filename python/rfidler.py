@@ -135,7 +135,6 @@
 // Author: Adam Laurie <adam@aperturelabs.com>
 
 """
-# p ylint: disable=line-too-long
 # pylint: disable=invalid-name, missing-function-docstring
 
 import sys
@@ -360,7 +359,7 @@ def autocorr(data) -> Tuple[int, int]:
 # unsubscriptable-object false positive: https://github.com/pylint-dev/pylint/issues/4577
 def plot_data(data) -> None:
     """
-        process data for pyplot
+        process and plot data with pyplot
     """
     # pylint: disable=too-many-statements, too-many-branches, too-many-locals, line-too-long
 
@@ -565,7 +564,7 @@ if __name__ == '__main__':
     ac = len(sys.argv)
     av = sys.argv[1:]
 
-    if ac < 2:
+    if ac < 2 or av[0] == "HELP":
         print_help()
         sys.exit(True)
 
@@ -583,6 +582,7 @@ if __name__ == '__main__':
         print(f'Reason: {reason}')
         sys.exit(1)
 
+    # should we have a -png option to have pylot save a PNG ?
     # process each command
     while av:
         command = av.pop(0)
@@ -613,17 +613,28 @@ if __name__ == '__main__':
 
         # HELP gets you the python help, "HELP COMMANDS" or "HELP RFIDLER"
         # will get the RFIDler board help info
-        if command_up in ['HELP', 'USAGE']:
+        if command_up in ['HELP', 'USAGE', "?"]:
             if av:
                 command_option = av.pop(0).upper()
-            if command_option in ['COMMANDS', 'RFIDLER']:
-                result, rdata = rfidler.command(command)
-                if result:
-                    for line in rdata:
-                        print(line)
+                if command_option in ['COMMANDS', 'RFIDLER']:
+                    result, rdata = rfidler.command(command)
+                    if result:
+                        for line in rdata:
+                            print(line)
+                    else:
+                        output('Failed: ' + rdata)
+                else:
+                    print_help()
             else:
                 print_help()
-                sys.exit(0)
+
+            sys.exit(0)
+
+        if command_up in ['VERSION']:
+
+            print(f"RFIDler.py : {RFIDler.__VERSION__}")
+            result, rdata = rfidler.command(command)
+            print(f"RFIDler Firmware: {rdata[0]}")
 
             continue
 
@@ -646,12 +657,14 @@ if __name__ == '__main__':
             if av:
                 command_option = av.pop(0)
             else:
-                print(f"command:{command} option missing")
+                print(f"command:{command} option(s) missing")
                 sys.exit(1)
 
             if command_up in ['PLOT', 'STORE']:
+                # if command_option.isdigit() ??
                 result, rdata = rfidler.command(f'ANALOGUE {command_option}')
             elif command_up in ['PLOTN', 'STOREN']:
+                # if command_option.isdigit() ??
                 result, rdata = rfidler.command(f'ANALOGUEN {command_option}')
             elif command_up in ['LOAD']:
                 result, rdata = load_data(command_option)
@@ -668,11 +681,12 @@ if __name__ == '__main__':
                         continue
 
                 elif command_up in ['STORE']:
+                    # Store
                     if av:
                         command_option = av.pop(0)
                     else:
-                        command_option = None
-                    # Store
+                        print(f"command:{command} file_prefix option missing")
+                        sys.exit(1)
                     store_data(rdata, command_option)
                 else:
                     print("Command Parse Error: This should never happen")

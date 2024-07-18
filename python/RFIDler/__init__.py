@@ -142,6 +142,8 @@ from typing import Union, Tuple
 import serial
 import serial.tools.list_ports
 
+__VERSION__ = '1.1'
+
 
 class RFIDler():
     """Class for communicating with RFIDler hardware"""
@@ -280,6 +282,14 @@ class RFIDler():
             return False, "Can't switch to API mode"
         return True, ""
 
+    # RFIDler ports info:
+    #   description: RFIDler-LF
+    #   manufacturer: Aperture Labs Ltd.
+    #   hwid: USB VID:PID=1D50:6098 SER=17130C2E00E1 LOCATION=1-1
+    #   pid: 24728
+    #   vid: 7504
+    #   serial_number 17130C2E00E1
+    #   product RFIDler-LF
     def _find_port(self) -> Union[str, None]:
         """find serial device"""
 
@@ -290,7 +300,7 @@ class RFIDler():
             if self.Debug:
                 print(f"{p.name}: {p.description} [{p.hwid}]")
 
-            if p.description.startswith("RFIDler") or \
+            if (p.description and p.description.startswith("RFIDler")) or \
                (p.product and p.product.startswith("RFIDler")):
                 return p.device
 

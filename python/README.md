@@ -36,4 +36,4 @@ To install use the command: `pip install`
 RFIDler Wiki:  https://github.com/AdamLaurie/RFIDler/wiki/How
 <br>Discussion forum : http://rfidler.org/
 <br>github : https://github.com/AdamLaurie/RFIDler/
-<br>Copying : (COPYING)[/COPYING]
+<br>Copying : [COPYING](/COPYING)

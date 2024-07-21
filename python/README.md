@@ -16,15 +16,33 @@
      STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
      LOAD <file>                         Load and plot saved sample-file
      PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
-     QUIET                               Supress confirmation of sent command (show results only)
+     QUIET                               Suppress confirmation of sent command (show results only)
      SLEEP <SECONDS>                     Pause for SECONDS
      HELP COMMANDS                       Print RFIDler Commands
-     TEST                                Run hardware manufacting test suite
+     TEST                                Run hardware manufacturing test suite
 
    Commands will be executed sequentially.
-   Unrecognised commands will be passed directly to RFIDler.
+   Unrecognized commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
 ```
+
+## Example
+For more detailed information see [RFIDler/wiki](https://github.com/AdamLaurie/RFIDler/wiki/How)
+
+ Set the tag type to ASKRAW, set the High Potentiometer to max, and plot 500 samples :
+&nbsp;&nbsp;`./rfidler.py 'set tag askraw' 'potset h 255' plot 500`
+
+Set tag type to FSK, set the High Potentiometer to max, set frequency to 134.2KHz and plot 500 samples :  
+&nbsp;&nbsp;`./rfidler.py 'set tag fskraw' 'potset h 255' 'set fc 745' plot 500`
+
+Note:
+The calculation for frequency is simply 1 over the frequency, eg:  
+&nbsp;&nbsp;$`1 / 134200 = 0.00000745`$
+
+
+
+
+Which translates as 'set the tag to ASKRAW, set the High Potentiometer to max, and plot 500 samples.
 
 ## Install
 

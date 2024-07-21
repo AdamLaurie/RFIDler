@@ -144,8 +144,19 @@ import time
 from typing import Tuple
 import xml.etree.ElementTree as ET
 from collections import Counter
-from matplotlib import pyplot
-from numpy import correlate
+
+try:
+    from matplotlib import pyplot
+except ImportError as e:
+    print("Failed to import matplotlib.pyplot")
+    pyplot = None
+
+try:
+    from numpy import correlate
+except ImportError as e:
+    print("Failed to import numpy.correlate")
+    correlate = None
+
 import RFIDler
 
 # if we want Partial functionality with missing libraries
@@ -182,13 +193,13 @@ def print_help() -> None:
      STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
      LOAD <file>                         Load and plot saved sample-file
      PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
-     QUIET                               Supress confirmation of sent command (show results only)
+     QUIET                               Suppress confirmation of sent command (show results only)
      SLEEP <SECONDS>                     Pause for SECONDS
      HELP COMMANDS                       Print RFIDler Commands
-     TEST                                Run hardware manufacting test suite
+     TEST                                Run hardware manufacturing test suite
 
    Commands will be executed sequentially.
-   Unrecognised commands will be passed directly to RFIDler.
+   Unrecognized commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
 """)
 
@@ -362,6 +373,10 @@ def plot_data(data) -> None:
         process and plot data with pyplot
     """
     # pylint: disable=too-many-statements, too-many-branches, too-many-locals, line-too-long
+
+    if pyplot is None or correlate is None:
+        print("plot functionally not available: missing library")
+        return
 
     # create graphic objects
     # fig, ax1 = pyplot.subplots()
@@ -578,9 +593,9 @@ if __name__ == '__main__':
     # if port is None, connect() will scan for the correct port
     result, reason = rfidler.connect(port)
     if not result:
-        print(f'Warning - could not open serial port: {port}')
-        print(f'Reason: {reason}')
-        sys.exit(1)
+        print(f'Warning - could not open serial port: {port or reason}')
+        # print(f'Reason: {reason}')
+        # sys.exit(1)
 
     # should we have a -png option to have pylot save a PNG ?
     # process each command
@@ -633,8 +648,9 @@ if __name__ == '__main__':
         if command_up in ['VERSION']:
 
             print(f"RFIDler.py : {RFIDler.__VERSION__}")
-            result, rdata = rfidler.command(command)
-            print(f"RFIDler Firmware: {rdata[0]}")
+            if rfidler.connection:
+                result, rdata = rfidler.command(command)
+                print(f"RFIDler Firmware: {rdata[0]}")
 
             continue
 
@@ -649,7 +665,10 @@ if __name__ == '__main__':
             continue
 
         if command_up == 'XKCD':
-            pyplot.xkcd()
+            if pyplot is None:
+                print(f"command {command} functionally not available without 'matplotlib' lib")
+            else:
+                pyplot.xkcd()
             continue
 
         if command_up in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
@@ -693,7 +712,9 @@ if __name__ == '__main__':
                     sys.exit(1)
 
             else:
-                output('Failed: ' + rdata)
+                output(f'{command}: Failed: ' + rdata)
+                sys.exit(1)
+
             continue
 
         if command_up == 'PROMPT':

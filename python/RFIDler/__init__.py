@@ -282,7 +282,7 @@ class RFIDler():
             return False, "Can't switch to API mode"
         return True, ""
 
-    # RFIDler ports info:
+    # RFIDler ports values:
     #   description: RFIDler-LF
     #   manufacturer: Aperture Labs Ltd.
     #   hwid: USB VID:PID=1D50:6098 SER=17130C2E00E1 LOCATION=1-1

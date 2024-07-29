@@ -192,6 +192,7 @@ def print_help() -> None:
      PLOT[N] <SAMPLES>                   Plot raw coil samples ([N]o local clock)
      STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
      LOAD <file>                         Load and plot saved sample-file
+     FC <field_freq>                     Set Field Clock Freq in KHz
      PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
      QUIET                               Suppress confirmation of sent command (show results only)
      SLEEP <SECONDS>                     Pause for SECONDS
@@ -202,6 +203,21 @@ def print_help() -> None:
    Unrecognized commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
 """)
+
+
+def print_rfidler_help(rfer):
+
+    result, rdata = rfer.command(command)
+    if result:
+        for line in rdata:
+            print(line)
+    else:
+        output('Failed: ' + rdata)
+    result, rdata = rfer.command('TAGS')
+    if result:
+        for line in rdata:
+            sys.stdout.write(line.rstrip())
+        print()
 
 
 def run_test() -> None:
@@ -345,7 +361,7 @@ def load_data(fname: str) -> Tuple[bool, list]:
     return [True, lines]
 
 
-def autocorr(data) -> Tuple[int, int]:
+def autocorr(data) -> Tuple[list, list]:
     """
     See
     http://stackoverflow.com/questions/643699/how-can-i-use-numpy-correlate-to-do-autocorrelation
@@ -382,31 +398,37 @@ def plot_data(data) -> None:
     # fig, ax1 = pyplot.subplots()
     fig, (ax1, ax_corr) = pyplot.subplots(2)
 
+    fig.canvas.manager.set_window_title('RFIDler plot')
+
     # we need second subplot for voltage scale
     ax2 = ax1.twinx()
 
     # get xml sections
     xml = ET.fromstring(''.join(data))
     samples = xml.find('Samples')
-    tag = xml.find('Tag')
-    pots = xml.find('Pots')
+    # tag = xml.find('Tag')
+    # pots = xml.find('Pots')
 
-    title = tag.find('Tag_Type')
-    pyplot.title('RFIDler - ' + title.find('Data').text)
+    title = xml.find('Tag/Tag_Type/Data').text
+    pyplot.title(f'RFIDler - {title}')
 
     # raw coil data
-    raw = samples.find('Coil_Data')
-    data = raw.find('Data')
-    out = data.text.replace(' ', '')
+    # raw = samples.find('Coil_Data')
+    # data = raw.find('Data')
+    # out = data.text.replace(' ', '')
+
+    out = samples.find('Coil_Data/Data').text.replace(' ', '')
     out = list(bytes.fromhex(out))
     out[:] = [x * ADC_To_Volts for x in out]
     r = range(len(out))
     ax2.plot(r, out, color='b', label="Raw Data")
 
     # reader HIGH/LOW
-    raw = samples.find('Reader_Output')
-    data = raw.find('Data')
-    out = data.text.replace(' ', '')
+    # raw = samples.find('Reader_Output')
+    # data = raw.find('Data')
+    # out = data.text.replace(' ', '')
+    out = samples.find('Reader_Output/Data').text.replace(' ', '')
+
     # out = map(ord, out.decode("hex"))
     out = list(bytes.fromhex(out))
 
@@ -430,6 +452,8 @@ def plot_data(data) -> None:
         else:
             out[i] = 4
 
+    ax1.plot(r, out, '-', color='g', label='Reader Logic')
+
     if Verbose:
         print("Bit periods")
         print(bitcounts)
@@ -447,12 +471,13 @@ def plot_data(data) -> None:
     # Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
     (autoc_1, autoc_2) = autocorr(out)
     ax_corr.title.set_text("Autocorrelation")
-    ax_corr.plot(range(len(autoc_1)), autoc_1, range(len(autoc_1)), "-", color='m', label="Autocorrelation (full)")
-    ax_corr2.plot(range(len(autoc_2)), autoc_2, range(len(autoc_2)), "-", color='g', label="Autocorrelation (500 samples)")
-    leg_corr = ax_corr.legend(loc=1)  # bbox_to_anchor=(1.04, 1))
-    leg_corr.set_draggable(state=True)
-
-    ax1.plot(r, out, '-', color='g', label='Reader Logic')
+    c1 = ax_corr.plot(range(len(autoc_1)), autoc_1, "-", color='m', label="Autocorrelation (full)")
+    c2 = ax_corr2.plot(range(len(autoc_2)), autoc_2, "-", color='g', label="Autocorrelation (500 samples)")
+    # consolidate legend labels
+    lns = c1 + c2
+    labs = [ln.get_label() for ln in lns]
+    leg_corr = ax_corr.legend(lns, labs, loc=0, fontsize='x-small', draggable=True)  # bbox_to_anchor=(1.04, 1))
+    # leg_corr2 = ax_corr2.legend(loc=0, fontsize='x-small', draggable=True)  # bbox_to_anchor=(1.04, 1))
 
     # show compressed version
 #     for i in range(len(out)):  # pylint: disable=consider-using-enumerate
@@ -473,9 +498,10 @@ def plot_data(data) -> None:
     # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
 
     # bit period
-    raw = samples.find('Bit_Period')
-    data = raw.find('Data')
-    out = data.text.replace(' ', '')
+    # raw = samples.find('Bit_Period')
+    # data = raw.find('Data')
+    # out = data.text.replace(' ', '')
+    out = samples.find('Bit_Period/Data').text.replace(' ', '')
     out = list(bytes.fromhex(out))
 
     # show bit period as single vertical stripe
@@ -519,17 +545,17 @@ def plot_data(data) -> None:
     for i, out_dat in enumerate(out):
         if out_dat:
             break
-    legend = tag.find('Data_Rate')
-    data = legend.find('Data').text
+    data = xml.find('Tag/Data_Rate/Data').text
     # Do we want this Rotated (Can't read it)
     ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs', color='r', alpha=0.5,  # rotation=270,
              ha='center', va='top')
 
     # pot settings
     color = 'r'
-    for element in 'Pot_High', 'Pot_Low ':
-        raw = pots.find(element.strip())
-        data = raw.find('Data').text
+    for element in 'Pot_High', 'Pot_Low':
+        # raw = pots.find( element.strip())
+        # data = raw.find('Data').text
+        data = xml.find(f'Pots/{element}/Data').text
         # convert pot setting to volts
         fdata = float(data)
         out = [fdata * POT_To_Volts] * len(r)
@@ -542,25 +568,21 @@ def plot_data(data) -> None:
     # done - label and show graph
     # ADC scale needs to match volts (5v / 3.3v)
     ax1.set_ylim(-5, 256 * 1.515151515)
-    # title = tag.find('Tag_Type')
+
     pyplot.xlim(0, len(r))
-    # pyplot.title('RFIDler - ' + title.find('Data').text)
-    ax1.set_ylabel('Signal Strength (ADC)')
+
+    ax1.set_ylabel('Signal Strength (ADC)', labelpad=8.0)
     ax1.set_xlabel('Sample Number')
-    leg_ax1 = ax1.legend(loc=2)
-    fig.canvas.manager.set_window_title('RFIDler plot')
+
+    leg_ax1 = ax1.legend(bbox_to_anchor=(0, 1), loc='lower left', fontsize='x-small', draggable=True)
     # volts scale up to 5.0v as that is max pot setting
     # note that the ADC will clip at 3.3v, so although we can use a higher pot setting,
     # we can't see token samples above 3.3v
     ax2.set_ylim(0, 5.0)
+
     # use "labelpad" so it moves off tic marks on right
     ax2.set_ylabel('Signal Strength (Volts)', rotation=270, labelpad=8.0)
-    leg_ax2 = ax2.legend(loc=1)
-
-    # make legend moveable
-    # https://matplotlib.org/stable/api/legend_api.html#matplotlib.legend.Legend.set_draggable
-    leg_ax1.set_draggable(state=True)
-    leg_ax2.set_draggable(state=True)
+    leg_ax2 = ax2.legend(bbox_to_anchor=(1, 1), loc='lower right', fontsize='x-small', draggable=True)
 
     # tight_layout does subplots_adjust automatically
     # pyplot.subplots_adjust(hspace=0.5)
@@ -579,7 +601,7 @@ if __name__ == '__main__':
     ac = len(sys.argv)
     av = sys.argv[1:]
 
-    if ac < 2 or av[0] == "HELP":
+    if ac <= 2 and av[0] == "HELP":
         print_help()
         sys.exit(True)
 
@@ -632,12 +654,7 @@ if __name__ == '__main__':
             if av:
                 command_option = av.pop(0).upper()
                 if command_option in ['COMMANDS', 'RFIDLER']:
-                    result, rdata = rfidler.command(command)
-                    if result:
-                        for line in rdata:
-                            print(line)
-                    else:
-                        output('Failed: ' + rdata)
+                    print_rfidler_help(rfidler)
                 else:
                     print_help()
             else:
@@ -671,6 +688,20 @@ if __name__ == '__main__':
                 pyplot.xkcd()
             continue
 
+        if command_up == 'FC':
+            if av:
+                command_option = float(av.pop(0))
+            else:
+                print(f"command:{command} missing Freq option (in KHz)")
+                sys.exit(1)
+
+            result, rdata = rfidler.command(f'SET FC {100000 / command_option}')
+            if result:
+                continue
+            else:
+                output('Failed: ' + rdata)
+                sys.exit(1)
+
         if command_up in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
 
             if av:
@@ -699,7 +730,7 @@ if __name__ == '__main__':
                         print("KeyboardInterrupt: exiting.....")
                         continue
 
-                elif command_up in ['STORE']:
+                elif command_up in ['STORE', 'STOREN']:
                     # Store
                     if av:
                         command_option = av.pop(0)

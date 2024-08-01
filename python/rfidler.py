@@ -144,6 +144,7 @@ import time
 from typing import Tuple
 import xml.etree.ElementTree as ET
 from collections import Counter
+from itertools import groupby
 
 try:
     from matplotlib import pyplot
@@ -152,9 +153,9 @@ except ImportError as e:
     pyplot = None
 
 try:
-    from numpy import correlate
+    import numpy as np
 except ImportError as e:
-    print("Failed to import numpy.correlate")
+    print("Failed to import numpy")
     correlate = None
 
 import RFIDler
@@ -344,6 +345,7 @@ def store_data(dat, filename_prefix="dump") -> None:
     root = ET.fromstring(''.join(dat))
     # wrap it in an ElementTree instance, and save as XML
     tree = ET.ElementTree(root)
+    ET.indent(tree, space="  ", level=0)
     timestr = time.strftime("%Y%m%d-%H%M%S")
     filename = f"{filename_prefix}_{timestr}.xml"
     tree.write(filename)
@@ -369,8 +371,8 @@ def autocorr(data) -> Tuple[list, list]:
     x1 = 400
     x2 = 1000
 
-    result1 = correlate(data, data[:x1], mode='full')
-    result2 = correlate(data, data[:x2], mode='full')
+    result1 = np.correlate(data, data[:x1], mode='full')
+    result2 = np.correlate(data, data[:x2], mode='full')
 
     if Verbose:
         print(len(result1))
@@ -390,7 +392,7 @@ def plot_data(data) -> None:
     """
     # pylint: disable=too-many-statements, too-many-branches, too-many-locals, line-too-long
 
-    if pyplot is None or correlate is None:
+    if pyplot is None or np is None:
         print("plot functionally not available: missing library")
         return
 
@@ -417,10 +419,16 @@ def plot_data(data) -> None:
     # data = raw.find('Data')
     # out = data.text.replace(' ', '')
 
+    # out = samples.find('Coil_Data/Data').text.replace(' ', '')
+    # out = list(bytes.fromhex(out))
+    # out[:] = [x * ADC_To_Volts for x in out]
+    # r = range(len(out))
+
+    # way faster
     out = samples.find('Coil_Data/Data').text.replace(' ', '')
-    out = list(bytes.fromhex(out))
-    out[:] = [x * ADC_To_Volts for x in out]
-    r = range(len(out))
+    out = np.frombuffer(bytes.fromhex(out), np.dtype('B')) * ADC_To_Volts
+    r = range(out.size)
+
     ax2.plot(r, out, color='b', label="Raw Data")
 
     # reader HIGH/LOW
@@ -433,34 +441,41 @@ def plot_data(data) -> None:
     out = list(bytes.fromhex(out))
 
     # Use a counter to help calc bit period
-    count = 0
-    prev = out[0]
-    bitcounts = []
+#    count = 0
+#    prev = out[0]
+#    bitcounts = []
 
     # convert to value that will show on scale
-    # for pylint consider-using-enumerate
-    for i, out_dat in enumerate(out):
-        if out_dat != prev:
-            prev = out_dat
-            bitcounts.append(count)
-            count = 1
-        else:
-            count = count + 1
-
-        if out_dat:
-            out[i] = 258
-        else:
-            out[i] = 4
-
-    ax1.plot(r, out, '-', color='g', label='Reader Logic')
+#    for i in range(len(out)):
+#        if out[i] != prev:
+#            prev = out[i]
+#            bitcounts.append(count)
+#            count = 1
+#        else:
+#            count = count +1
+#
+#        if out[i]:
+#            out[i] = 258
+#        else:
+#            out[i] = 4
 
     if Verbose:
+        # Use a counter to help calc bit period
+
+        # way faster way to count
+        # https://stackoverflow.com/questions/55141181/count-number-of-consecutive-elements-in-a-list#answer-55141306
+        bitcounts = [len(list(g)) for k, g in groupby(out)]
+
         print("Bit periods")
         print(bitcounts)
 
-        #  C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
         print("Most common bit periods:")
         print("\n".join(["%d : %d" % kv for kv in Counter(bitcounts).most_common(10)]))  # pylint: disable=consider-using-f-string
+
+    ax1.plot(r, [258 if x else 4 for x in out], '-', color='g',
+             label='Reader Logic')
+    # show compressed version
+    ax1.plot(r, [320 if x else 300 for x in out], '-', color='g')
 
     #   Not  yet finished
     ax_corr2 = ax_corr.twinx()
@@ -471,31 +486,17 @@ def plot_data(data) -> None:
     # Autocorrelation should be best at 500, there's a 500 repeater period (2000 samples)
     (autoc_1, autoc_2) = autocorr(out)
     ax_corr.title.set_text("Autocorrelation")
-    c1 = ax_corr.plot(range(len(autoc_1)), autoc_1, "-", color='m', label="Autocorrelation (full)")
-    c2 = ax_corr2.plot(range(len(autoc_2)), autoc_2, "-", color='g', label="Autocorrelation (500 samples)")
+    c1 = ax_corr.plot(range(len(autoc_1)), autoc_1, "-", color='m',
+                      label="Autocorrelation (full)", alpha=0.5)
+    c2 = ax_corr2.plot(range(len(autoc_2)), autoc_2, "-", color='g',
+                       label="Autocorrelation (500 samples)", alpha=0.5)
     # consolidate legend labels
     lns = c1 + c2
     labs = [ln.get_label() for ln in lns]
-    leg_corr = ax_corr.legend(lns, labs, loc=0, fontsize='x-small', draggable=True)  # bbox_to_anchor=(1.04, 1))
+    leg_corr = ax_corr.legend(lns, labs, loc=0, fontsize='x-small',
+                              draggable=True)  # bbox_to_anchor=(1.04, 1))
     # leg_corr2 = ax_corr2.legend(loc=0, fontsize='x-small', draggable=True)  # bbox_to_anchor=(1.04, 1))
 
-    # show compressed version
-#     for i in range(len(out)):  # pylint: disable=consider-using-enumerate
-#         if out[i] == 258:
-#             out[i] = 320
-#         else:
-#             out[i] = 300
-
-    # show compressed version
-    for i, out_dat in enumerate(out):
-        if out_dat == 258:
-            out[i] = 320
-        else:
-            out[i] = 300
-
-    ax1.plot(r, out, '-', color='g')
-
-    # ax1.text(-10, out[0], 'Reader Logic', color= 'g', ha= 'right', va= 'center')
 
     # bit period
     # raw = samples.find('Bit_Period')
@@ -509,19 +510,6 @@ def plot_data(data) -> None:
     fill = 0
     fill1 = 0
     toggle = True
-
-#    for i in range(len(out)):
-#        if out[i] != prev:
-#            prev = out[i]
-#            if fill1:
-#                fill = fill1
-#                fill1 = i
-#            else:
-#                fill1 = i
-#            # fill every other stripe
-#            if toggle:
-#                ax1.axvspan(fill, fill1, facecolor='r', alpha=0.1)
-#            toggle = not toggle
 
     for i, out_dat in enumerate(out):
         if out_dat != prev:
@@ -541,13 +529,13 @@ def plot_data(data) -> None:
 #        if out[i]:
 #            break
 
-    # https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/consider-using-enumerate.html
     for i, out_dat in enumerate(out):
         if out_dat:
             break
     data = xml.find('Tag/Data_Rate/Data').text
     # Do we want this Rotated (Can't read it)
-    ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs', color='r', alpha=0.5,  # rotation=270,
+    ax1.text(i + ((fill1 - fill) / 2), -10, f'Bit Period\n{data} FCs',
+             color='r', alpha=0.5,  # rotation=270,
              ha='center', va='top')
 
     # pot settings

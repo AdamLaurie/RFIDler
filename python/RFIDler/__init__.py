@@ -142,7 +142,7 @@ from typing import Union, Tuple
 import serial
 import serial.tools.list_ports
 
-__VERSION__ = '1.1'
+__VERSION__ = '1.1a'
 
 
 class RFIDler():
@@ -259,13 +259,15 @@ class RFIDler():
                 return False, "Unable to find correct port"
 
             print(f"Using: {port}")
+        else:
+            print(f"Given: {port}")  # PMS #
 
         try:
             self.connection = serial.Serial(port, baud, timeout=timeout)
             self.connection.flushInput()
             self.connection.flushOutput()
         except serial.serialutil.SerialException as _e:
-            print(f"SerialException: {_e}")
+            # print(f"SerialException: {_e}")
             return False, f"Can't open serial port: {_e}"
         except (OSError, ValueError) as _e:
             return False, f"Exception Error: {_e}"

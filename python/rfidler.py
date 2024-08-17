@@ -208,17 +208,22 @@ def print_help() -> None:
 
 def print_rfidler_help(rfer):
 
-    result, rdata = rfer.command(command)
+    print("print_rfidler_help", command)
+
+    result, rdata = rfer.command("HELP")
     if result:
         for line in rdata:
             print(line)
     else:
         output('Failed: ' + rdata)
+
     result, rdata = rfer.command('TAGS')
     if result:
+        sys.stdout.write('\n')
         for line in rdata:
             sys.stdout.write(line.rstrip())
-        print()
+        # print()
+        sys.stdout.write('\n\n')
 
 
 def run_test() -> None:
@@ -497,7 +502,6 @@ def plot_data(data) -> None:
                               draggable=True)  # bbox_to_anchor=(1.04, 1))
     # leg_corr2 = ax_corr2.legend(loc=0, fontsize='x-small', draggable=True)  # bbox_to_anchor=(1.04, 1))
 
-
     # bit period
     # raw = samples.find('Bit_Period')
     # data = raw.find('Data')
@@ -586,26 +590,34 @@ def plot_data(data) -> None:
 if __name__ == '__main__':
 
     port = None
-    ac = len(sys.argv)
+    no_connect = False
     av = sys.argv[1:]
+    ac = len(av)
 
-    if ac <= 2 and av[0] == "HELP":
+    if ac == 0 or av[0] == "HELP":
         print_help()
         sys.exit(True)
 
     rfidler = RFIDler.RFIDler()
 
+    if av and av[0] == "-n":
+        av.pop(0)
+        no_connect = True
+        sys.exit(True)
+
     # if there is more then 1 arg AND 1st arg is a path
     # assume it is a path to port
-    if ac > 2 and av[0][0] == '/':
+    if av and av[0][0] == '/':
         port = av.pop(0)
 
-    # if port is None, connect() will scan for the correct port
-    result, reason = rfidler.connect(port)
-    if not result:
-        print(f'Warning - could not open serial port: {port or reason}')
-        # print(f'Reason: {reason}')
-        # sys.exit(1)
+    if no_connect is False:
+        # if port is None, connect() will scan for the correct port
+        result, reason = rfidler.connect(port)
+        del no_connect
+        if not result:
+            print(f'Warning - could not open serial port: {port or reason}')
+            # print(f'Reason: {reason}')
+            # sys.exit(1)
 
     # should we have a -png option to have pylot save a PNG ?
     # process each command
@@ -619,6 +631,10 @@ if __name__ == '__main__':
 
         if command_up == 'VERBOSE':
             Verbose = True
+            continue
+
+        if command_up.startswith('NOVERB'):
+            Verbose = False
             continue
 
         if command_up == 'DEBUG':
@@ -666,7 +682,6 @@ if __name__ == '__main__':
             else:
                 print(f"{command} missing argument")
                 sys.exit(1)
-
             continue
 
         if command_up == 'XKCD':
@@ -674,6 +689,27 @@ if __name__ == '__main__':
                 print(f"command {command} functionally not available without 'matplotlib' lib")
             else:
                 pyplot.xkcd()
+            continue
+
+        if command_up in ["CONNECT", "RECONNECT"]:
+            print("reconnect")
+            rfidler.disconnect()  # Always returns True
+            result, rdata = rfidler.connect(rfidler.used_port)
+            print(f"Conn result: {result} {rdata}")
+            continue
+
+        if command_up == 'REBOOT':
+            print("REBOOTING")
+            result, rdata = rfidler.command("REBOOT")
+            if result is False:
+                output('Reboot Failed: ' + rdata)
+                sys.exit(1)
+            rfidler.disconnect()
+            time.sleep(2)
+            result, rdata = rfidler.connect(rfidler.used_port)
+            if result is False:
+                output('(re)connect Failed: ' + rdata)
+                sys.exit(1)
             continue
 
         if command_up == 'FC':
@@ -684,11 +720,10 @@ if __name__ == '__main__':
                 sys.exit(1)
 
             result, rdata = rfidler.command(f'SET FC {100000 / command_option}')
-            if result:
-                continue
-            else:
+            if result is False:
                 output('Failed: ' + rdata)
                 sys.exit(1)
+            continue
 
         if command_up in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
 

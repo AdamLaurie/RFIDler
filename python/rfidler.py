@@ -619,6 +619,7 @@ if __name__ == '__main__':
             # print(f'Reason: {reason}')
             # sys.exit(1)
 
+    # plot_data = None
     # should we have a -png option to have pylot save a PNG ?
     # process each command
     while av:
@@ -663,16 +664,13 @@ if __name__ == '__main__':
                     print_help()
             else:
                 print_help()
-
             sys.exit(0)
 
         if command_up in ['VERSION']:
-
             print(f"RFIDler.py : {RFIDler.__VERSION__}")
             if rfidler.connection:
                 result, rdata = rfidler.command(command)
                 print(f"RFIDler Firmware: {rdata[0]}")
-
             continue
 
         if command_up in ['FLASH', 'FLASHP']:
@@ -691,29 +689,31 @@ if __name__ == '__main__':
                 pyplot.xkcd()
             continue
 
-        if command_up in ["CONNECT", "RECONNECT"]:
+        if command_up in ['CONNECT', 'RECONNECT']:
             print("reconnect")
             rfidler.disconnect()  # Always returns True
             result, rdata = rfidler.connect(rfidler.used_port)
             print(f"Conn result: {result} {rdata}")
             continue
 
-        if command_up == 'REBOOT':
+        if command_up in ['REBOOT', 'RESET']:
             print("REBOOTING")
             result, rdata = rfidler.command("REBOOT")
             if result is False:
                 output('Reboot Failed: ' + rdata)
                 sys.exit(1)
-            rfidler.disconnect()
-            time.sleep(2)
-            result, rdata = rfidler.connect(rfidler.used_port)
-            if result is False:
-                output('(re)connect Failed: ' + rdata)
-                sys.exit(1)
-            continue
+            if av:  # Only need to do this if there are other commands to run
+                rfidler.disconnect()
+                time.sleep(2)
+                result, rdata = rfidler.connect(rfidler.used_port)
+                if result is False:
+                    output('(re)connect Failed: ' + rdata)
+                    sys.exit(1)
+                continue
+            sys.exit(0)
 
         if command_up == 'FC':
-            if av:
+            if av:  # We should add a ranges / value test
                 command_option = float(av.pop(0))
             else:
                 print(f"command:{command} missing Freq option (in KHz)")
@@ -725,6 +725,7 @@ if __name__ == '__main__':
                 sys.exit(1)
             continue
 
+        # This Command logic is a mess
         if command_up in ['PLOT', 'PLOTN', 'STORE', 'STOREN', 'LOAD']:
 
             if av:
@@ -830,3 +831,5 @@ if __name__ == '__main__':
             output('Failed: ' + rdata)
 
         continue
+
+    sys.exit(0)

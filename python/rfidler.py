@@ -179,27 +179,35 @@ Verbose = False
 ADC_To_Volts = 0.012890625  # 3.3 / 256
 POT_To_Volts = 0.019607843  # 5 / 255
 
+cmd_help = {
+    'DEBUG <OFF|ON>':                   'Show serial comms',
+    'FLASH[P] <IMAGE.HEX>':             'Set bootloader mode and flash IMAGE.HEX [in Production mode]',
+    'PLOT[N] <SAMPLES>':                'Plot raw coil samples ([N]o local clock)',
+    'STORE[N] <SAMPLES> <file_prefix>': 'Save raw coil samples to file ([N]o local clock)',
+    'LOAD <file>':                      'Load and plot saved sample-file',
+    'FC <field_freq>':                  'Set Field Clock value Freq from KHz',
+    'PROMPT <MESSAGE>':                 'Print MESSAGE and wait for <ENTER>',
+    'QUIET':                            'Suppress confirmation of sent command (show results only)',
+    'VERBOSE':                          'Be slightly more Verbose',
+    'SLEEP <SECONDS>':                  'Pause for SECONDS',
+    'RESET':                            'Wipe & Reset RFIDler to defaults',
+    'HELP COMMANDS':                    'Print RFIDler Commands',
+    'TEST':                             'Run hardware manufacturing test suite',
+}
+
 
 # should this take command name args for more detailed help???
 def print_help() -> None:
     """ Print help test """
-    print(f"""
- usage: {sys.argv[0]} [PORT] <COMMAND> [ARGS] [COMMAND [ARGS] ...]
+    print(f"    usage: {sys.argv[0]} [PORT] <COMMAND> [ARGS] [COMMAND [ARGS] ...]")
+    print("    Commands:")
 
-   Commands:
+    max_len = max(len(x) for x in cmd_help) + 3
 
-     DEBUG <OFF|ON>                      Show serial comms
-     FLASH[P] <IMAGE.HEX>                Set bootloader mode and flash IMAGE.HEX [in Production mode]
-     PLOT[N] <SAMPLES>                   Plot raw coil samples ([N]o local clock)
-     STORE[N] <SAMPLES> <file_prefix>    Save raw coil samples to file ([N]o local clock)
-     LOAD <file>                         Load and plot saved sample-file
-     FC <field_freq>                     Set Field Clock Freq in KHz
-     PROMPT <MESSAGE>                    Print MESSAGE and wait for <ENTER>
-     QUIET                               Suppress confirmation of sent command (show results only)
-     SLEEP <SECONDS>                     Pause for SECONDS
-     HELP COMMANDS                       Print RFIDler Commands
-     TEST                                Run hardware manufacturing test suite
+    for c, y in cmd_help.items():
+        print(f"\t{c:{max_len}} {y}")
 
+    print("""
    Commands will be executed sequentially.
    Unrecognized commands will be passed directly to RFIDler.
    Commands with arguments to be passed directly should be quoted. e.g. "SET TAG FDXB"
@@ -208,20 +216,20 @@ def print_help() -> None:
 
 def print_rfidler_help(rfer):
 
-    print("print_rfidler_help", command)
+    print("RFIDler HELP:")
 
-    result, rdata = rfer.command("HELP")
-    if result:
-        for line in rdata:
-            print(line)
+    h_result, h_rdata = rfer.command("HELP")
+    if h_result:
+        for h_line in h_rdata:
+            print(h_line)
     else:
-        output('Failed: ' + rdata)
+        output('Failed: ' + h_rdata)
 
-    result, rdata = rfer.command('TAGS')
-    if result:
+    h_result, h_rdata = rfer.command('TAGS')
+    if h_result:
         sys.stdout.write('\n')
-        for line in rdata:
-            sys.stdout.write(line.rstrip())
+        for h_line in h_rdata:
+            sys.stdout.write(h_line.rstrip())
         # print()
         sys.stdout.write('\n\n')
 
@@ -362,8 +370,8 @@ def load_data(fname: str) -> Tuple[bool, list]:
     try:    # ET.ElementTree write in "utf-8" format by default
         with open(fname, "r", encoding="utf-8") as f:
             lines = f.readlines()
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        return [False, str(e)]
+    except Exception as _e:  # pylint: disable=broad-exception-caught
+        return [False, str(_e)]
 
     return [True, lines]
 
@@ -616,7 +624,7 @@ if __name__ == '__main__':
         del no_connect
         if not result:
             print(f'Warning - could not open serial port: {port or reason}')
-            # print(f'Reason: {reason}')
+            print(f'Reason: {reason}')
             # sys.exit(1)
 
     # plot_data = None
@@ -690,36 +698,55 @@ if __name__ == '__main__':
             continue
 
         if command_up in ['CONNECT', 'RECONNECT']:
-            print("reconnect")
+            if Verbose:
+                print("(re)connect")
             rfidler.disconnect()  # Always returns True
             result, rdata = rfidler.connect(rfidler.used_port)
             print(f"Conn result: {result} {rdata}")
             continue
 
-        if command_up in ['REBOOT', 'RESET']:
-            print("REBOOTING")
+        if command_up in ['RESET']:
+            if Verbose:
+                print("WIPE/REBOOTING")
+            result, rdata = rfidler.command("WIPE")
+            if result is False:
+                output('Reboot Failed: ' + rdata)
             result, rdata = rfidler.command("REBOOT")
             if result is False:
                 output('Reboot Failed: ' + rdata)
                 sys.exit(1)
-            if av:  # Only need to do this if there are other commands to run
+            if av:  # Only need to reconnect this if no more args
                 rfidler.disconnect()
                 time.sleep(2)
                 result, rdata = rfidler.connect(rfidler.used_port)
                 if result is False:
                     output('(re)connect Failed: ' + rdata)
                     sys.exit(1)
-                continue
-            sys.exit(0)
+            continue
 
         if command_up == 'FC':
-            if av:  # We should add a ranges / value test
-                command_option = float(av.pop(0))
-            else:
+            if not av:  # We should add a ranges / value test
                 print(f"command:{command} missing Freq option (in KHz)")
                 sys.exit(1)
 
-            result, rdata = rfidler.command(f'SET FC {100000 / command_option}')
+            command_option = av.pop(0).upper()
+
+            if command_option.endswith('KHZ'):
+                command_option = command_option[:-3]
+
+            try:
+                command_option = float(command_option)
+            except ValueError:
+                print(f"command:{command} invalid value {command_option}")
+                print("\texpecting value in Khz")
+                sys.exit(1)
+
+            command_option = int(100000 // command_option)
+
+            if Verbose:
+                print(f"setting FC to {command_option}")
+
+            result, rdata = rfidler.command(f'SET FC {command_option}')
             if result is False:
                 output('Failed: ' + rdata)
                 sys.exit(1)

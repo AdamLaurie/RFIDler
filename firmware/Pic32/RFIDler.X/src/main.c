@@ -910,6 +910,7 @@ void show_usage(char *command)
         "SET BIPHASE <ON|OFF>                                         Set BiPhase encoding\r\n",
         "SET BITS <BITS>                                              Set number of data bits\r\n",
         "SET FC <PERIOD>                                              Set Field Clock in uS/100\r\n",
+        "SET HEXTOBIN <ON|OFF>                                        Set hextobin conversion\r\n",
         "SET INVERT <ON|OFF>                                          Set data inversion\r\n",
         "SET MANCHESTER <ON|OFF>                                      Set Manchester encoding\r\n",
         "SET MOD <ASK|FSK|PSK1>                                       Set modulation scheme\r\n",
@@ -1886,7 +1887,10 @@ BYTE ProcessSerialCommand(char *command)
             while(!get_user_abort())
             {
                 if(get_interpreted_tag_uid(DataBuff, RFIDlerConfig.TagType))
-                    UserMessage("%s\r\n", DataBuff);
+                    if(RFIDlerConfig.Hex2bin)
+                        printhexasbin(DataBuff);
+                    else
+                        UserMessage("%s\r\n", DataBuff);
                 mLED_Comms_Toggle();
             }
             eod();
@@ -1984,6 +1988,18 @@ BYTE ProcessSerialCommand(char *command)
         }
         else
             commandok= command_nack("Invalid FC period!");
+    }
+
+    if (strcmp(command, "SET HEXTOBIN OFF") == 0)
+    {
+        RFIDlerConfig.Hextobin= FALSE;
+        commandok= command_ack(NO_DATA);
+    }
+
+    if (strcmp(command, "SET HEXTOBIN ON") == 0)
+    {
+        RFIDlerConfig.Hextobin= TRUE;
+        commandok= command_ack(NO_DATA);
     }
 
     if (strcmp(command, "SET INVERT OFF") == 0)
@@ -2359,7 +2375,10 @@ BYTE ProcessSerialCommand(char *command)
             if(get_interpreted_tag_uid(DataBuff, RFIDlerConfig.TagType))
             {
                 commandok= command_ack(DATA);
-                UserMessage("%s\r\n", DataBuff);
+                if(RFIDlerConfig.Hex2bin)
+                    printhexasbin(DataBuff);
+                else
+                    UserMessage("%s\r\n", DataBuff);
                 eod();
             }
             else

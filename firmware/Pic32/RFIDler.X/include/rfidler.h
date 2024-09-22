@@ -215,6 +215,7 @@ typedef struct {
     BOOL            BiPhase;
     BOOL            Invert;
     BOOL            Manchester;
+    BOOL            Hextobin;
     BOOL            HalfDuplex;
     unsigned int    Repeat;
     unsigned int    PotLow;

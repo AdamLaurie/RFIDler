@@ -134,21 +134,22 @@
 
 """
 
-# pylint: disable=line-too-long,invalid-name
+# pylint: disable=invalid-name
 
+from typing import Union, Tuple
 # serial needs to be pyserial
 # https://stackoverflow.com/questions/64383756/has-python-package-serial-been-renamed-to-pyserial
-from typing import Union, Tuple
 import serial
 import serial.tools.list_ports
 
+__VERSION__ = '1.1a'
+
 
 class RFIDler():
-    # pylint: disable=broad-exception-caught
     """Class for communicating with RFIDler hardware"""
 
     # globals
-    Connection = None
+    connection = None
     Debug = False
     used_port = None
 
@@ -164,23 +165,29 @@ class RFIDler():
             '!' - command failed, reason to follow
             '?' - command not recognised
         """
+        # pylint: disable=too-many-return-statements
+
+        if self.connection is None:
+            return False, "Device not connected"
+
         try:
             cmd_str = f"{tosend}\r\n".encode('ascii')
             if self.Debug:
                 print(f'\r\n>>> {cmd_str}', end='')
 
-            self.Connection.write(cmd_str)
+            self.connection.write(cmd_str)
         except serial.serialutil.SerialException as _e:
             print(f"SerialException: {_e}")
             return False, f"Send SerialException {_e}"
-        except Exception as _e:
+        # except Exception as _e:
+        except (OSError, ValueError) as _e:
             print(f"Exception: Send: '{_e}'")
             return False, "Serial communications failure (send)!"
 
         if self.Debug:
             print("")
         try:
-            result = self.Connection.read(1).decode('ascii')
+            result = self.connection.read(1).decode('ascii')
             if self.Debug:
                 print('\r\n<<<', end='')
             if result not in '.+!?':
@@ -193,7 +200,7 @@ class RFIDler():
         except serial.serialutil.SerialException as _e:
             print(f"SerialException: {_e}")
             return False, f"Read SerialException {_e}"
-        except Exception as _e:  # pylint: disable=broad-exception-caught
+        except (OSError, ValueError) as _e:
             print(f"Exception: Read: {_e}")
             return False, "Serial communications failure (receive)!"
 
@@ -202,8 +209,13 @@ class RFIDler():
         send command
         args: command line to send
         return: True/False, [data line(s) or reason for failure]
-        note that CR/LF is stripped from each data item but all other whitespace is left intact (including blank lines)
+        note that CR/LF is stripped from each data item
+            but all other whitespace is left intact (including blank lines)
         """
+        # pylint: disable=too-many-return-statements
+        if self.connection is None:
+            return False, "Device not connected"
+
         result, data = self.send_command(tosend)
         if not result:
             return False, data
@@ -213,7 +225,7 @@ class RFIDler():
             return False, "Command not recognised!"
         # if '!', command failed
         if data == '!':
-            data = self.Connection.readline().decode('ascii').rstrip('\r\n')
+            data = self.connection.readline().decode('ascii').rstrip('\r\n')
             return False, data
         # if '.', we're done
         if data == '.':
@@ -222,7 +234,7 @@ class RFIDler():
         if data == '+':
             data = []
             while 42:
-                item = self.Connection.readline()
+                item = self.connection.readline()
                 item = item.decode('ascii').rstrip('\r\n')
 
                 if self.Debug:
@@ -243,32 +255,43 @@ class RFIDler():
         """
         if port is None:
             port = self._find_port()
+            if port is None:
+                return False, "Unable to find correct port"
 
-        if port is None:
-            return False, "Unable to find correct port"
+            print(f"Using: {port}")
+        else:
+            print(f"Given: {port}")  # PMS #
 
-        print(f"Using: {port}")
         try:
-            self.Connection = serial.Serial(port, baud, timeout=timeout)
-            self.Connection.flushInput()
-            self.Connection.flushOutput()
+            self.connection = serial.Serial(port, baud, timeout=timeout)
+            self.connection.flushInput()
+            self.connection.flushOutput()
         except serial.serialutil.SerialException as _e:
-            print(f"SerialException: {_e}")
+            # print(f"SerialException: {_e}")
             return False, f"Can't open serial port: {_e}"
-        except Exception as _e:
+        except (OSError, ValueError) as _e:
             return False, f"Exception Error: {_e}"
+
         # Save for later if needed elsewhere
         self.used_port = port
-        # make sure we're in API mode - send it twice as RFIDler's serial buffer may already have some crap in it
+
+        # make sure we're in API mode
+        # send it twice as RFIDler's serial buffer may already have some crap in it
         self.command("API")
-        while self.Connection.readline():
+        while self.connection.readline():
             continue
         if not self.command("API"):
             return False, "Can't switch to API mode"
         return True, ""
 
-    # COM4: USB Serial Device (COM4) [USB VID:PID=0483:5740 SER=FLIP_UNYANA LOCATION=1-3:x.0]
-    # /dev/cu.usbmodemflip_Unyana1: Flipper Unyana [USB VID:PID=0483:5740 SER=flip_Unyana LOCATION=20-2]
+    # RFIDler ports values:
+    #   description: RFIDler-LF
+    #   manufacturer: Aperture Labs Ltd.
+    #   hwid: USB VID:PID=1D50:6098 SER=17130C2E00E1 LOCATION=1-1
+    #   pid: 24728
+    #   vid: 7504
+    #   serial_number 17130C2E00E1
+    #   product RFIDler-LF
     def _find_port(self) -> Union[str, None]:
         """find serial device"""
 
@@ -279,18 +302,20 @@ class RFIDler():
             if self.Debug:
                 print(f"{p.name}: {p.description} [{p.hwid}]")
 
-            if p.description.startswith("RFIDler") or (p.product and p.product.startswith("RFIDler")):
+            if (p.description and p.description.startswith("RFIDler")) or \
+               (p.product and p.product.startswith("RFIDler")):
                 return p.device
 
         return None
 
-    # pylint: disable=bare-except
     def disconnect(self) -> bool:
         """
         close serial connection to RFIDler
         """
         try:
-            self.Connection.close()
-        except Exception as _e:
+            if self.connection:
+                self.connection.close()
+                self.connection = None
+        except Exception as _e:   # pylint: disable=broad-exception-caught
             pass
         return True

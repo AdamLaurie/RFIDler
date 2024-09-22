@@ -111,7 +111,7 @@ under the "Linux Support" tab. Copy this file to `/etc/udev/rules.d` and run `su
 
 This file can also be found in this repo at: linux-support/71-rfidler-lf-cdc-blacklist.rules
 
-####  Windows
+#### Windows
 
 Windows drivers can be found in the 'Windows Driver' tab of the MPLAB project
 
@@ -120,7 +120,7 @@ To connect, any serial terminal emulator should work, but we recommend:
 
 * Linux: minicom (`sudo apt-get install minicom`)
 * Windows: [PuTTY](http://www.chiark.greenend.org.uk/~sgtatham/putty/)
-* Mac OS X: SerialTools (free from the App Store)
+* Mac OS X: minicom (install: [brew](https://brew.sh/) minicom) or SerialTools (free from the App Store)
 
 Example linux connection:
 
@@ -203,3 +203,8 @@ sudo make install64
 cd #RFIDler repo
 mphidflash -r -w firmware/Pic32/RFIDler.X/dist/debug/production/RFIDler.X.production.hex
 ```
+
+
+## See Also
+
+(python shell command line interfacee)[python/README.md]
